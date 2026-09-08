@@ -46,7 +46,9 @@ cd web && npm install && npm run dev
 
 Development settings point at the `docker compose` SQL Server. To use PostgreSQL
 instead, set `Storage:Provider=PostgreSql` and `Storage:ConnectionString`
-(`Host=localhost;Database=jetreportdesigner;Username=jet;Password=jet`).
+(`Host=localhost;Port=5433;Database=jetreportdesigner;Username=jet;Password=jet`).
+The compose file maps PostgreSQL to host port **5433** to avoid clashing with a
+local 5432.
 
 ## Test
 

@@ -1,9 +1,11 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using DotNet.Testcontainers.Containers;
 using JetReportDesigner.Api.Contracts;
 using JetReportDesigner.Core.Model;
+using JetReportDesigner.Core.Serialization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Testcontainers.MsSql;
@@ -18,6 +20,8 @@ namespace JetReportDesigner.Api.Tests;
 /// </summary>
 public abstract class ReportsApiTestsBase(DatabaseFixture fixture)
 {
+    private static readonly JsonSerializerOptions Json = ReportJson.Apply(new JsonSerializerOptions());
+
     private WebApplicationFactory<Program> CreateFactory() =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
@@ -59,38 +63,38 @@ public abstract class ReportsApiTestsBase(DatabaseFixture fixture)
         };
 
         // Create
-        var createResponse = await client.PostAsJsonAsync("/api/reports", definition);
+        var createResponse = await client.PostAsJsonAsync("/api/reports", definition, Json);
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
-        var created = await createResponse.Content.ReadFromJsonAsync<ReportResponse>();
+        var created = await createResponse.Content.ReadFromJsonAsync<ReportResponse>(Json);
         Assert.NotNull(created);
         Assert.NotEqual(Guid.Empty, created!.Id);
         Assert.Equal("Invoice", created.Definition.Body!.Elements[0].Text);
 
         // List
-        var list = await client.GetFromJsonAsync<List<ReportSummaryResponse>>("/api/reports");
+        var list = await client.GetFromJsonAsync<List<ReportSummaryResponse>>("/api/reports", Json);
         Assert.Contains(list!, r => r.Id == created.Id && r.Name == "Integration Invoice");
 
         // Get
-        var fetched = await client.GetFromJsonAsync<ReportResponse>($"/api/reports/{created.Id}");
+        var fetched = await client.GetFromJsonAsync<ReportResponse>($"/api/reports/{created.Id}", Json);
         Assert.Equal(created.ConcurrencyToken, fetched!.ConcurrencyToken);
 
         // Update (with matching If-Match)
         fetched.Definition.Name = "Renamed Invoice";
         using var update = new HttpRequestMessage(HttpMethod.Put, $"/api/reports/{created.Id}")
         {
-            Content = JsonContent.Create(fetched.Definition),
+            Content = JsonContent.Create(fetched.Definition, options: Json),
         };
         update.Headers.IfMatch.Add(new EntityTagHeaderValue($"\"{fetched.ConcurrencyToken}\""));
         var updateResponse = await client.SendAsync(update);
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
-        var updated = await updateResponse.Content.ReadFromJsonAsync<ReportResponse>();
+        var updated = await updateResponse.Content.ReadFromJsonAsync<ReportResponse>(Json);
         Assert.Equal("Renamed Invoice", updated!.Definition.Name);
         Assert.NotEqual(created.ConcurrencyToken, updated.ConcurrencyToken);
 
         // Stale update -> 409
         using var stale = new HttpRequestMessage(HttpMethod.Put, $"/api/reports/{created.Id}")
         {
-            Content = JsonContent.Create(fetched.Definition),
+            Content = JsonContent.Create(fetched.Definition, options: Json),
         };
         stale.Headers.IfMatch.Add(new EntityTagHeaderValue($"\"{created.ConcurrencyToken}\""));
         var staleResponse = await client.SendAsync(stale);
@@ -115,7 +119,7 @@ public abstract class ReportsApiTestsBase(DatabaseFixture fixture)
         var client = factory.CreateClient();
 
         var invalid = new ReportDefinition { Name = "", LayoutMode = LayoutMode.Free };
-        var response = await client.PostAsJsonAsync("/api/reports", invalid);
+        var response = await client.PostAsJsonAsync("/api/reports", invalid, Json);
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
     }
