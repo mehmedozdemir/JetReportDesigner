@@ -1,5 +1,6 @@
 using JetReportDesigner.Core.Model;
 using JetReportDesigner.DataSources;
+using JetReportDesigner.Storage.Connections;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JetReportDesigner.Api.Controllers;
@@ -7,7 +8,9 @@ namespace JetReportDesigner.Api.Controllers;
 [ApiController]
 [Route("api/datasources")]
 [Produces("application/json")]
-public sealed class DataSourcesController(IEnumerable<IDataSourceReader> readers) : ControllerBase
+public sealed class DataSourcesController(
+    IEnumerable<IDataSourceReader> readers,
+    IConnectionRepository connections) : ControllerBase
 {
     private readonly IReadOnlyDictionary<DataSourceKind, IDataSourceReader> _readers =
         readers.ToDictionary(r => r.Kind);
@@ -48,9 +51,37 @@ public sealed class DataSourcesController(IEnumerable<IDataSourceReader> readers
             return ResolvedDataSet.Empty;
         }
 
-        return _readers.TryGetValue(definition.Kind, out var reader)
-            ? await reader.ReadAsync(definition, new DataSourceReadContext(new Dictionary<string, object?>()), cancellationToken)
-            : null;
+        if (!_readers.TryGetValue(definition.Kind, out var reader))
+        {
+            return null;
+        }
+
+        var context = new DataSourceReadContext(
+            new Dictionary<string, object?>(),
+            await ResolveConnectionsAsync(definition, cancellationToken));
+
+        return await reader.ReadAsync(definition, context, cancellationToken);
+    }
+
+    /// <summary>
+    /// The designer previews a data source before the report (and its connection refs)
+    /// are saved, so resolve the SQL connection by name straight from the registry.
+    /// </summary>
+    private async Task<IReadOnlyList<ConnectionRef>> ResolveConnectionsAsync(
+        DataSourceDefinition definition,
+        CancellationToken cancellationToken)
+    {
+        var name = definition.Sql?.Connection;
+        if (definition.Kind != DataSourceKind.Sql || string.IsNullOrWhiteSpace(name))
+        {
+            return [];
+        }
+
+        var registered = await connections.ListAsync(cancellationToken);
+        var match = registered.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.Ordinal));
+        return match is null
+            ? []
+            : [new ConnectionRef { Name = match.Name, ConnectionId = match.Id, Provider = match.Provider }];
     }
 
     public sealed record SchemaResponse(IReadOnlyList<DataField> Fields);
