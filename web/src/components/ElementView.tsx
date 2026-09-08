@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useDesigner } from "../store";
 import type { ReportElement, ReportStyle } from "../types";
 import { useCanvasDrag, type ResizeHandle } from "../hooks/useCanvasDrag";
@@ -17,11 +18,26 @@ function effectiveStyle(el: ReportElement, styles: Record<string, ReportStyle>):
   };
 }
 
+const EDITABLE = new Set(["label", "field", "pageInfo"]);
+
 export function ElementView({ element }: { element: ReportElement }) {
   const selectedIds = useDesigner((s) => s.selectedIds);
   const select = useDesigner((s) => s.select);
+  const mutateElement = useDesigner((s) => s.mutateElement);
   const styles = useDesigner((s) => s.report?.styles) ?? EMPTY_STYLES;
   const { beginMove, beginResize } = useCanvasDrag();
+  const [editing, setEditing] = useState(false);
+  const [lastDown, setLastDown] = useState(0);
+
+  const isLabel = element.type === "label";
+  const currentText = isLabel ? element.text ?? "" : element.value ?? "";
+  const commitText = (value: string) => {
+    setEditing(false);
+    mutateElement(element.id, (el) => {
+      if (isLabel) el.text = value;
+      else el.value = value;
+    });
+  };
 
   const selected = selectedIds.includes(element.id);
   const s = effectiveStyle(element, styles);
@@ -63,6 +79,14 @@ export function ElementView({ element }: { element: ReportElement }) {
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
+    const now = Date.now();
+    if (now - lastDown < 300 && EDITABLE.has(element.type)) {
+      setLastDown(0);
+      setEditing(true);
+      return;
+    }
+    setLastDown(now);
+
     if (!selected) select([element.id], e.shiftKey);
     const ids = useDesigner.getState().selectedIds.includes(element.id)
       ? useDesigner.getState().selectedIds
@@ -71,10 +95,32 @@ export function ElementView({ element }: { element: ReportElement }) {
   };
 
   return (
-    <div style={boxStyle} onPointerDown={onPointerDown} data-el-id={element.id}>
-      {(element.type === "label" || element.type === "field" || element.type === "pageInfo") && (
-        <span>{labelText(element)}</span>
-      )}
+    <div
+      style={boxStyle}
+      onPointerDown={editing ? undefined : onPointerDown}
+      onDoubleClick={() => EDITABLE.has(element.type) && setEditing(true)}
+      data-el-id={element.id}
+    >
+      {EDITABLE.has(element.type) &&
+        (editing ? (
+          <textarea
+            className="inline-edit"
+            autoFocus
+            defaultValue={currentText}
+            onBlur={(e) => commitText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                commitText((e.target as HTMLTextAreaElement).value);
+              } else if (e.key === "Escape") {
+                setEditing(false);
+              }
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span>{labelText(element)}</span>
+        ))}
       {element.type === "image" && <span className="img-ph">image</span>}
       {element.type === "table" && element.table && (
         <table className="tbl-preview">

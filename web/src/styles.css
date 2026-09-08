@@ -164,6 +164,26 @@ button.mini { padding: 3px 8px; min-width: 26px; }
   background: rgba(37,99,235,.08);
   pointer-events: none;
 }
+.guide {
+  position: absolute;
+  background: #ec4899;
+  pointer-events: none;
+  z-index: 5;
+}
+.guide-v { top: 0; bottom: 0; width: 1px; }
+.guide-h { left: 0; right: 0; height: 1px; }
+
+.inline-edit {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--accent);
+  outline: none;
+  resize: none;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  padding: 0 2px;
+}
 
 .img-ph { color: var(--muted); font-size: 11px; }
 

@@ -1,32 +1,45 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDesigner, type ElementLocation } from "../store";
-import { pageDimensions, type Band, type ElementType, type ReportElement } from "../types";
+import { pageDimensions, type Band, type ElementType } from "../types";
 import { ElementView } from "./ElementView";
 
 export function Canvas() {
   const layoutMode = useDesigner((s) => s.report?.layoutMode);
-  const removeSelected = useDesigner((s) => s.removeSelected);
-  const nudge = useDesigner((s) => s.nudge);
-  const undo = useDesigner((s) => s.undo);
-  const redo = useDesigner((s) => s.redo);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
-      if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT") return;
+      if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable) return;
+      const s = useDesigner.getState();
+      const mod = e.ctrlKey || e.metaKey;
+
       if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault();
-        removeSelected();
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+        s.removeSelected();
+      } else if (mod && e.key.toLowerCase() === "z") {
         e.preventDefault();
-        e.shiftKey ? redo() : undo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+        e.shiftKey ? s.redo() : s.undo();
+      } else if (mod && e.key.toLowerCase() === "y") {
         e.preventDefault();
-        redo();
+        s.redo();
+      } else if (mod && e.key.toLowerCase() === "c") {
+        s.copySelection();
+      } else if (mod && e.key.toLowerCase() === "v") {
+        e.preventDefault();
+        s.paste();
+      } else if (mod && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        s.duplicateSelection();
+      } else if (mod && e.key === "]") {
+        e.preventDefault();
+        s.reorderSelection(e.shiftKey ? "front" : "forward");
+      } else if (mod && e.key === "[") {
+        e.preventDefault();
+        s.reorderSelection(e.shiftKey ? "back" : "backward");
       } else if (e.key.startsWith("Arrow")) {
         e.preventDefault();
         const step = e.shiftKey ? 10 : 1;
-        nudge(
+        s.nudge(
           e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0,
           e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0,
         );
@@ -34,7 +47,7 @@ export function Canvas() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [removeSelected, nudge, undo, redo]);
+  }, []);
 
   if (!layoutMode) return <div className="canvas-wrap empty">Select or create a report</div>;
   return layoutMode === "free" ? <FreeCanvas /> : <BandedCanvas />;
@@ -67,22 +80,68 @@ function FreeCanvas() {
   const report = useDesigner((s) => s.report)!;
   const zoom = useDesigner((s) => s.zoom);
   const select = useDesigner((s) => s.select);
+  const guides = useDesigner((s) => s.guides);
   const pageRef = useRef<HTMLDivElement>(null);
+  const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
   const { width, height } = pageDimensions(report.page);
   const onDrop = useDropHandler(pageRef, { container: "body" });
+
+  const onPagePointerDown = (e: React.PointerEvent) => {
+    if (e.target !== pageRef.current) return;
+    select([]);
+    const rect = pageRef.current!.getBoundingClientRect();
+    const start = { x: (e.clientX - rect.left) / zoom, y: (e.clientY - rect.top) / zoom };
+    setMarquee({ x0: start.x, y0: start.y, x1: start.x, y1: start.y });
+
+    const move = (ev: PointerEvent) => {
+      setMarquee((m) => (m ? { ...m, x1: (ev.clientX - rect.left) / zoom, y1: (ev.clientY - rect.top) / zoom } : m));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      setMarquee((m) => {
+        if (m) {
+          const [lx, rx] = [Math.min(m.x0, m.x1), Math.max(m.x0, m.x1)];
+          const [ty, by] = [Math.min(m.y0, m.y1), Math.max(m.y0, m.y1)];
+          if (rx - lx > 3 || by - ty > 3) {
+            const hits = (report.body?.elements ?? [])
+              .filter((el) => el.bounds.x < rx && el.bounds.x + el.bounds.width > lx && el.bounds.y < by && el.bounds.y + el.bounds.height > ty)
+              .map((el) => el.id);
+            select(hits);
+          }
+        }
+        return null;
+      });
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
 
   return (
     <div className="canvas-wrap" onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
       <div
         className="page"
         ref={pageRef}
-        onPointerDown={(e) => e.target === pageRef.current && select([])}
+        onPointerDown={onPagePointerDown}
         style={{ width, height, transform: `scale(${zoom})`, transformOrigin: "top center" }}
       >
         <Margins />
         {(report.body?.elements ?? []).map((el) => (
           <ElementView key={el.id} element={el} />
         ))}
+        {guides.x !== null && <div className="guide guide-v" style={{ left: guides.x }} />}
+        {guides.y !== null && <div className="guide guide-h" style={{ top: guides.y }} />}
+        {marquee && (
+          <div
+            className="marquee"
+            style={{
+              left: Math.min(marquee.x0, marquee.x1),
+              top: Math.min(marquee.y0, marquee.y1),
+              width: Math.abs(marquee.x1 - marquee.x0),
+              height: Math.abs(marquee.y1 - marquee.y0),
+            }}
+          />
+        )}
       </div>
     </div>
   );
@@ -148,7 +207,7 @@ function BandStrip({ band, index, width }: { band: Band; index: number; width: n
           if (e.target === areaRef.current) select([]);
         }}
       >
-        {band.elements.map((el: ReportElement) => (
+        {band.elements.map((el) => (
           <ElementView key={el.id} element={el} />
         ))}
         <div className="band-resize" onPointerDown={beginHeightResize} title="Drag to resize band" />

@@ -159,9 +159,18 @@ function ElementProperties({
   const isText = element.type === "label" || element.type === "field" || element.type === "pageInfo";
   const inFooter = bandType === "groupFooter" || bandType === "pageFooter" || bandType === "reportFooter";
 
+  const reorder = useDesigner((st) => st.reorderSelection);
+
   return (
     <div className="panel">
       <h2>{element.type}</h2>
+
+      <div className="row" style={{ marginBottom: 6 }}>
+        <button className="mini" title="Send to back (Ctrl+Shift+[)" onClick={() => reorder("back")}>⤓</button>
+        <button className="mini" title="Send backward (Ctrl+[)" onClick={() => reorder("backward")}>▽</button>
+        <button className="mini" title="Bring forward (Ctrl+])" onClick={() => reorder("forward")}>△</button>
+        <button className="mini" title="Bring to front (Ctrl+Shift+])" onClick={() => reorder("front")}>⤒</button>
+      </div>
 
       <div className="grid2">
         <Num label="X" value={element.bounds.x} onChange={(v) => onPatch((e) => (e.bounds.x = v))} />

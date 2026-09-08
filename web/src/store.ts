@@ -60,6 +60,14 @@ interface DesignerState {
   nudge(dx: number, dy: number): void;
   setZoom(zoom: number): void;
 
+  copySelection(): void;
+  paste(): void;
+  duplicateSelection(): void;
+  reorderSelection(mode: "front" | "back" | "forward" | "backward"): void;
+
+  guides: { x: number | null; y: number | null };
+  setGuides(x: number | null, y: number | null): void;
+
   setLayoutMode(mode: LayoutMode): void;
   addBand(type: BandType): void;
   removeBand(index: number): void;
@@ -72,8 +80,33 @@ interface DesignerState {
   removeParameter(index: number): void;
 }
 
-function clone(report: ReportDefinition): ReportDefinition {
-  return structuredClone(report);
+function clone<T>(value: T): T {
+  return structuredClone(value);
+}
+
+let clipboard: ReportElement[] = [];
+
+function flatElements(report: ReportDefinition | null): ReportElement[] {
+  if (!report) return [];
+  return [...(report.body?.elements ?? []), ...report.bands.flatMap((b) => b.elements)];
+}
+
+function firstElementLocation(state: { report: ReportDefinition | null; selectedIds: string[] }): ElementLocation {
+  const r = state.report;
+  if (!r) return { container: "body" };
+  const id = state.selectedIds[0];
+  if (id) {
+    if (r.body?.elements.some((e) => e.id === id)) return { container: "body" };
+    const bi = r.bands.findIndex((b) => b.elements.some((e) => e.id === id));
+    if (bi >= 0) return { container: "band", bandIndex: bi };
+  }
+  return r.layoutMode === "free"
+    ? { container: "body" }
+    : { container: "band", bandIndex: Math.max(0, r.bands.findIndex((b: Band) => b.type === "detail")) };
+}
+
+function containerElements(r: ReportDefinition, loc: ElementLocation): ReportElement[] | undefined {
+  return loc.container === "body" ? r.body?.elements : r.bands[loc.bandIndex]?.elements;
 }
 
 function sortBands(bands: Band[]): Band[] {
@@ -90,6 +123,7 @@ export const useDesigner = create<DesignerState>((set, get) => ({
   dirty: false,
   past: [],
   future: [],
+  guides: { x: null, y: null },
 
   load: (response) =>
     set({
@@ -238,6 +272,66 @@ export const useDesigner = create<DesignerState>((set, get) => ({
   },
 
   setZoom: (zoom) => set({ zoom: Math.min(2, Math.max(0.25, zoom)) }),
+
+  copySelection: () => {
+    const ids = new Set(get().selectedIds);
+    const all = flatElements(get().report);
+    clipboard = all.filter((e) => ids.has(e.id)).map((e) => clone(e));
+  },
+
+  paste: () => {
+    if (clipboard.length === 0) return;
+    const loc = get().selectedBand !== null
+      ? ({ container: "band", bandIndex: get().selectedBand! } as ElementLocation)
+      : firstElementLocation(get());
+    const fresh = clipboard.map((e) => ({
+      ...clone(e),
+      id: `${e.type}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+      bounds: { ...e.bounds, x: e.bounds.x + 12, y: e.bounds.y + 12 },
+    }));
+    get().mutate((r) => {
+      const target = containerElements(r, loc);
+      target?.push(...fresh);
+    });
+    set({ selectedIds: fresh.map((e) => e.id), selectedBand: null });
+  },
+
+  duplicateSelection: () => {
+    get().copySelection();
+    get().paste();
+  },
+
+  reorderSelection: (mode) => {
+    const ids = new Set(get().selectedIds);
+    if (ids.size === 0) return;
+    get().mutate((r) => {
+      const containers: ReportElement[][] = [
+        ...(r.body ? [r.body.elements] : []),
+        ...r.bands.map((b) => b.elements),
+      ];
+      for (const list of containers) {
+        const picked = list.filter((e) => ids.has(e.id));
+        if (picked.length === 0) continue;
+        const rest = list.filter((e) => !ids.has(e.id));
+        if (mode === "front") list.splice(0, list.length, ...rest, ...picked);
+        else if (mode === "back") list.splice(0, list.length, ...picked, ...rest);
+        else {
+          // forward / backward: shift each picked element one slot
+          const step = mode === "forward" ? 1 : -1;
+          const order = mode === "forward" ? [...picked].reverse() : picked;
+          for (const el of order) {
+            const i = list.indexOf(el);
+            const j = i + step;
+            if (j >= 0 && j < list.length && !ids.has(list[j].id)) {
+              [list[i], list[j]] = [list[j], list[i]];
+            }
+          }
+        }
+      }
+    });
+  },
+
+  setGuides: (x, y) => set({ guides: { x, y } }),
 
   setLayoutMode: (mode) => {
     const report = get().report;
