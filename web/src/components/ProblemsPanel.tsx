@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AlertCircle, AlertTriangle, CheckCircle2, ShieldCheck } from "lucide-react";
 import { api } from "../api";
 import { useDesigner } from "../store";
 import type { ReportIssue } from "../types";
@@ -26,17 +27,18 @@ export function ProblemsPanel() {
   if (!report) return null;
 
   const errors = issues.filter((i) => i.severity === "error").length;
+  const badgeClass = errors ? "count-badge err" : issues.length ? "count-badge warn" : "count-badge";
 
   return (
     <div className="panel">
       <h2>
-        Problems{" "}
-        {issues.length > 0 && (
-          <span className={errors ? "badge err" : "badge warn"}>{issues.length}</span>
-        )}
+        <ShieldCheck /> Problems
+        {issues.length > 0 && <span className={badgeClass}>{issues.length}</span>}
       </h2>
       {issues.length === 0 ? (
-        <p className="hint">No problems.</p>
+        <p className="hint" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <CheckCircle2 size={14} color="var(--success)" /> No problems.
+        </p>
       ) : (
         <ul className="problems">
           {issues.map((issue, i) => (
@@ -44,10 +46,10 @@ export function ProblemsPanel() {
               key={i}
               className={issue.severity}
               onClick={() => issue.elementId && select([issue.elementId])}
-              title={issue.elementId ? "Select element" : undefined}
+              title={issue.elementId ? "Select the affected element" : undefined}
             >
-              <span className="dot" />
-              {issue.message}
+              {issue.severity === "error" ? <AlertCircle /> : <AlertTriangle />}
+              <span>{issue.message}</span>
             </li>
           ))}
         </ul>

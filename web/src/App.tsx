@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
+import { AlertTriangle, FileText } from "lucide-react";
 import { api } from "./api";
 import { useDesigner } from "./store";
-import { emptyFreeReport, type ReportSummary } from "./types";
+import { emptyFreeReport, type ReportDefinition, type ReportSummary } from "./types";
 import { Canvas } from "./components/Canvas";
+import { Toolbar } from "./components/Toolbar";
 import { Toolbox } from "./components/Toolbox";
 import { DataPanel } from "./components/DataPanel";
 import { ParametersPanel } from "./components/ParametersPanel";
@@ -12,7 +14,7 @@ import { PreviewPane } from "./components/PreviewPane";
 
 export function App() {
   const [reports, setReports] = useState<ReportSummary[]>([]);
-  const [samples, setSamples] = useState<{ name: string; definition: import("./types").ReportDefinition }[]>([]);
+  const [samples, setSamples] = useState<{ name: string; definition: ReportDefinition }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"design" | "preview">("design");
@@ -20,15 +22,6 @@ export function App() {
 
   const report = useDesigner((s) => s.report);
   const reportId = useDesigner((s) => s.reportId);
-  const dirty = useDesigner((s) => s.dirty);
-  const zoom = useDesigner((s) => s.zoom);
-  const setZoom = useDesigner((s) => s.setZoom);
-  const setLayoutMode = useDesigner((s) => s.setLayoutMode);
-  const addBand = useDesigner((s) => s.addBand);
-  const undo = useDesigner((s) => s.undo);
-  const redo = useDesigner((s) => s.redo);
-  const canUndo = useDesigner((s) => s.past.length > 0);
-  const canRedo = useDesigner((s) => s.future.length > 0);
   const load = useDesigner((s) => s.load);
   const markSaved = useDesigner((s) => s.markSaved);
 
@@ -51,9 +44,11 @@ export function App() {
     setBusy(true);
     setError(null);
     try {
-      const { id, ...definition } = sample.definition;
-      void id;
-      const created = await api.createReport({ ...definition, name: `${definition.name} ${new Date().toISOString().slice(11, 19)}` });
+      const { id: _id, ...definition } = sample.definition;
+      const created = await api.createReport({
+        ...definition,
+        name: `${definition.name} ${new Date().toISOString().slice(11, 19)}`,
+      });
       load(created);
       await refresh();
       setTab("design");
@@ -139,97 +134,18 @@ export function App() {
 
   return (
     <div className="app">
-      <div className="topbar">
-        <strong>JetReportDesigner</strong>
-        <select
-          className="report-select"
-          value={reportId ?? ""}
-          onChange={(e) => e.target.value && void open(e.target.value)}
-        >
-          <option value="">— open report —</option>
-          {reports.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name}
-            </option>
-          ))}
-        </select>
-        <button onClick={createReport} disabled={busy}>New</button>
-        {samples.length > 0 && (
-          <select
-            className="report-select"
-            value=""
-            onChange={(e) => e.target.value && void createFromSample(e.target.value)}
-            disabled={busy}
-          >
-            <option value="">Sample…</option>
-            {samples.map((s) => (
-              <option key={s.name} value={s.name}>{s.name}</option>
-            ))}
-          </select>
-        )}
-        <button className="primary" onClick={save} disabled={busy || !report || !reportId}>
-          Save{dirty ? " *" : ""}
-        </button>
-
-        <span className="sep" />
-        <button onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">Undo</button>
-        <button onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">Redo</button>
-
-        <span className="sep" />
-        <div className="tabs">
-          <button
-            className={report?.layoutMode === "free" ? "on" : ""}
-            disabled={!report}
-            onClick={() => setLayoutMode("free")}
-          >
-            Free
-          </button>
-          <button
-            className={report?.layoutMode === "banded" ? "on" : ""}
-            disabled={!report}
-            onClick={() => setLayoutMode("banded")}
-          >
-            Banded
-          </button>
-        </div>
-        {report?.layoutMode === "banded" && (
-          <select
-            className="add-band"
-            value=""
-            onChange={(e) => {
-              if (e.target.value) addBand(e.target.value as never);
-              e.currentTarget.value = "";
-            }}
-          >
-            <option value="">+ band…</option>
-            <option value="reportHeader">Report header</option>
-            <option value="pageHeader">Page header</option>
-            <option value="groupHeader">Group header</option>
-            <option value="detail">Detail</option>
-            <option value="groupFooter">Group footer</option>
-            <option value="pageFooter">Page footer</option>
-            <option value="reportFooter">Report footer</option>
-          </select>
-        )}
-
-        <span className="sep" />
-        <button onClick={() => setZoom(zoom - 0.1)} disabled={!report}>−</button>
-        <span className="zoom">{Math.round(zoom * 100)}%</span>
-        <button onClick={() => setZoom(zoom + 0.1)} disabled={!report}>+</button>
-
-        <span className="sep" />
-        <div className="tabs">
-          <button className={tab === "design" ? "on" : ""} onClick={() => setTab("design")} disabled={!report}>
-            Design
-          </button>
-          <button className={tab === "preview" ? "on" : ""} onClick={() => setTab("preview")} disabled={!report}>
-            Preview
-          </button>
-        </div>
-
-        <div className="spacer" />
-        <button onClick={exportPdf} disabled={busy || !report}>Export PDF</button>
-      </div>
+      <Toolbar
+        reports={reports}
+        samples={samples}
+        tab={tab}
+        busy={busy}
+        onSetTab={setTab}
+        onOpen={(id) => void open(id)}
+        onNew={() => void createReport()}
+        onSample={(name) => void createFromSample(name)}
+        onSave={() => void save()}
+        onExport={() => void exportPdf()}
+      />
 
       <div className="left">
         <Toolbox />
@@ -239,7 +155,14 @@ export function App() {
       </div>
 
       <div className="center">
-        {!report && <div className="canvas-wrap empty">Open or create a report to start.</div>}
+        {!report && (
+          <div className="canvas-wrap empty">
+            <div className="empty-hint-block">
+              <FileText />
+              <div>Open a report, start a new one, or pick a sample.</div>
+            </div>
+          </div>
+        )}
         {report && (report.parameters?.length ?? 0) > 0 && (
           <div className="param-bar">
             {report.parameters.map((p) => (
@@ -262,7 +185,14 @@ export function App() {
         <PropertiesPanel />
       </div>
 
-      {error && <div className="error toast">{error}</div>}
+      {error && (
+        <div className="toast" role="alert">
+          <div className="error">
+            <AlertTriangle />
+            <span>{error}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

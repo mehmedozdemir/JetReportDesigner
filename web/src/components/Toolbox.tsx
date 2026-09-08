@@ -1,14 +1,16 @@
+import { Hash, Image, Minus, Square, Table, Type, Variable, Wrench } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { ElementType } from "../types";
 import { useDesigner } from "../store";
 
-const TOOLS: { type: ElementType; label: string }[] = [
-  { type: "label", label: "Label" },
-  { type: "field", label: "Field" },
-  { type: "table", label: "Table" },
-  { type: "rectangle", label: "Rectangle" },
-  { type: "line", label: "Line" },
-  { type: "image", label: "Image" },
-  { type: "pageInfo", label: "Page info" },
+const TOOLS: { type: ElementType; label: string; Icon: LucideIcon }[] = [
+  { type: "label", label: "Label", Icon: Type },
+  { type: "field", label: "Field", Icon: Variable },
+  { type: "table", label: "Table", Icon: Table },
+  { type: "rectangle", label: "Rectangle", Icon: Square },
+  { type: "line", label: "Line", Icon: Minus },
+  { type: "image", label: "Image", Icon: Image },
+  { type: "pageInfo", label: "Page info", Icon: Hash },
 ];
 
 export function Toolbox() {
@@ -29,24 +31,28 @@ export function Toolbox() {
     report?.layoutMode === "banded"
       ? selectedBand !== null
         ? "Adds to the selected band"
-        : "Adds to the detail band (or drag onto a band)"
-      : "Drag onto the page, or click to drop at 40,8";
+        : "Adds to the detail band — or drag onto any band"
+      : "Click to add at 40,8 — or drag onto the page";
 
   return (
     <div className="panel">
-      <h2>Toolbox</h2>
+      <h2>
+        <Wrench /> Toolbox
+      </h2>
       <div className="tool-grid">
-        {TOOLS.map((t) => (
+        {TOOLS.map(({ type, label, Icon }) => (
           <button
-            key={t.type}
+            key={type}
             className="tool"
             disabled={!hasReport}
             draggable={hasReport}
-            onDragStart={(e) => e.dataTransfer.setData("application/x-tool", t.type)}
-            onClick={() => add(t.type)}
-            title={hint}
+            onDragStart={(e) => e.dataTransfer.setData("application/x-tool", type)}
+            onClick={() => add(type)}
+            title={`${label} — ${hint}`}
+            aria-label={`Add ${label}`}
           >
-            {t.label}
+            <Icon size={19} />
+            {label}
           </button>
         ))}
       </div>

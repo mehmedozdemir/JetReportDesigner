@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AlertTriangle, Eye, Loader2 } from "lucide-react";
 import { api } from "../api";
 import { useDesigner } from "../store";
 
@@ -25,8 +26,16 @@ export function PreviewPane({ parameters }: { parameters: Record<string, unknown
 
   return (
     <div className="preview-wrap">
-      {loading && <div className="hint">Rendering…</div>}
-      {error && <div className="error">{error}</div>}
+      <div className="preview-bar">
+        {loading ? <Loader2 size={14} className="spin" /> : <Eye size={14} />}
+        <span>{loading ? "Rendering…" : "Server-rendered preview"}</span>
+      </div>
+      {error && (
+        <div className="error" style={{ padding: "10px 16px" }}>
+          <AlertTriangle />
+          <span>{error}</span>
+        </div>
+      )}
       <iframe title="preview" className="preview-frame" srcDoc={html} />
     </div>
   );

@@ -1,3 +1,4 @@
+import { Plus, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useDesigner } from "../store";
 import type { ParameterType } from "../types";
 
@@ -15,46 +16,41 @@ export function ParametersPanel() {
 
   return (
     <div className="panel">
-      <h2>Parameters</h2>
-      {params.length === 0 && <p className="hint">Used as {"{param:name}"} in bindings, REST and SQL.</p>}
+      <h2>
+        <SlidersHorizontal /> Parameters
+        {params.length > 0 && <span className="count-badge">{params.length}</span>}
+      </h2>
+      {params.length === 0 && <p className="hint">Referenced as {"{param:name}"} in bindings, REST and SQL.</p>}
       {params.map((p, i) => (
         <div key={i} className="param-row">
           <div className="row">
-            <input
-              value={p.name}
-              placeholder="name"
-              onChange={(e) => patchParameter(i, (x) => (x.name = e.target.value))}
-            />
+            <input value={p.name} placeholder="name" onChange={(e) => patchParameter(i, (x) => (x.name = e.target.value))} />
             <select value={p.type} onChange={(e) => patchParameter(i, (x) => (x.type = e.target.value as ParameterType))}>
               {TYPES.map((t) => (
                 <option key={t}>{t}</option>
               ))}
             </select>
-            <button className="mini" onClick={() => removeParameter(i)}>×</button>
+            <button className="mini danger" onClick={() => removeParameter(i)} title="Remove parameter" aria-label="Remove parameter">
+              <Trash2 />
+            </button>
           </div>
           <div className="row">
-            <input
-              value={p.label ?? ""}
-              placeholder="label"
-              onChange={(e) => patchParameter(i, (x) => (x.label = e.target.value))}
-            />
+            <input value={p.label ?? ""} placeholder="label" onChange={(e) => patchParameter(i, (x) => (x.label = e.target.value))} />
             <input
               value={p.defaultValue == null ? "" : String(p.defaultValue)}
               placeholder="default"
               onChange={(e) => patchParameter(i, (x) => (x.defaultValue = e.target.value || null))}
             />
           </div>
-          <label className="row" style={{ fontSize: 11, color: "var(--muted)" }}>
-            <input
-              type="checkbox"
-              checked={p.required}
-              onChange={(e) => patchParameter(i, (x) => (x.required = e.target.checked))}
-            />
+          <label className="row" style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+            <input type="checkbox" checked={p.required} onChange={(e) => patchParameter(i, (x) => (x.required = e.target.checked))} />
             required
           </label>
         </div>
       ))}
-      <button className="mini" onClick={addParameter}>+ parameter</button>
+      <button className="mini" onClick={addParameter} style={{ marginTop: 6 }}>
+        <Plus /> Parameter
+      </button>
     </div>
   );
 }

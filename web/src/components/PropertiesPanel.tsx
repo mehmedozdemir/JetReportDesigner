@@ -1,13 +1,49 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  ArrowDown,
+  ArrowDownToLine,
+  ArrowUp,
+  ArrowUpToLine,
+  Ban,
+  BoxSelect,
+  FileText,
+  Hash,
+  Image as ImageIcon,
+  Layers,
+  Minus,
+  MousePointerSquareDashed,
+  Plus,
+  Rows3,
+  Square,
+  Table as TableIcon,
+  Trash2,
+  Type as TypeIcon,
+  Variable,
+} from "lucide-react";
 import { useDesigner } from "../store";
 import type {
   AggregateFunction,
   AggregateScope,
   Band,
+  ElementType,
   PageSize,
   ReportElement,
   TextAlign,
 } from "../types";
 import { edge } from "../types";
+
+const ELEMENT_ICON: Record<ElementType, LucideIcon> = {
+  label: TypeIcon,
+  field: Variable,
+  table: TableIcon,
+  rectangle: Square,
+  line: Minus,
+  image: ImageIcon,
+  pageInfo: Hash,
+};
 
 export function PropertiesPanel() {
   const report = useDesigner((s) => s.report);
@@ -44,7 +80,7 @@ export function PropertiesPanel() {
   if (selectedIds.length > 1) {
     return (
       <div className="panel">
-        <h2>Properties</h2>
+        <h2><BoxSelect /> Selection</h2>
         <p className="hint">{selectedIds.length} elements selected</p>
       </div>
     );
@@ -64,11 +100,17 @@ function BandProperties({ index }: { index: number }) {
 
   return (
     <div className="panel">
-      <h2>{band.type} band</h2>
-      <div className="row">
-        <button className="mini" onClick={() => moveBand(index, -1)} disabled={index === 0}>↑</button>
-        <button className="mini" onClick={() => moveBand(index, 1)} disabled={index === bandCount - 1}>↓</button>
-        <button className="mini" onClick={() => removeBand(index)}>Delete</button>
+      <h2><Rows3 /> {titleCase(band.type)} band</h2>
+      <div className="row" style={{ marginBottom: 8 }}>
+        <button className="mini" onClick={() => moveBand(index, -1)} disabled={index === 0} title="Move band up" aria-label="Move band up">
+          <ArrowUp />
+        </button>
+        <button className="mini" onClick={() => moveBand(index, 1)} disabled={index === bandCount - 1} title="Move band down" aria-label="Move band down">
+          <ArrowDown />
+        </button>
+        <button className="mini danger" onClick={() => removeBand(index)} title="Delete band">
+          <Trash2 /> Delete
+        </button>
       </div>
 
       <label className="field">
@@ -160,16 +202,28 @@ function ElementProperties({
   const inFooter = bandType === "groupFooter" || bandType === "pageFooter" || bandType === "reportFooter";
 
   const reorder = useDesigner((st) => st.reorderSelection);
+  const Icon = ELEMENT_ICON[element.type] ?? MousePointerSquareDashed;
 
   return (
     <div className="panel">
-      <h2>{element.type}</h2>
+      <h2><Icon /> {titleCase(element.type)}</h2>
 
-      <div className="row" style={{ marginBottom: 6 }}>
-        <button className="mini" title="Send to back (Ctrl+Shift+[)" onClick={() => reorder("back")}>⤓</button>
-        <button className="mini" title="Send backward (Ctrl+[)" onClick={() => reorder("backward")}>▽</button>
-        <button className="mini" title="Bring forward (Ctrl+])" onClick={() => reorder("forward")}>△</button>
-        <button className="mini" title="Bring to front (Ctrl+Shift+])" onClick={() => reorder("front")}>⤒</button>
+      <div className="row" style={{ marginBottom: 8 }}>
+        <button className="mini" title="Send to back (Ctrl+Shift+[)" aria-label="Send to back" onClick={() => reorder("back")}>
+          <ArrowDownToLine />
+        </button>
+        <button className="mini" title="Send backward (Ctrl+[)" aria-label="Send backward" onClick={() => reorder("backward")}>
+          <ArrowDown />
+        </button>
+        <button className="mini" title="Bring forward (Ctrl+])" aria-label="Bring forward" onClick={() => reorder("forward")}>
+          <ArrowUp />
+        </button>
+        <button className="mini" title="Bring to front (Ctrl+Shift+])" aria-label="Bring to front" onClick={() => reorder("front")}>
+          <ArrowUpToLine />
+        </button>
+        <span style={{ marginLeft: "auto", color: "var(--text-secondary)", display: "flex", alignItems: "center" }} title="Z-order">
+          <Layers size={13} />
+        </span>
       </div>
 
       <div className="grid2">
@@ -277,7 +331,9 @@ function ElementProperties({
                   placeholder="fmt"
                   onChange={(v) => onPatch((e) => (e.table!.columns[i].format = v.target.value || null))}
                 />
-                <button className="mini" onClick={() => onPatch((e) => e.table!.columns.splice(i, 1))}>×</button>
+                <button className="mini danger" onClick={() => onPatch((e) => e.table!.columns.splice(i, 1))} aria-label="Remove column">
+                  <Trash2 />
+                </button>
               </div>
             </div>
           ))}
@@ -289,7 +345,7 @@ function ElementProperties({
               )
             }
           >
-            + column
+            <Plus /> Column
           </button>
         </div>
       )}
@@ -333,7 +389,7 @@ function PageProperties() {
 
   return (
     <div className="panel">
-      <h2>Page</h2>
+      <h2><FileText /> Page</h2>
       <label className="field">
         <span>Size</span>
         <select value={p.size} onChange={(e) => set((page) => (page.size = e.target.value as PageSize))}>
@@ -411,8 +467,8 @@ function Color({
       <span className="row">
         <input type="color" value={cleared ? "#ffffff" : value} onChange={(e) => onChange(e.target.value)} />
         {allowClear && (
-          <button className="mini" onClick={onClear} title="No fill" type="button">
-            {cleared ? "none" : "×"}
+          <button className={`mini ${cleared ? "on" : ""}`} onClick={onClear} title="No fill" aria-label="No fill" type="button">
+            <Ban />
           </button>
         )}
       </span>
@@ -429,15 +485,31 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
 }
 
 function AlignPicker({ value, onChange }: { value: TextAlign; onChange: (v: TextAlign) => void }) {
+  const items: [TextAlign, LucideIcon][] = [
+    ["left", AlignLeft],
+    ["center", AlignCenter],
+    ["right", AlignRight],
+  ];
   return (
     <span className="row">
-      {(["left", "center", "right"] as TextAlign[]).map((a) => (
-        <button key={a} type="button" className={`mini ${value === a ? "on" : ""}`} onClick={() => onChange(a)}>
-          {a[0].toUpperCase()}
+      {items.map(([a, Icon]) => (
+        <button
+          key={a}
+          type="button"
+          className={`mini ${value === a ? "on" : ""}`}
+          onClick={() => onChange(a)}
+          title={`Align ${a}`}
+          aria-label={`Align ${a}`}
+        >
+          <Icon />
         </button>
       ))}
     </span>
   );
+}
+
+function titleCase(s: string): string {
+  return s.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
 }
 
 // ---- style mutation helpers ----

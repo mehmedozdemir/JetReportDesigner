@@ -1,7 +1,19 @@
 import { useEffect, useRef, useState } from "react";
+import type { LucideIcon } from "lucide-react";
+import { AlignEndHorizontal, AlignStartHorizontal, Rows2, Rows3, Table2 } from "lucide-react";
 import { useDesigner, type ElementLocation } from "../store";
 import { pageDimensions, type Band, type ElementType } from "../types";
 import { ElementView } from "./ElementView";
+
+const BAND_META: Record<Band["type"], { label: string; Icon: LucideIcon }> = {
+  reportHeader: { label: "Report header", Icon: AlignStartHorizontal },
+  pageHeader: { label: "Page header", Icon: AlignStartHorizontal },
+  groupHeader: { label: "Group header", Icon: Rows2 },
+  detail: { label: "Detail", Icon: Table2 },
+  groupFooter: { label: "Group footer", Icon: Rows2 },
+  pageFooter: { label: "Page footer", Icon: AlignEndHorizontal },
+  reportFooter: { label: "Report footer", Icon: AlignEndHorizontal },
+};
 
 export function Canvas() {
   const layoutMode = useDesigner((s) => s.report?.layoutMode);
@@ -156,7 +168,12 @@ function BandedCanvas() {
   return (
     <div className="canvas-wrap">
       <div className="band-stack" style={{ width: usableWidth, transform: `scale(${zoom})`, transformOrigin: "top center" }}>
-        {report.bands.length === 0 && <div className="hint" style={{ padding: 24 }}>Add a band to start.</div>}
+        {report.bands.length === 0 && (
+          <div className="empty-hint-block">
+            <Rows3 />
+            <div>No bands yet — use “Band…” in the toolbar to add one.</div>
+          </div>
+        )}
         {report.bands.map((band, index) => (
           <BandStrip key={`${band.type}-${index}`} band={band} index={index} width={usableWidth} />
         ))}
@@ -191,10 +208,13 @@ function BandStrip({ band, index, width }: { band: Band; index: number; width: n
     window.addEventListener("pointerup", onUp);
   };
 
+  const { label, Icon } = BAND_META[band.type];
+
   return (
     <div className={`band ${selectedBand === index ? "sel" : ""}`}>
       <button className="band-tag" onClick={() => selectBand(index)} title="Edit band">
-        {BAND_LABEL[band.type]}
+        <Icon size={12} />
+        {label}
         {band.type === "detail" && band.dataSource ? ` · ${band.dataSource}` : ""}
       </button>
       <div
@@ -222,12 +242,3 @@ function Margins() {
   return <div className="page-margins" style={{ inset: `${m.top}px ${m.right}px ${m.bottom}px ${m.left}px` }} />;
 }
 
-const BAND_LABEL: Record<Band["type"], string> = {
-  reportHeader: "Report header",
-  pageHeader: "Page header",
-  groupHeader: "Group header",
-  detail: "Detail",
-  groupFooter: "Group footer",
-  pageFooter: "Page footer",
-  reportFooter: "Report footer",
-};
