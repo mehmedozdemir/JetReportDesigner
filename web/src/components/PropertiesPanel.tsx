@@ -37,8 +37,6 @@ import { FormatField } from "./FormatDialog";
 import { FormulaField } from "./FormulaDialog";
 import { ConditionalFormatDialog } from "./ConditionalFormatDialog";
 import type {
-  AggregateFunction,
-  AggregateScope,
   Band,
   BorderSpec,
   ElementType,
@@ -98,8 +96,6 @@ export function PropertiesPanel() {
   const selectedIds = useDesigner((s) => s.selectedIds);
   const selectedBand = useDesigner((s) => s.selectedBand);
   const mutateElement = useDesigner((s) => s.mutateElement);
-  const locate = useDesigner((s) => s.locate);
-
   if (!report) return null;
 
   if (selectedBand !== null && report.bands[selectedBand]) {
@@ -112,16 +108,7 @@ export function PropertiesPanel() {
       report.body?.elements.find((e) => e.id === id) ??
       report.bands.flatMap((b) => b.elements).find((e) => e.id === id);
     if (el) {
-      const loc = locate(id);
-      const bandType =
-        loc?.container === "band" ? report.bands[loc.bandIndex]?.type : undefined;
-      return (
-        <ElementProperties
-          element={el}
-          bandType={bandType}
-          onPatch={(fn) => mutateElement(id, fn)}
-        />
-      );
+      return <ElementProperties element={el} onPatch={(fn) => mutateElement(id, fn)} />;
     }
   }
 
@@ -345,16 +332,11 @@ function BandProperties({ index }: { index: number }) {
   );
 }
 
-const AGG_FUNCS: AggregateFunction[] = ["none", "sum", "count", "average", "min", "max", "first", "last"];
-const AGG_SCOPES: AggregateScope[] = ["group", "page", "report"];
-
 function ElementProperties({
   element,
-  bandType,
   onPatch,
 }: {
   element: ReportElement;
-  bandType?: Band["type"];
   onPatch: (fn: (el: ReportElement) => void) => void;
 }) {
   const sources = useDesigner((st) => st.report!.dataSources);
@@ -362,7 +344,6 @@ function ElementProperties({
   const fieldNames = sources.flatMap((src) => src.fields.map((f) => f.name));
   const s = element.style ?? {};
   const isText = element.type === "label" || element.type === "field" || element.type === "pageInfo";
-  const inFooter = bandType === "groupFooter" || bandType === "pageFooter" || bandType === "reportFooter";
 
   const reorder = useDesigner((st) => st.reorderSelection);
   const Icon = ELEMENT_ICON[element.type] ?? MousePointerSquareDashed;
@@ -420,33 +401,6 @@ function ElementProperties({
         </>
       )}
 
-      {inFooter && element.type === "field" && (
-        <div className="grid2">
-          <label className="field">
-            <span>Aggregate</span>
-            <select
-              value={element.aggregate ?? "none"}
-              onChange={(e) => onPatch((el) => (el.aggregate = e.target.value as AggregateFunction))}
-            >
-              {AGG_FUNCS.map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>Scope</span>
-            <select
-              value={element.aggregateScope ?? "group"}
-              onChange={(e) => onPatch((el) => (el.aggregateScope = e.target.value as AggregateScope))}
-              disabled={(element.aggregate ?? "none") === "none"}
-            >
-              {AGG_SCOPES.map((sc) => (
-                <option key={sc} value={sc}>{sc}</option>
-              ))}
-            </select>
-          </label>
-        </div>
-      )}
       {element.type === "image" && (
         <Text label="Source (URL / data URI)" value={element.image?.source ?? ""} onChange={(v) => onPatch((e) => (e.image = { source: v, fit: e.image?.fit ?? "contain" }))} />
       )}
