@@ -28,6 +28,7 @@ import {
   Variable,
 } from "lucide-react";
 import { useDesigner } from "../store";
+import { FormatField } from "./FormatDialog";
 import type {
   AggregateFunction,
   AggregateScope,
@@ -363,7 +364,7 @@ function ElementProperties({
       {(element.type === "field" || element.type === "pageInfo") && (
         <>
           <Text label="Value / binding" value={element.value ?? ""} onChange={(v) => onPatch((e) => (e.value = v))} />
-          <Text label="Format" value={element.format ?? ""} placeholder="n2, dd.MM.yyyy, c" onChange={(v) => onPatch((e) => (e.format = v || null))} />
+          <FormatField value={element.format ?? ""} onChange={(v) => onPatch((e) => (e.format = v || null))} />
         </>
       )}
 
