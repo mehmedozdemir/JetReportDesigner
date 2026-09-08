@@ -145,6 +145,19 @@ body {
 .toolbar .spacer { flex: 1; }
 .toolbar .group { display: flex; align-items: center; gap: 2px; }
 
+.report-title {
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--text-primary);
+  background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm);
+  padding: 5px 8px; min-width: 90px; max-width: 240px; flex: 0 1 auto;
+  text-overflow: ellipsis;
+}
+.report-title:hover { border-color: var(--border); }
+.report-title:focus {
+  outline: none; border-color: var(--border-focus);
+  background: var(--bg-surface); box-shadow: 0 0 0 3px var(--accent-muted);
+}
+.report-title::placeholder { color: var(--text-disabled); font-weight: 500; }
+
 .zoom-label {
   min-width: 46px;
   text-align: center;

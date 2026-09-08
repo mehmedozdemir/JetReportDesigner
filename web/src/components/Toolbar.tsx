@@ -52,6 +52,7 @@ export function Toolbar({
   const report = useDesigner((s) => s.report);
   const reportId = useDesigner((s) => s.reportId);
   const dirty = useDesigner((s) => s.dirty);
+  const mutate = useDesigner((s) => s.mutate);
   const zoom = useDesigner((s) => s.zoom);
   const setZoom = useDesigner((s) => s.setZoom);
   const setLayoutMode = useDesigner((s) => s.setLayoutMode);
@@ -81,6 +82,23 @@ export function Toolbar({
           <FilePlus2 />
         </button>
       </div>
+
+      {report && (
+        <>
+          <div className="divider" />
+          <input
+            className="report-title"
+            value={report.name}
+            title="Report name"
+            aria-label="Report name"
+            placeholder="Untitled report"
+            onChange={(e) => mutate((r) => (r.name = e.target.value), false)}
+            onBlur={(e) => {
+              if (!e.target.value.trim()) mutate((r) => (r.name = "Untitled report"), false);
+            }}
+          />
+        </>
+      )}
 
       <div className="divider" />
 
