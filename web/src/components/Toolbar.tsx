@@ -3,8 +3,7 @@ import {
   FileBarChart2,
   FileDown,
   FilePlus2,
-  FolderOpen,
-  LayoutTemplate,
+  LayoutGrid,
   PencilRuler,
   Plus,
   Redo2,
@@ -16,7 +15,7 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { useDesigner } from "../store";
-import type { BandType, ReportDefinition, ReportSummary } from "../types";
+import type { BandType } from "../types";
 
 const BAND_OPTIONS: { value: BandType; label: string }[] = [
   { value: "reportHeader", label: "Report header" },
@@ -29,27 +28,21 @@ const BAND_OPTIONS: { value: BandType; label: string }[] = [
 ];
 
 interface ToolbarProps {
-  reports: ReportSummary[];
-  samples: { name: string; definition: ReportDefinition }[];
   tab: "design" | "preview";
   busy: boolean;
   onSetTab: (tab: "design" | "preview") => void;
-  onOpen: (id: string) => void;
   onNew: () => void;
-  onSample: (name: string) => void;
+  onShowStart: () => void;
   onSave: () => void;
   onExport: () => void;
 }
 
 export function Toolbar({
-  reports,
-  samples,
   tab,
   busy,
   onSetTab,
-  onOpen,
   onNew,
-  onSample,
+  onShowStart,
   onSave,
   onExport,
 }: ToolbarProps) {
@@ -77,40 +70,13 @@ export function Toolbar({
       <div className="divider" />
 
       <div className="group">
-        <label className="menu-select" title="Open report">
-          <FolderOpen />
-          <select
-            value={reportId ?? ""}
-            onChange={(e) => e.target.value && onOpen(e.target.value)}
-            aria-label="Open report"
-          >
-            <option value="">Open report…</option>
-            {reports.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
-          </select>
-        </label>
-
-        <button className="btn" onClick={onNew} disabled={busy} title="New report" aria-label="New report">
+        <button className="btn" onClick={onShowStart} title="Start screen — open or create a report" aria-label="Start screen">
+          <LayoutGrid />
+          <span>Start</span>
+        </button>
+        <button className="btn icon" onClick={onNew} disabled={busy} title="New blank report" aria-label="New blank report">
           <FilePlus2 />
         </button>
-
-        {samples.length > 0 && (
-          <label className="menu-select" title="Create from a sample">
-            <LayoutTemplate />
-            <select
-              value=""
-              onChange={(e) => e.target.value && onSample(e.target.value)}
-              disabled={busy}
-              aria-label="Create from sample"
-            >
-              <option value="">Sample…</option>
-              {samples.map((s) => (
-                <option key={s.name} value={s.name}>{s.name}</option>
-              ))}
-            </select>
-          </label>
-        )}
       </div>
 
       <div className="divider" />

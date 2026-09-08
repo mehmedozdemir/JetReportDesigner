@@ -293,6 +293,19 @@ export function emptyFreeReport(name: string): ReportDefinition {
   };
 }
 
+export function emptyBandedReport(name: string): ReportDefinition {
+  return {
+    ...emptyFreeReport(name),
+    layoutMode: "banded",
+    body: null,
+    bands: [
+      { type: "pageHeader", height: 32, visible: true, elements: [], repeatOnEveryPage: false },
+      { type: "detail", height: 24, visible: true, elements: [], repeatOnEveryPage: false },
+      { type: "pageFooter", height: 28, visible: true, elements: [], repeatOnEveryPage: false },
+    ],
+  };
+}
+
 let counter = 0;
 export function newElementId(type: ElementType): string {
   counter += 1;

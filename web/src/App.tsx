@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, FileText } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { api } from "./api";
 import { useDesigner } from "./store";
-import { emptyFreeReport, type ReportDefinition, type ReportSummary } from "./types";
+import { emptyBandedReport, emptyFreeReport, type ReportDefinition, type ReportSummary } from "./types";
 import { Canvas } from "./components/Canvas";
+import { StartScreen } from "./components/StartScreen";
 import { Toolbar } from "./components/Toolbar";
 import { Toolbox } from "./components/Toolbox";
 import { DataPanel } from "./components/DataPanel";
@@ -19,6 +20,7 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"design" | "preview">("design");
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
+  const [showStart, setShowStart] = useState(false);
 
   const report = useDesigner((s) => s.report);
   const reportId = useDesigner((s) => s.reportId);
@@ -52,6 +54,7 @@ export function App() {
       load(created);
       await refresh();
       setTab("design");
+      setShowStart(false);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -64,20 +67,46 @@ export function App() {
     try {
       load(await api.getReport(id));
       setTab("design");
+      setShowStart(false);
     } catch (e) {
       setError(String(e));
     }
   };
 
-  const createReport = async () => {
+  const removeReport = async (id: string) => {
+    setError(null);
+    try {
+      await api.deleteReport(id);
+      if (id === reportId) {
+        useDesigner.setState({
+          report: null,
+          reportId: null,
+          concurrencyToken: null,
+          selectedIds: [],
+          selectedBand: null,
+          past: [],
+          future: [],
+          dirty: false,
+        });
+      }
+      await refresh();
+    } catch (e) {
+      setError(String(e));
+    }
+  };
+
+  const createReport = async (mode: "free" | "banded" = "free") => {
     setBusy(true);
     setError(null);
     try {
       const name = `Untitled ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
-      const created = await api.createReport(emptyFreeReport(name));
+      const created = await api.createReport(
+        mode === "banded" ? emptyBandedReport(name) : emptyFreeReport(name),
+      );
       load(created);
       await refresh();
       setTab("design");
+      setShowStart(false);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -135,14 +164,11 @@ export function App() {
   return (
     <div className="app">
       <Toolbar
-        reports={reports}
-        samples={samples}
         tab={tab}
         busy={busy}
         onSetTab={setTab}
-        onOpen={(id) => void open(id)}
-        onNew={() => void createReport()}
-        onSample={(name) => void createFromSample(name)}
+        onNew={() => void createReport("free")}
+        onShowStart={() => setShowStart(true)}
         onSave={() => void save()}
         onExport={() => void exportPdf()}
       />
@@ -155,14 +181,6 @@ export function App() {
       </div>
 
       <div className="center">
-        {!report && (
-          <div className="canvas-wrap empty">
-            <div className="empty-hint-block">
-              <FileText />
-              <div>Open a report, start a new one, or pick a sample.</div>
-            </div>
-          </div>
-        )}
         {report && (report.parameters?.length ?? 0) > 0 && (
           <div className="param-bar">
             {report.parameters.map((p) => (
@@ -192,6 +210,21 @@ export function App() {
       <div className="right">
         <PropertiesPanel />
       </div>
+
+      {(!report || showStart) && (
+        <div className="start-overlay">
+          <StartScreen
+            reports={reports}
+            samples={samples}
+            busy={busy}
+            onBlank={(mode) => void createReport(mode)}
+            onSample={(name) => void createFromSample(name)}
+            onOpen={(id) => void open(id)}
+            onDelete={(id) => void removeReport(id)}
+            onClose={report ? () => setShowStart(false) : undefined}
+          />
+        </div>
+      )}
 
       {error && (
         <div className="toast" role="alert">
