@@ -1,5 +1,6 @@
-# Local development databases for JetReportDesigner (Phase 0: SQL Server + PostgreSQL).
-# Oracle is added in Phase 3.
+# Local development databases for JetReportDesigner.
+# SQL Server + PostgreSQL start by default; Oracle is opt-in:
+#   docker compose --profile oracle up -d
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -33,6 +34,24 @@ services:
       timeout: 5s
       retries: 10
 
+  oracle:
+    image: gvenzl/oracle-free:23-slim
+    profiles: ["oracle"]
+    environment:
+      ORACLE_PASSWORD: "jet"
+      APP_USER: "jet"
+      APP_USER_PASSWORD: "jet"
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+
 volumes:
   sqlserver-data:
   postgres-data:
+  oracle-data:

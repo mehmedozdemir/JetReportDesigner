@@ -4,6 +4,7 @@
     <Project Path="src/JetReportDesigner.Core/JetReportDesigner.Core.csproj" />
     <Project Path="src/JetReportDesigner.DataSources/JetReportDesigner.DataSources.csproj" />
     <Project Path="src/JetReportDesigner.Rendering/JetReportDesigner.Rendering.csproj" />
+    <Project Path="src/JetReportDesigner.Storage.Migrations.Oracle/JetReportDesigner.Storage.Migrations.Oracle.csproj" />
     <Project Path="src/JetReportDesigner.Storage.Migrations.PostgreSql/JetReportDesigner.Storage.Migrations.PostgreSql.csproj" />
     <Project Path="src/JetReportDesigner.Storage.Migrations.SqlServer/JetReportDesigner.Storage.Migrations.SqlServer.csproj" />
     <Project Path="src/JetReportDesigner.Storage/JetReportDesigner.Storage.csproj" />

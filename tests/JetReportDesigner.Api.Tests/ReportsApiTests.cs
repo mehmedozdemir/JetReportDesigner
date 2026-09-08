@@ -151,6 +151,11 @@ public sealed class PostgreSqlReportsApiTests(PostgreSqlDatabaseFixture fixture)
 {
 }
 
+public sealed class OracleReportsApiTests(OracleDatabaseFixture fixture)
+    : ReportsApiTestsBase(fixture), IClassFixture<OracleDatabaseFixture>
+{
+}
+
 public abstract class DatabaseFixture : IAsyncLifetime
 {
     private IDatabaseContainer? _container;
@@ -164,8 +169,17 @@ public abstract class DatabaseFixture : IAsyncLifetime
 
     protected abstract IDatabaseContainer BuildContainer();
 
+    /// <summary>Overridden by heavy/opt-in fixtures (Oracle) to skip unless explicitly requested.</summary>
+    protected virtual bool Enabled => true;
+
     public async Task InitializeAsync()
     {
+        if (!Enabled)
+        {
+            Available = false;
+            return;
+        }
+
         try
         {
             _container = BuildContainer();
@@ -202,4 +216,16 @@ public sealed class PostgreSqlDatabaseFixture : DatabaseFixture
 
     protected override IDatabaseContainer BuildContainer() =>
         new PostgreSqlBuilder("postgres:16-alpine").Build();
+}
+
+/// <summary>Opt-in: set RUN_ORACLE_TESTS=1. The Oracle image is large and slow to start.</summary>
+public sealed class OracleDatabaseFixture : DatabaseFixture
+{
+    public override string Provider => "Oracle";
+
+    protected override bool Enabled =>
+        string.Equals(Environment.GetEnvironmentVariable("RUN_ORACLE_TESTS"), "1", StringComparison.Ordinal);
+
+    protected override IDatabaseContainer BuildContainer() =>
+        new Testcontainers.Oracle.OracleBuilder("gvenzl/oracle-free:23-slim").Build();
 }

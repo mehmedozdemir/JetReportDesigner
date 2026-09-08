@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Oracle.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JetReportDesigner.Storage\JetReportDesigner.Storage.csproj" />
+  </ItemGroup>
+
+</Project>

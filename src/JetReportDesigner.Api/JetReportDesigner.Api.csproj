@@ -18,6 +18,7 @@
     <ProjectReference Include="..\JetReportDesigner.Storage\JetReportDesigner.Storage.csproj" />
     <ProjectReference Include="..\JetReportDesigner.Storage.Migrations.SqlServer\JetReportDesigner.Storage.Migrations.SqlServer.csproj" />
     <ProjectReference Include="..\JetReportDesigner.Storage.Migrations.PostgreSql\JetReportDesigner.Storage.Migrations.PostgreSql.csproj" />
+    <ProjectReference Include="..\JetReportDesigner.Storage.Migrations.Oracle\JetReportDesigner.Storage.Migrations.Oracle.csproj" />
   </ItemGroup>
 
 </Project>

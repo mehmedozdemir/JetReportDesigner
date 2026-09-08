@@ -9,6 +9,7 @@ using JetReportDesigner.DataSources.Json;
 using JetReportDesigner.Rendering;
 using JetReportDesigner.Rendering.Engines;
 using JetReportDesigner.Storage;
+using JetReportDesigner.Storage.Migrations.Oracle;
 using JetReportDesigner.Storage.Migrations.PostgreSql;
 using JetReportDesigner.Storage.Migrations.SqlServer;
 using Serilog;
@@ -26,7 +27,8 @@ builder.Services.AddSingleton(storageOptions);
 builder.Services.AddJetReportStorage(
     storageOptions,
     new SqlServerStorageProvider(),
-    new PostgreSqlStorageProvider());
+    new PostgreSqlStorageProvider(),
+    new OracleStorageProvider());
 
 // --- Web ---
 builder.Services

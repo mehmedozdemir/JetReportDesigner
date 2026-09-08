@@ -60,6 +60,16 @@ jobs:
           Storage__Provider: PostgreSql
           Storage__ConnectionString: "Host=unused;Database=unused;Username=unused;Password=unused"
 
+      - name: Verify Oracle migrations wiring
+        run: >
+          dotnet ef migrations list
+          --project src/JetReportDesigner.Storage.Migrations.Oracle
+          --startup-project src/JetReportDesigner.Api
+          --no-connect
+        env:
+          Storage__Provider: Oracle
+          Storage__ConnectionString: "User Id=unused;Password=unused;Data Source=unused:1521/FREEPDB1"
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
