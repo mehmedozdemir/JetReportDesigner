@@ -27,14 +27,11 @@ public class RestDataSourceReaderTests
     {
         Name = "orders",
         Kind = DataSourceKind.Rest,
-        Rest = new RestSourceConfig
-        {
-            Url = url,
-            Method = "GET",
-            Query = query ?? [],
-            ResultPath = resultPath,
-        },
+        Rest = new RestSourceConfig { Url = url, Method = "GET", Query = query ?? [], ResultPath = resultPath },
     };
+
+    private static DataSourceReadContext Context(Dictionary<string, object?>? parameters = null) =>
+        new(parameters ?? []);
 
     [Fact]
     public async Task Reads_Rows_From_ResultPath_And_Infers_Schema()
@@ -44,8 +41,8 @@ public class RestDataSourceReaderTests
 
         var set = await reader.ReadAsync(
             RestSource("https://api.example.com/orders", resultPath: "$.data.items"),
-            new Dictionary<string, object?>(),
-            TestContext());
+            Context(),
+            CancellationToken.None);
 
         Assert.Equal(2, set.Rows.Count);
         Assert.Equal("a", set.Rows[0]["name"]);
@@ -60,8 +57,8 @@ public class RestDataSourceReaderTests
 
         await reader.ReadAsync(
             RestSource("https://api.example.com/{param:tenant}/orders", new Dictionary<string, string> { ["from"] = "{param:from}" }),
-            new Dictionary<string, object?> { ["tenant"] = "acme", ["from"] = "2026-01-01" },
-            TestContext());
+            Context(new Dictionary<string, object?> { ["tenant"] = "acme", ["from"] = "2026-01-01" }),
+            CancellationToken.None);
 
         var uri = stub.LastRequest!.RequestUri!;
         Assert.Equal("/acme/orders", uri.AbsolutePath);
@@ -75,7 +72,7 @@ public class RestDataSourceReaderTests
         var reader = new RestDataSourceReader(new HttpClient(stub), new SsrfGuard());
 
         await Assert.ThrowsAsync<SsrfBlockedException>(() =>
-            reader.ReadAsync(RestSource("file:///etc/passwd"), new Dictionary<string, object?>(), TestContext()));
+            reader.ReadAsync(RestSource("file:///etc/passwd"), Context(), CancellationToken.None));
         Assert.Null(stub.LastRequest);
     }
 
@@ -86,8 +83,6 @@ public class RestDataSourceReaderTests
         var reader = new RestDataSourceReader(new HttpClient(stub), new SsrfGuard());
 
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            reader.ReadAsync(RestSource("https://api.example.com/x"), new Dictionary<string, object?>(), TestContext()));
+            reader.ReadAsync(RestSource("https://api.example.com/x"), Context(), CancellationToken.None));
     }
-
-    private static CancellationToken TestContext() => CancellationToken.None;
 }

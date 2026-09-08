@@ -51,9 +51,15 @@ builder.Services.AddSingleton(ssrfGuard);
 builder.Services.AddSingleton<IDataSourceReader, JsonDataSourceReader>();
 builder.Services.AddSingleton<IDataSourceReader>(_ =>
     new RestDataSourceReader(RestHttp.CreateClient(ssrfGuard, restOptions), ssrfGuard));
-builder.Services.AddSingleton<ReportDataResolver>();
+builder.Services.AddScoped<JetReportDesigner.DataSources.Sql.ConnectionStringResolver>(sp =>
+{
+    var connections = sp.GetRequiredService<JetReportDesigner.Storage.Connections.IConnectionRepository>();
+    return (id, ct) => connections.ResolveAsync(id, ct);
+});
+builder.Services.AddScoped<IDataSourceReader, JetReportDesigner.DataSources.Sql.SqlDataSourceReader>();
+builder.Services.AddScoped<ReportDataResolver>();
 builder.Services.AddSingleton<IPdfRenderer, MigraDocPdfRenderer>();
-builder.Services.AddSingleton<ReportRenderService>();
+builder.Services.AddScoped<ReportRenderService>();
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<JetReportDesigner.Storage.JetReportDbContext>("storage");

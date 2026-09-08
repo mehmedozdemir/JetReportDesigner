@@ -1,6 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\JetReportDesigner.Core\JetReportDesigner.Core.csproj" />
   </ItemGroup>
 

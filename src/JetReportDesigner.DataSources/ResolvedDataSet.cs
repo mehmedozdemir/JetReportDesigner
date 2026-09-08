@@ -10,13 +10,23 @@ public sealed record ResolvedDataSet(
     public static readonly ResolvedDataSet Empty = new([], []);
 }
 
-/// <summary>Reads one kind of data source. Phase 1 ships JSON; REST and SQL arrive in Phase 3.</summary>
+/// <summary>Everything a reader needs beyond the data source itself: resolved parameters and the report's connection references.</summary>
+public sealed class DataSourceReadContext(
+    IReadOnlyDictionary<string, object?> parameters,
+    IReadOnlyList<ConnectionRef>? connections = null)
+{
+    public IReadOnlyDictionary<string, object?> Parameters { get; } = parameters;
+
+    public IReadOnlyList<ConnectionRef> Connections { get; } = connections ?? [];
+}
+
+/// <summary>Reads one kind of data source. Phase 1 ships JSON; REST arrives in Phase 3A, SQL in 3C.</summary>
 public interface IDataSourceReader
 {
     DataSourceKind Kind { get; }
 
     Task<ResolvedDataSet> ReadAsync(
         DataSourceDefinition definition,
-        IReadOnlyDictionary<string, object?> parameters,
+        DataSourceReadContext context,
         CancellationToken cancellationToken);
 }

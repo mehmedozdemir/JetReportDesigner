@@ -8,7 +8,7 @@ public sealed class JsonDataSourceReader : IDataSourceReader
 
     public Task<ResolvedDataSet> ReadAsync(
         DataSourceDefinition definition,
-        IReadOnlyDictionary<string, object?> parameters,
+        DataSourceReadContext context,
         CancellationToken cancellationToken)
     {
         var config = definition.Json;

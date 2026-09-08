@@ -32,6 +32,7 @@ public sealed class ReportDataResolver(IEnumerable<IDataSourceReader> readers)
         CancellationToken cancellationToken)
     {
         var sets = new Dictionary<string, ResolvedDataSet>(StringComparer.Ordinal);
+        var context = new DataSourceReadContext(parameters, report.Connections);
 
         foreach (var source in report.DataSources)
         {
@@ -46,7 +47,7 @@ public sealed class ReportDataResolver(IEnumerable<IDataSourceReader> readers)
                 throw new NotSupportedException($"No data source reader is registered for '{source.Kind}'.");
             }
 
-            sets[source.Name] = await reader.ReadAsync(source, parameters, cancellationToken);
+            sets[source.Name] = await reader.ReadAsync(source, context, cancellationToken);
         }
 
         return new ReportData(sets);

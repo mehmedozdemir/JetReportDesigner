@@ -14,9 +14,10 @@ public sealed class RestDataSourceReader(HttpClient httpClient, SsrfGuard guard)
 
     public async Task<ResolvedDataSet> ReadAsync(
         DataSourceDefinition definition,
-        IReadOnlyDictionary<string, object?> parameters,
+        DataSourceReadContext context,
         CancellationToken cancellationToken)
     {
+        var parameters = context.Parameters;
         var config = definition.Rest;
         if (config is null || string.IsNullOrWhiteSpace(config.Url))
         {

@@ -49,7 +49,7 @@ public sealed class DataSourcesController(IEnumerable<IDataSourceReader> readers
         }
 
         return _readers.TryGetValue(definition.Kind, out var reader)
-            ? await reader.ReadAsync(definition, new Dictionary<string, object?>(), cancellationToken)
+            ? await reader.ReadAsync(definition, new DataSourceReadContext(new Dictionary<string, object?>()), cancellationToken)
             : null;
     }
 
