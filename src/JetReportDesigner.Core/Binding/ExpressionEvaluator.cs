@@ -318,10 +318,10 @@ public static class ExpressionEvaluator
         {
             "if" or "iif" => ToBool(args[0]) ? args[1] : args[2],
             "coalesce" => args.FirstOrDefault(a => a is not null),
-            "format" => BindingResolver.FormatValue(args[0], Convert.ToString(args.ElementAtOrDefault(1), CultureInfo.InvariantCulture)),
-            "upper" => Convert.ToString(args[0], CultureInfo.CurrentCulture)?.ToUpperInvariant(),
-            "lower" => Convert.ToString(args[0], CultureInfo.CurrentCulture)?.ToLowerInvariant(),
-            "len" => (double)(Convert.ToString(args[0], CultureInfo.CurrentCulture)?.Length ?? 0),
+            "format" => BindingResolver.FormatValue(args[0], Convert.ToString(args.ElementAtOrDefault(1), CultureInfo.InvariantCulture), context.Culture),
+            "upper" => Convert.ToString(args[0], context.Culture)?.ToUpper(context.Culture),
+            "lower" => Convert.ToString(args[0], context.Culture)?.ToLower(context.Culture),
+            "len" => (double)(Convert.ToString(args[0], CultureInfo.InvariantCulture)?.Length ?? 0),
             "pagenumber" => (double)context.PageNumber,
             "totalpages" => (double)context.TotalPages,
             "now" => context.Now,
@@ -351,9 +351,9 @@ public static class ExpressionEvaluator
             _ => true,
         };
 
-        private static object Add(object? left, object? right) =>
+        private object Add(object? left, object? right) =>
             left is string || right is string
-                ? Convert.ToString(left, CultureInfo.CurrentCulture) + Convert.ToString(right, CultureInfo.CurrentCulture)
+                ? Convert.ToString(left, context.Culture) + Convert.ToString(right, context.Culture)
                 : ToNumber(left) + ToNumber(right);
 
         private static bool Compare(string op, object? left, object? right)

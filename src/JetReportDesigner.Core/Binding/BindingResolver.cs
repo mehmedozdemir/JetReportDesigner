@@ -25,11 +25,14 @@ public sealed class BindingContext(
 
     public DateTime Now { get; init; } = DateTime.Now;
 
+    /// <summary>Culture applied to number/date formatting and case functions.</summary>
+    public CultureInfo Culture { get; init; } = CultureInfo.CurrentCulture;
+
     public BindingContext WithRow(IReadOnlyDictionary<string, object?>? newRow) =>
-        new(newRow, Parameters) { PageNumber = PageNumber, TotalPages = TotalPages, Now = Now };
+        new(newRow, Parameters) { PageNumber = PageNumber, TotalPages = TotalPages, Now = Now, Culture = Culture };
 
     public BindingContext WithPaging(int pageNumber, int totalPages) =>
-        new(Row, Parameters) { PageNumber = pageNumber, TotalPages = totalPages, Now = Now };
+        new(Row, Parameters) { PageNumber = pageNumber, TotalPages = totalPages, Now = Now, Culture = Culture };
 }
 
 /// <summary>
@@ -56,7 +59,7 @@ public static partial class BindingResolver
         return PlaceholderRegex().Replace(template, match =>
         {
             var value = Lookup(match.Groups["expr"].Value, context);
-            return value is null ? string.Empty : Convert.ToString(value, CultureInfo.CurrentCulture) ?? string.Empty;
+            return value is null ? string.Empty : Convert.ToString(value, context.Culture) ?? string.Empty;
         });
     }
 
@@ -77,7 +80,7 @@ public static partial class BindingResolver
         {
             try
             {
-                return Format(ExpressionEvaluator.Evaluate(expression, context), format);
+                return Format(ExpressionEvaluator.Evaluate(expression, context), format, context.Culture);
             }
             catch (ExpressionException ex)
             {
@@ -90,7 +93,7 @@ public static partial class BindingResolver
         if (single.Success && single.Value.Length == expression.Length)
         {
             var raw = Lookup(single.Groups["expr"].Value, context);
-            return Format(raw, format);
+            return Format(raw, format, context.Culture);
         }
 
         return ResolveText(expression, context);
@@ -140,10 +143,11 @@ public static partial class BindingResolver
         return context.Row.TryGetValue(field, out var v) ? v : null;
     }
 
-    /// <summary>Formats a raw value with an optional .NET format string, using the current culture.</summary>
-    public static string FormatValue(object? value, string? format) => Format(value, format);
+    /// <summary>Formats a raw value with an optional .NET format string. Null <paramref name="culture"/> uses the current culture.</summary>
+    public static string FormatValue(object? value, string? format, CultureInfo? culture = null) =>
+        Format(value, format, culture ?? CultureInfo.CurrentCulture);
 
-    private static string Format(object? value, string? format)
+    private static string Format(object? value, string? format, CultureInfo culture)
     {
         if (value is null)
         {
@@ -152,11 +156,11 @@ public static partial class BindingResolver
 
         if (string.IsNullOrEmpty(format))
         {
-            return Convert.ToString(value, CultureInfo.CurrentCulture) ?? string.Empty;
+            return Convert.ToString(value, culture) ?? string.Empty;
         }
 
         return value is IFormattable formattable
-            ? formattable.ToString(format, CultureInfo.CurrentCulture)
+            ? formattable.ToString(format, culture)
             : value.ToString() ?? string.Empty;
     }
 

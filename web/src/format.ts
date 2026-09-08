@@ -134,21 +134,23 @@ export function applyFormat(
   rawValue: string,
   format: string,
   domain?: "number" | "date",
+  locale?: string,
 ): string {
   const fmt = (format ?? "").trim();
   const value = rawValue ?? "";
   if (!fmt) return value;
+  const loc = locale && locale.trim() ? locale.trim() : undefined;
 
   const asNum = parseNumber(value);
   const asDate = parseDate(value);
 
   if (domain === "date" || (domain !== "number" && asDate && asNum === null)) {
     const d = asDate ?? (domain === "date" ? SAMPLE_DATE : null);
-    if (d) return formatDate(d, fmt);
+    if (d) return formatDate(d, fmt, loc);
   }
 
   if (asNum !== null) {
-    const out = formatNumber(asNum, fmt);
+    const out = formatNumber(asNum, fmt, loc);
     if (out !== null) return out;
   }
 
@@ -178,10 +180,10 @@ function parseDate(s: string): Date | null {
 
 // ---- number formatting ------------------------------------------------------
 
-function guessCurrency(): string {
+function guessCurrency(locale?: string): string {
   try {
-    const loc = new Intl.NumberFormat().resolvedOptions().locale;
-    const region = loc.split("-").find((p) => /^[A-Z]{2}$/.test(p));
+    const loc = locale || new Intl.NumberFormat().resolvedOptions().locale;
+    const region = loc.split("-").find((p) => /^[A-Za-z]{2}$/.test(p))?.toUpperCase();
     const map: Record<string, string> = {
       US: "USD", GB: "GBP", TR: "TRY", JP: "JPY", CN: "CNY", IN: "INR",
       CA: "CAD", AU: "AUD", CH: "CHF", SE: "SEK", NO: "NOK", DK: "DKK",
@@ -194,14 +196,14 @@ function guessCurrency(): string {
   }
 }
 
-function formatNumber(n: number, fmt: string): string | null {
+function formatNumber(n: number, fmt: string, locale?: string): string | null {
   const std = /^([A-Za-z])(\d*)$/.exec(fmt);
   if (std) {
     const c = std[1].toLowerCase();
     const prec = std[2] === "" ? undefined : parseInt(std[2], 10);
     switch (c) {
       case "n":
-        return new Intl.NumberFormat(undefined, {
+        return new Intl.NumberFormat(locale, {
           minimumFractionDigits: prec ?? 2,
           maximumFractionDigits: prec ?? 2,
         }).format(n);
@@ -210,14 +212,14 @@ function formatNumber(n: number, fmt: string): string | null {
       case "d":
         return (n < 0 ? "-" : "") + Math.abs(Math.trunc(n)).toString().padStart(prec ?? 0, "0");
       case "c":
-        return new Intl.NumberFormat(undefined, {
+        return new Intl.NumberFormat(locale, {
           style: "currency",
-          currency: guessCurrency(),
+          currency: guessCurrency(locale),
           minimumFractionDigits: prec ?? 2,
           maximumFractionDigits: prec ?? 2,
         }).format(n);
       case "p":
-        return new Intl.NumberFormat(undefined, {
+        return new Intl.NumberFormat(locale, {
           style: "percent",
           minimumFractionDigits: prec ?? 2,
           maximumFractionDigits: prec ?? 2,
@@ -232,7 +234,7 @@ function formatNumber(n: number, fmt: string): string | null {
         return null;
     }
   }
-  if (/[0#]/.test(fmt)) return formatCustomNumber(n, fmt);
+  if (/[0#]/.test(fmt)) return formatCustomNumber(n, fmt, locale);
   return null;
 }
 
@@ -242,7 +244,7 @@ function toDotNetExponential(n: number, fracDigits: number, expDigits: number): 
     .replace(/e([+-])(\d+)/i, (_, sign, digits) => `E${sign}${digits.padStart(expDigits, "0")}`);
 }
 
-function formatCustomNumber(n: number, fmt: string): string | null {
+function formatCustomNumber(n: number, fmt: string, locale?: string): string | null {
   const sci = /^([0#]+)(?:\.([0#]+))?E([+-])(0+)$/i.exec(fmt);
   if (sci) {
     const fracLen = (sci[2] ?? "").length;
@@ -267,7 +269,7 @@ function formatCustomNumber(n: number, fmt: string): string | null {
   const minFrac = (fracPart.match(/0/g) || []).length;
   const maxFrac = fracPart.length;
 
-  const body = new Intl.NumberFormat(undefined, {
+  const body = new Intl.NumberFormat(locale, {
     useGrouping: grouping,
     minimumIntegerDigits: Math.max(1, minInt),
     minimumFractionDigits: minFrac,
@@ -303,14 +305,14 @@ const DATE_TOKENS = [
   "tt", "t", "fff", "ff", "f",
 ];
 
-function formatDate(d: Date, fmt: string): string {
+function formatDate(d: Date, fmt: string, locale?: string): string {
   if (fmt.length === 1 && STD_DATE[fmt]) {
-    return new Intl.DateTimeFormat(undefined, STD_DATE[fmt]).format(d);
+    return new Intl.DateTimeFormat(locale, STD_DATE[fmt]).format(d);
   }
 
   const pad = (x: number, n = 2) => String(x).padStart(n, "0");
   const name = (opt: Intl.DateTimeFormatOptions, ref: Date) =>
-    new Intl.DateTimeFormat(undefined, opt).format(ref);
+    new Intl.DateTimeFormat(locale, opt).format(ref);
   const h12 = d.getHours() % 12 || 12;
 
   let out = "";

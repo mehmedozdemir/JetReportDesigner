@@ -13,6 +13,7 @@
     "description": { "type": ["string", "null"], "maxLength": 2000 },
     "layoutMode": { "enum": ["banded", "free"] },
     "unit": { "type": "string", "const": "px" },
+    "culture": { "type": ["string", "null"] },
     "page": { "$ref": "#/$defs/pageSetup" },
     "parameters": { "type": "array", "items": { "$ref": "#/$defs/parameter" } },
     "connections": { "type": "array", "items": { "$ref": "#/$defs/connectionRef" } },

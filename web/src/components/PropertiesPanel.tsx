@@ -357,6 +357,7 @@ function ElementProperties({
   onPatch: (fn: (el: ReportElement) => void) => void;
 }) {
   const sources = useDesigner((st) => st.report!.dataSources);
+  const culture = useDesigner((st) => st.report?.culture) || undefined;
   const s = element.style ?? {};
   const isText = element.type === "label" || element.type === "field" || element.type === "pageInfo";
   const inFooter = bandType === "groupFooter" || bandType === "pageFooter" || bandType === "reportFooter";
@@ -399,7 +400,11 @@ function ElementProperties({
       {(element.type === "field" || element.type === "pageInfo") && (
         <>
           <Text label="Value / binding" value={element.value ?? ""} onChange={(v) => onPatch((e) => (e.value = v))} />
-          <FormatField value={element.format ?? ""} onChange={(v) => onPatch((e) => (e.format = v || null))} />
+          <FormatField
+            value={element.format ?? ""}
+            locale={culture}
+            onChange={(v) => onPatch((e) => (e.format = v || null))}
+          />
         </>
       )}
 
@@ -573,10 +578,43 @@ function PageProperties() {
         <Num label="Margin B" value={p.margins.bottom} onChange={(v) => set((page) => (page.margins.bottom = v))} />
         <Num label="Margin L" value={p.margins.left} onChange={(v) => set((page) => (page.margins.left = v))} />
       </div>
+
+      <label className="field">
+        <span>Culture</span>
+        <select
+          value={report.culture ?? ""}
+          onChange={(e) => mutate((r) => (r.culture = e.target.value || null))}
+        >
+          {CULTURES.map((c) => (
+            <option key={c.value} value={c.value}>{c.label}</option>
+          ))}
+        </select>
+        <span className="hint" style={{ fontWeight: 400 }}>Number &amp; date formatting</span>
+      </label>
+
       <p className="hint">Select an element to edit its properties.</p>
     </div>
   );
 }
+
+const CULTURES: { value: string; label: string }[] = [
+  { value: "", label: "System (server default)" },
+  { value: "en-US", label: "English (US)" },
+  { value: "en-GB", label: "English (UK)" },
+  { value: "tr-TR", label: "Türkçe (Türkiye)" },
+  { value: "de-DE", label: "Deutsch (Deutschland)" },
+  { value: "fr-FR", label: "Français (France)" },
+  { value: "es-ES", label: "Español (España)" },
+  { value: "it-IT", label: "Italiano (Italia)" },
+  { value: "nl-NL", label: "Nederlands (Nederland)" },
+  { value: "pt-BR", label: "Português (Brasil)" },
+  { value: "pt-PT", label: "Português (Portugal)" },
+  { value: "ru-RU", label: "Русский (Россия)" },
+  { value: "pl-PL", label: "Polski (Polska)" },
+  { value: "ja-JP", label: "日本語 (日本)" },
+  { value: "zh-CN", label: "中文 (简体)" },
+  { value: "ar-SA", label: "العربية (السعودية)" },
+];
 
 // ---- small inputs ----
 

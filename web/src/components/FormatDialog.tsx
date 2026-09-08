@@ -14,9 +14,11 @@ import {
 export function FormatField({
   value,
   onChange,
+  locale,
 }: {
   value: string;
   onChange: (v: string) => void;
+  locale?: string;
 }) {
   const [open, setOpen] = useState(false);
   const trimmed = value.trim();
@@ -42,12 +44,13 @@ export function FormatField({
       </div>
       {trimmed && (
         <span className="format-preview">
-          Preview: {applyFormat(previewSeed(trimmed), trimmed) || "—"}
+          Preview: {applyFormat(previewSeed(trimmed), trimmed, undefined, locale) || "—"}
         </span>
       )}
       {open && (
         <FormatDialog
           initial={value}
+          locale={locale}
           onApply={(v) => {
             onChange(v);
             setOpen(false);
@@ -61,10 +64,12 @@ export function FormatField({
 
 function FormatDialog({
   initial,
+  locale,
   onApply,
   onClose,
 }: {
   initial: string;
+  locale?: string;
   onApply: (v: string) => void;
   onClose: () => void;
 }) {
@@ -88,7 +93,7 @@ function FormatDialog({
 
   const domain: "number" | "date" = cat === "date" || cat === "time" ? "date" : "number";
   const presets = FORMAT_PRESETS[cat];
-  const result = draft ? applyFormat(sample, draft, domain) : sample;
+  const result = draft ? applyFormat(sample, draft, domain, locale) : sample;
 
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
@@ -139,7 +144,7 @@ function FormatDialog({
                       className={p.code === draft ? "on" : ""}
                       onClick={() => setDraft(p.code)}
                     >
-                      <span className="fmt-sample">{applyFormat(sample, p.code, domain) || "—"}</span>
+                      <span className="fmt-sample">{applyFormat(sample, p.code, domain, locale) || "—"}</span>
                       <span className="fmt-code">{p.code || "General"}</span>
                     </button>
                   </li>

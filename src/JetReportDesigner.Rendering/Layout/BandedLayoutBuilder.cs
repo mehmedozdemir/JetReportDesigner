@@ -50,7 +50,8 @@ public sealed class BandedLayoutBuilder
             && !string.IsNullOrWhiteSpace(groupSpec.Expression)
             && (groupHeader is not null || groupFooter is not null);
 
-        var baseContext = new BindingContext(null, parameters) { Now = now };
+        var culture = CultureResolver.Resolve(report.Culture);
+        var baseContext = new BindingContext(null, parameters) { Now = now, Culture = culture };
 
         if (grouping)
         {
@@ -195,6 +196,7 @@ public sealed class BandedLayoutBuilder
                     PageNumber = p + 1,
                     TotalPages = totalPages,
                     Now = now,
+                    Culture = culture,
                 };
 
                 string? Aggregate(ReportElement element)
@@ -211,7 +213,7 @@ public sealed class BandedLayoutBuilder
                         _ => instance.AggregateRows,
                     };
                     var value = AggregateComputer.Compute(element.Aggregate, element.Value, scopeRows);
-                    return BindingResolver.FormatValue(value, element.Format);
+                    return BindingResolver.FormatValue(value, element.Format, culture);
                 }
 
                 // conditional formatting on the band row: paint its background, then

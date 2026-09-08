@@ -221,6 +221,7 @@ export interface ReportDefinition {
   description?: string | null;
   layoutMode: LayoutMode;
   unit: "px";
+  culture?: string | null;
   page: PageSetup;
   parameters: ReportParameter[];
   connections: ConnectionRef[];

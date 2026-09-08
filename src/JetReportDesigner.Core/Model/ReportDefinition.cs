@@ -24,6 +24,12 @@ public sealed class ReportDefinition
     /// <summary>Internal coordinate unit. Fixed at 1/96 inch ("px"); the UI converts for display.</summary>
     public string Unit { get; set; } = "px";
 
+    /// <summary>
+    /// Culture used for number and date formatting (e.g. <c>tr-TR</c>). Null or empty
+    /// means "use whatever culture the render process is running in".
+    /// </summary>
+    public string? Culture { get; set; }
+
     public List<ReportParameter> Parameters { get; set; } = [];
 
     /// <summary>References to registered database connections used by SQL data sources.</summary>
