@@ -51,7 +51,7 @@ export function Toolbox() {
             title={`${label} — ${hint}`}
             aria-label={`Add ${label}`}
           >
-            <Icon size={19} />
+            <Icon size={15} />
             {label}
           </button>
         ))}
