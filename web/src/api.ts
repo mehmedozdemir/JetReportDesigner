@@ -75,6 +75,18 @@ export const api = {
       body: JSON.stringify({ name, provider, connectionString }),
     }).then(json<ConnectionResponse>),
 
+  updateConnection: (
+    id: string,
+    name: string,
+    provider: string,
+    connectionString: string | null,
+  ): Promise<ConnectionResponse> =>
+    fetch(`/api/connections/${id}`, {
+      method: "PUT",
+      headers: jsonHeaders,
+      body: JSON.stringify({ name, provider, connectionString }),
+    }).then(json<ConnectionResponse>),
+
   deleteConnection: (id: string): Promise<void> =>
     fetch(`/api/connections/${id}`, { method: "DELETE" }).then((r) => {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);

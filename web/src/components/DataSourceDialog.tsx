@@ -3,11 +3,13 @@ import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
   Ban,
+  Check,
   ChevronDown,
   ChevronRight,
   Database,
   FileJson,
   Globe,
+  Pencil,
   Play,
   Plug,
   Plus,
@@ -343,6 +345,16 @@ function KVEditor({
   );
 }
 
+const PROVIDERS: { value: string; label: string }[] = [
+  { value: "sqlServer", label: "SQL Server" },
+  { value: "postgreSql", label: "PostgreSQL" },
+  { value: "oracle", label: "Oracle" },
+];
+const providerLabel = (v: string) => PROVIDERS.find((p) => p.value === v)?.label ?? v;
+
+type ConnForm = { name: string; provider: string; connStr: string };
+const EMPTY_FORM: ConnForm = { name: "", provider: "sqlServer", connStr: "" };
+
 function ConnectionsManager({
   connections,
   onChange,
@@ -350,20 +362,52 @@ function ConnectionsManager({
   connections: ConnectionResponse[];
   onChange: (c: ConnectionResponse[]) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [provider, setProvider] = useState("sqlServer");
-  const [connStr, setConnStr] = useState("");
+  const [open, setOpen] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [edit, setEdit] = useState<ConnForm>(EMPTY_FORM);
+  const [add, setAdd] = useState<ConnForm>(EMPTY_FORM);
   const [err, setErr] = useState<string | null>(null);
 
   const refresh = async () => onChange(await api.listConnections());
 
-  const add = async () => {
+  const beginEdit = (c: ConnectionResponse) => {
+    setErr(null);
+    setEditingId(c.id);
+    setEdit({ name: c.name, provider: c.provider, connStr: "" });
+  };
+
+  const saveEdit = async () => {
     setErr(null);
     try {
-      await api.createConnection(name.trim(), provider, connStr);
-      setName("");
-      setConnStr("");
+      await api.updateConnection(
+        editingId!,
+        edit.name.trim(),
+        edit.provider,
+        edit.connStr.trim() ? edit.connStr : null,
+      );
+      setEditingId(null);
+      await refresh();
+    } catch (e) {
+      setErr(String(e));
+    }
+  };
+
+  const remove = async (id: string) => {
+    setErr(null);
+    try {
+      await api.deleteConnection(id);
+      if (editingId === id) setEditingId(null);
+      await refresh();
+    } catch (e) {
+      setErr(String(e));
+    }
+  };
+
+  const create = async () => {
+    setErr(null);
+    try {
+      await api.createConnection(add.name.trim(), add.provider, add.connStr);
+      setAdd(EMPTY_FORM);
       await refresh();
     } catch (e) {
       setErr(String(e));
@@ -379,30 +423,73 @@ function ConnectionsManager({
       </button>
       {open && (
         <div className="connections-body">
-          {connections.map((c) => (
-            <div key={c.id} className="conn-row">
-              <span>
-                {c.name} <em>{c.provider}</em>
-              </span>
-              <button
-                className="mini danger"
-                onClick={() => api.deleteConnection(c.id).then(refresh)}
-                aria-label="Delete connection"
-              >
-                <Trash2 />
-              </button>
-            </div>
-          ))}
-          <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <select value={provider} onChange={(e) => setProvider(e.target.value)}>
-            <option value="sqlServer">SQL Server</option>
-            <option value="postgreSql">PostgreSQL</option>
-            <option value="oracle">Oracle</option>
-          </select>
-          <input placeholder="Connection string" value={connStr} onChange={(e) => setConnStr(e.target.value)} />
-          <button className="mini" onClick={add} disabled={!name.trim() || !connStr.trim()}>
-            <Plus /> Add connection
-          </button>
+          {connections.length === 0 && <p className="hint">No connections yet.</p>}
+
+          {connections.map((c) =>
+            editingId === c.id ? (
+              <div key={c.id} className="conn-edit">
+                <input
+                  placeholder="Name"
+                  value={edit.name}
+                  onChange={(e) => setEdit({ ...edit, name: e.target.value })}
+                />
+                <select value={edit.provider} onChange={(e) => setEdit({ ...edit, provider: e.target.value })}>
+                  {PROVIDERS.map((p) => (
+                    <option key={p.value} value={p.value}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  placeholder="New connection string — blank keeps the current one"
+                  value={edit.connStr}
+                  onChange={(e) => setEdit({ ...edit, connStr: e.target.value })}
+                />
+                <div className="row">
+                  <button className="mini" onClick={saveEdit} disabled={!edit.name.trim()}>
+                    <Check /> Save
+                  </button>
+                  <button className="mini ghost" onClick={() => setEditingId(null)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div key={c.id} className="conn-row">
+                <span>
+                  {c.name} <em>{providerLabel(c.provider)}</em>
+                  <span className="conn-date">added {new Date(c.createdAtUtc).toLocaleDateString()}</span>
+                </span>
+                <button className="mini" onClick={() => beginEdit(c)} aria-label="Edit connection">
+                  <Pencil />
+                </button>
+                <button className="mini danger" onClick={() => remove(c.id)} aria-label="Delete connection">
+                  <Trash2 />
+                </button>
+              </div>
+            ),
+          )}
+
+          <div className="conn-add">
+            <span className="conn-add-label">Add connection</span>
+            <input placeholder="Name" value={add.name} onChange={(e) => setAdd({ ...add, name: e.target.value })} />
+            <select value={add.provider} onChange={(e) => setAdd({ ...add, provider: e.target.value })}>
+              {PROVIDERS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+            <input
+              placeholder="Connection string"
+              value={add.connStr}
+              onChange={(e) => setAdd({ ...add, connStr: e.target.value })}
+            />
+            <button className="mini" onClick={create} disabled={!add.name.trim() || !add.connStr.trim()}>
+              <Plus /> Add
+            </button>
+          </div>
+
           {err && (
             <div className="error small">
               <AlertTriangle /> <span>{err}</span>

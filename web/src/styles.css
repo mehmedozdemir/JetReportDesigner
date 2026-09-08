@@ -303,8 +303,23 @@ body {
 
 .connections { margin-top: 10px; }
 .connections-body { display: flex; flex-direction: column; gap: 5px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-elevated); }
-.conn-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.conn-row { display: flex; align-items: center; gap: 4px; }
+.conn-row > span:first-child { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; }
 .conn-row em { color: var(--text-secondary); font-style: normal; font-size: 10.5px; }
+.conn-date { color: var(--text-disabled); font-size: 10px; }
+.conn-edit {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 6px; border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm); background: var(--bg-surface);
+}
+.conn-add {
+  display: flex; flex-direction: column; gap: 5px;
+  margin-top: 3px; padding-top: 8px; border-top: 1px solid var(--border);
+}
+.conn-add-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--text-secondary);
+}
 
 .param-row { padding: 8px 0; border-bottom: 1px dashed var(--border); display: flex; flex-direction: column; gap: 4px; }
 .param-bar {
