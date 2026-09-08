@@ -51,9 +51,16 @@ public class ExpressionEvaluatorTests
     }
 
     [Fact]
-    public void Bad_Expression_Throws()
+    public void Bad_Expression_Throws_From_Evaluator()
     {
         Assert.Throws<ExpressionException>(() => ExpressionEvaluator.Evaluate("=1 +", Ctx()));
         Assert.Throws<ExpressionException>(() => ExpressionEvaluator.Evaluate("=bogus(1)", Ctx()));
+    }
+
+    [Fact]
+    public void Bad_Expression_Degrades_To_Error_Text_In_A_Cell()
+    {
+        var result = BindingResolver.ResolveValue("=upper(customer) + | + 1", null, Ctx());
+        Assert.StartsWith("#ERR:", result);
     }
 }

@@ -75,7 +75,15 @@ public static partial class BindingResolver
 
         if (ExpressionEvaluator.IsExpression(expression))
         {
-            return Format(ExpressionEvaluator.Evaluate(expression, context), format);
+            try
+            {
+                return Format(ExpressionEvaluator.Evaluate(expression, context), format);
+            }
+            catch (ExpressionException ex)
+            {
+                // Degrade gracefully in the cell rather than failing the whole render.
+                return $"#ERR: {ex.Message}";
+            }
         }
 
         var single = PlaceholderRegex().Match(expression);

@@ -1,4 +1,6 @@
 using FluentValidation;
+using JetReportDesigner.DataSources.Http;
+using JetReportDesigner.DataSources.Sql;
 using JetReportDesigner.Storage.Repositories;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +35,14 @@ internal sealed class GlobalExceptionHandler(IProblemDetailsService problemDetai
                 StatusCodes.Status501NotImplemented,
                 "That report feature is not implemented yet.",
                 (Dictionary<string, string[]>?)null),
+            SsrfBlockedException or UnsafeSqlCommandException => (
+                StatusCodes.Status422UnprocessableEntity,
+                "The data source request was rejected by a safety check.",
+                new Dictionary<string, string[]> { ["dataSource"] = [exception.Message] }),
+            InvalidOperationException when exception.Message.Contains("connection", StringComparison.OrdinalIgnoreCase) => (
+                StatusCodes.Status422UnprocessableEntity,
+                "The report's data source could not be resolved.",
+                new Dictionary<string, string[]> { ["dataSource"] = [exception.Message] }),
             _ => (0, string.Empty, null),
         };
 
