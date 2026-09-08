@@ -5,9 +5,9 @@ using JetReportDesigner.DataSources;
 namespace JetReportDesigner.Rendering.Layout;
 
 /// <summary>
-/// Builds a <see cref="RenderDocument"/> from a free-layout report. Phase 1: a single
-/// page, elements positioned absolutely, bindings resolved against row 0 of the
-/// report's first data source.
+/// Builds a <see cref="RenderDocument"/> from a free-layout report: a single page,
+/// elements positioned absolutely, bindings resolved against row 0 of the report's
+/// first data source. A table element iterates its own data source.
 /// </summary>
 public sealed class FreeLayoutBuilder
 {
@@ -25,9 +25,19 @@ public sealed class FreeLayoutBuilder
         var primarySource = report.DataSources.FirstOrDefault()?.Name ?? string.Empty;
         var context = new BindingContext(data.Row(primarySource, 0), parameters);
 
-        var primitives = report.Body.Elements
-            .SelectMany(el => ElementEmitter.Emit(el, report.Styles, context, 0, 0))
-            .ToList();
+        var primitives = new List<RenderPrimitive>();
+        foreach (var element in report.Body.Elements)
+        {
+            if (element.Type == ElementType.Table)
+            {
+                var rows = data.Get(element.Table?.DataSource ?? primarySource).Rows;
+                primitives.AddRange(TableEmitter.Emit(element, report.Styles, rows, context, 0, 0));
+            }
+            else
+            {
+                primitives.AddRange(ElementEmitter.Emit(element, report.Styles, context, 0, 0));
+            }
+        }
 
         return new RenderDocument
         {

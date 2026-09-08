@@ -75,6 +75,28 @@ export function ElementView({ element }: { element: ReportElement }) {
         <span>{labelText(element)}</span>
       )}
       {element.type === "image" && <span className="img-ph">image</span>}
+      {element.type === "table" && element.table && (
+        <table className="tbl-preview">
+          {element.table.showHeader && (
+            <thead>
+              <tr>
+                {element.table.columns.map((c, i) => (
+                  <th key={i} style={{ width: c.width, textAlign: c.align }}>{c.header}</th>
+                ))}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            {[0, 1].map((r) => (
+              <tr key={r}>
+                {element.table!.columns.map((c, i) => (
+                  <td key={i} style={{ width: c.width, textAlign: c.align }}>{c.value}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       {selected &&
         HANDLES.map((h) => (

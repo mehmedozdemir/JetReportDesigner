@@ -45,22 +45,27 @@ not depend on it.
 
 ## Build order (each slice builds + a check, then a commit)
 
-- **A — Banded rendering engine.** `BandedLayoutBuilder`, `AggregateComputer`,
-  page-info token resolution, two-pass pagination; `ReportRenderService` routes
-  banded reports here (drop the `501`). Check: unit tests for a grouped 40-row
-  JSON report — expected page count, group-footer subtotals, report grand total,
-  page numbers.
-- **B — Banded designer.** Store: layout-mode switch + band CRUD + element↔band
-  addressing. Canvas renders band strips with per-band resize and an "add band"
-  menu; band inspector (type, data source, group expr + sort); element inspector
-  gains aggregate + scope when the element sits in a footer band. Check: build a
-  grouped report in the browser, preview paginates.
-- **C — Table element.** Renderer emits a table (header + one row per data row) in
-  both layouts; designer columns editor (header, binding, width, format, align).
-  Check: a table bound to the JSON source renders all rows in preview + PDF.
-- **D — Expression evaluator (optional).** `if`, `+ - * / %`, unary minus, string
+- **[done] A — Banded rendering engine.** `BandedLayoutBuilder`, `AggregateComputer`,
+  `ElementEmitter` (shared), page-info tokens in `BindingResolver`, two-pass
+  pagination; `ReportRenderService` routes banded reports here (`501` removed).
+  Check: `BandedLayoutTests` — 45-row grouped report, ≥2 pages, per-page
+  "Page N / M", group subtotals summing to the grand total, repeated group headers
+  across a forced mid-group break.
+- **[done] B — Banded designer.** Store: layout-mode switch, band CRUD, generic
+  element↔container addressing, `selectedBand`. Canvas renders band strips with
+  per-band height resize + drop targets; band inspector (height, detail source,
+  group expr + sort, repeat-on-page); element inspector gains aggregate + scope in
+  footer bands. Verified in the browser: grouped report paginates in preview with
+  subtotals (3.300 / 3.450) and a grand total.
+- **[done] C — Table element.** `TableEmitter` (header + one row per data row, grid
+  lines) used by both builders; toolbox "Table", canvas preview, columns editor
+  (data source, header row, per-column header/binding/width/align/format).
+  Verified: a 5-row table renders in preview with `n2` totals; `TableElementTests`
+  cover free + banded.
+- **[deferred] D — Expression evaluator.** `if`, `+ - * / %`, unary minus, string
   concat, parens, literals; functions `format`, `pageNumber`, `totalPages`, `now`.
-  Check: unit tests.
+  Not built — Phase 2 verification does not need it. Picked up when a report
+  actually requires computed values beyond a single binding + aggregate.
 
 ## Phase 2 verification
 

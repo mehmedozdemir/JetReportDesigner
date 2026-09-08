@@ -4,6 +4,7 @@ import { useDesigner } from "../store";
 const TOOLS: { type: ElementType; label: string }[] = [
   { type: "label", label: "Label" },
   { type: "field", label: "Field" },
+  { type: "table", label: "Table" },
   { type: "rectangle", label: "Rectangle" },
   { type: "line", label: "Line" },
   { type: "image", label: "Image" },

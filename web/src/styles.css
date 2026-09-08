@@ -144,6 +144,30 @@ button.mini { padding: 3px 8px; min-width: 26px; }
 
 .img-ph { color: var(--muted); font-size: 11px; }
 
+.tbl-preview {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 11px;
+  pointer-events: none;
+}
+.tbl-preview th, .tbl-preview td {
+  border: 1px solid #cbd5e1;
+  padding: 1px 4px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.tbl-preview th { background: #f1f5f9; }
+.tbl-preview td { color: var(--muted); }
+
+.table-props .col-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.table-props .col-row input, .table-props .col-row select { padding: 3px 5px; }
+
 .handle {
   position: absolute;
   width: 8px; height: 8px;

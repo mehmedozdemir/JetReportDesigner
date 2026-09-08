@@ -5,6 +5,34 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added — Phase 2 (banded reports)
+- **Rendering**: `BandedLayoutBuilder` — single-level grouping (sorted), detail
+  iteration, group/page/report aggregates (`AggregateComputer`), page
+  header/footer, two-pass pagination with fixed-height bands, group-header repeat
+  on page break, report footer. `ElementEmitter` (element→primitives) extracted
+  and shared with the free-layout builder. `TableEmitter` — header + one row per
+  data-source row with grid lines, usable in both layouts. `BindingResolver` gains
+  `pageNumber()` / `totalPages()` / `now()` tokens and `ResolveGroupKey`.
+  `ReportRenderService` renders banded reports (the `501` is gone).
+- **API**: `/api/render` and `/api/reports/{id}/render` now serve banded reports.
+- **Designer**: Free/Banded layout toggle (seeds default bands); band strip editor
+  on the canvas (labelled tag, per-band height resize, drop targets); "+ band"
+  menu; band inspector (height, detail data source, group expression + sort,
+  repeat-on-every-page); element inspector gains aggregate function + scope inside
+  footer bands. Table element: toolbox entry, canvas preview, columns editor (data
+  source, header row, per-column header / binding / width / align / format).
+  Generic element addressing across the body and all bands; undo/redo, keyboard
+  and selection carried over.
+- Verified end to end in the browser: a 45-row report grouped by customer
+  paginates (Page 1/2, 2/2) with correct per-group subtotals and a report grand
+  total; a free-layout table renders every data row with formatted values.
+
+### Deferred within Phase 2
+- Expression evaluator (`if`, arithmetic, string concat) — Phase 2 verification
+  does not require it.
+- Nested grouping, auto-height / can-grow bands, page-scoped aggregates inside a
+  group footer, per-report culture.
+
 ### Added — Phase 1 (free-layout designer + static JSON + PDF)
 - **Rendering pipeline**: `BindingResolver` (`{ds.field}` / `{param:name}` +
   .NET format strings), `ParameterValues`, `JsonRows` (dotted `resultPath`,

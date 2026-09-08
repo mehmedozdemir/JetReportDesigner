@@ -216,8 +216,17 @@ public sealed class BandedLayoutBuilder
 
                 foreach (var element in instance.Band.Elements)
                 {
-                    primitives.AddRange(
-                        ElementEmitter.Emit(element, report.Styles, context, margins.Left, instance.Y, Aggregate));
+                    if (element.Type == ElementType.Table)
+                    {
+                        var tableRows = data.Get(element.Table?.DataSource ?? detailSource).Rows;
+                        primitives.AddRange(
+                            TableEmitter.Emit(element, report.Styles, tableRows, context, margins.Left, instance.Y));
+                    }
+                    else
+                    {
+                        primitives.AddRange(
+                            ElementEmitter.Emit(element, report.Styles, context, margins.Left, instance.Y, Aggregate));
+                    }
                 }
             }
 

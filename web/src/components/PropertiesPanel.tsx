@@ -154,6 +154,7 @@ function ElementProperties({
   bandType?: Band["type"];
   onPatch: (fn: (el: ReportElement) => void) => void;
 }) {
+  const sources = useDesigner((st) => st.report!.dataSources);
   const s = element.style ?? {};
   const isText = element.type === "label" || element.type === "field" || element.type === "pageInfo";
   const inFooter = bandType === "groupFooter" || bandType === "pageFooter" || bandType === "reportFooter";
@@ -208,6 +209,80 @@ function ElementProperties({
       )}
       {element.type === "image" && (
         <Text label="Source (URL / data URI)" value={element.image?.source ?? ""} onChange={(v) => onPatch((e) => (e.image = { source: v, fit: e.image?.fit ?? "contain" }))} />
+      )}
+
+      {element.type === "table" && element.table && (
+        <div className="table-props">
+          <label className="field">
+            <span>Data source</span>
+            <select
+              value={element.table.dataSource}
+              onChange={(v) => onPatch((e) => (e.table!.dataSource = v.target.value))}
+            >
+              <option value="">— (first source)</option>
+              {sources.map((src) => (
+                <option key={src.name}>{src.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="row" style={{ marginBottom: 6 }}>
+            <input
+              type="checkbox"
+              checked={element.table.showHeader}
+              onChange={(v) => onPatch((e) => (e.table!.showHeader = v.target.checked))}
+            />
+            <span>Header row</span>
+          </label>
+
+          <h3>Columns</h3>
+          {element.table.columns.map((col, i) => (
+            <div key={i} className="col-row">
+              <input
+                value={col.header}
+                placeholder="Header"
+                onChange={(v) => onPatch((e) => (e.table!.columns[i].header = v.target.value))}
+              />
+              <input
+                value={col.value}
+                placeholder="{src.field}"
+                onChange={(v) => onPatch((e) => (e.table!.columns[i].value = v.target.value))}
+              />
+              <div className="row">
+                <input
+                  type="number"
+                  style={{ width: 56 }}
+                  value={Math.round(col.width)}
+                  onChange={(v) => onPatch((e) => (e.table!.columns[i].width = Number(v.target.value) || 0))}
+                />
+                <select
+                  value={col.align}
+                  onChange={(v) => onPatch((e) => (e.table!.columns[i].align = v.target.value as TextAlign))}
+                >
+                  <option value="left">L</option>
+                  <option value="center">C</option>
+                  <option value="right">R</option>
+                </select>
+                <input
+                  style={{ width: 60 }}
+                  value={col.format ?? ""}
+                  placeholder="fmt"
+                  onChange={(v) => onPatch((e) => (e.table!.columns[i].format = v.target.value || null))}
+                />
+                <button className="mini" onClick={() => onPatch((e) => e.table!.columns.splice(i, 1))}>×</button>
+              </div>
+            </div>
+          ))}
+          <button
+            className="mini"
+            onClick={() =>
+              onPatch((e) =>
+                e.table!.columns.push({ header: "Column", value: "{src.field}", width: 100, align: "left" }),
+              )
+            }
+          >
+            + column
+          </button>
+        </div>
       )}
 
       {isText && (

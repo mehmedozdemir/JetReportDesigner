@@ -2,7 +2,7 @@
 // this from the OpenAPI document.
 
 export type LayoutMode = "banded" | "free";
-export type ElementType = "label" | "field" | "image" | "line" | "rectangle" | "pageInfo";
+export type ElementType = "label" | "field" | "table" | "image" | "line" | "rectangle" | "pageInfo";
 export type PageSize = "A4" | "A5" | "Letter" | "Legal" | "Custom";
 export type Orientation = "portrait" | "landscape";
 export type TextAlign = "left" | "center" | "right" | "justify";
@@ -234,6 +234,20 @@ export function defaultElement(type: ElementType, x: number, y: number): ReportE
       return { ...base, text: "Text" };
     case "field":
       return { ...base, value: "{source.field}" };
+    case "table":
+      return {
+        ...base,
+        bounds: { x, y, width: 460, height: 120 },
+        table: {
+          dataSource: "",
+          showHeader: true,
+          columns: [
+            { header: "Column 1", value: "{source.field1}", width: 160, align: "left" },
+            { header: "Column 2", value: "{source.field2}", width: 120, align: "right" },
+          ],
+        },
+        style: { border: edge(1, "#cbd5e1") },
+      };
     case "line":
       return { ...base, bounds: { x, y, width: 200, height: 0 }, line: { orientation: "horizontal" } };
     case "rectangle":
