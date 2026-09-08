@@ -22,6 +22,7 @@ public sealed record RenderResult(byte[] Content, string ContentType, string Fil
 public sealed class ReportRenderService(ReportDataResolver dataResolver, IPdfRenderer pdfRenderer)
 {
     private readonly FreeLayoutBuilder _freeLayout = new();
+    private readonly BandedLayoutBuilder _bandedLayout = new();
     private readonly HtmlReportRenderer _htmlRenderer = new();
 
     public async Task<RenderResult> RenderAsync(
@@ -36,7 +37,7 @@ public sealed class ReportRenderService(ReportDataResolver dataResolver, IPdfRen
         var document = report.LayoutMode switch
         {
             LayoutMode.Free => _freeLayout.Build(report, data, resolvedParameters),
-            LayoutMode.Banded => throw new NotSupportedException("Banded report rendering arrives in Phase 2."),
+            LayoutMode.Banded => _bandedLayout.Build(report, data, resolvedParameters),
             _ => throw new NotSupportedException($"Unknown layout mode '{report.LayoutMode}'."),
         };
 

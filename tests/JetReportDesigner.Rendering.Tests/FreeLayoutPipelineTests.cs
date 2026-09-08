@@ -125,16 +125,17 @@ public class FreeLayoutPipelineTests
     }
 
     [Fact]
-    public async Task RenderService_Rejects_Banded_Until_Phase2()
+    public async Task RenderService_Handles_Banded_Reports()
     {
         var banded = new ReportDefinition
         {
             Name = "b",
             LayoutMode = LayoutMode.Banded,
-            Bands = [new Band { Type = BandType.Detail, Height = 20 }],
+            Bands = [new Band { Type = BandType.ReportHeader, Height = 30, Elements = [] }],
         };
 
-        await Assert.ThrowsAsync<NotSupportedException>(() =>
-            Service().RenderAsync(banded, null, RenderFormat.Pdf, CancellationToken.None));
+        var result = await Service().RenderAsync(banded, null, RenderFormat.Html, CancellationToken.None);
+
+        Assert.StartsWith("text/html", result.ContentType);
     }
 }
