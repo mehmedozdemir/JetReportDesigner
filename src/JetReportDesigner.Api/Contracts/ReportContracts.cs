@@ -29,6 +29,12 @@ public sealed record ReportResponse(
         r.Id, r.Definition, r.CreatedAtUtc, r.UpdatedAtUtc, r.ConcurrencyToken);
 }
 
+public sealed record ReportIssueResponse(string Severity, string Message, string? ElementId)
+{
+    public static ReportIssueResponse From(JetReportDesigner.Core.Validation.ReportIssue i) =>
+        new(i.Severity.ToString().ToLowerInvariant(), i.Message, i.ElementId);
+}
+
 public sealed record ReportVersionResponse(int Version, string Name, DateTime SavedAtUtc)
 {
     public static ReportVersionResponse From(ReportVersionInfo v) => new(v.Version, v.Name, v.SavedAtUtc);

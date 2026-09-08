@@ -1,6 +1,7 @@
 using FluentValidation;
 using JetReportDesigner.Api.Contracts;
 using JetReportDesigner.Core.Model;
+using JetReportDesigner.Core.Validation;
 using JetReportDesigner.Storage.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
@@ -66,6 +67,11 @@ public sealed class ReportsController(IReportRepository repository, IValidator<R
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
         await repository.DeleteAsync(id, cancellationToken) ? NoContent() : NotFound();
+
+    /// <summary>Design-time inspection: non-fatal problems (unknown bindings, empty tables, out-of-bounds elements).</summary>
+    [HttpPost("validate")]
+    public ActionResult<IReadOnlyList<ReportIssueResponse>> Validate([FromBody] ReportDefinition definition) =>
+        Ok(ReportInspector.Inspect(definition).Select(ReportIssueResponse.From).ToList());
 
     [HttpGet("{id:guid}/versions")]
     public async Task<ActionResult<IReadOnlyList<ReportVersionResponse>>> Versions(Guid id, CancellationToken cancellationToken)

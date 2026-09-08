@@ -3,6 +3,7 @@ import type {
   DataField,
   DataSourceDefinition,
   ReportDefinition,
+  ReportIssue,
   ReportResponse,
   ReportSummary,
 } from "./types";
@@ -42,6 +43,10 @@ export const api = {
     }),
 
   // --- data sources ---
+  validate: (definition: ReportDefinition): Promise<ReportIssue[]> =>
+    fetch("/api/reports/validate", { method: "POST", headers: jsonHeaders, body: JSON.stringify(definition) })
+      .then(json<ReportIssue[]>),
+
   schema: (source: DataSourceDefinition): Promise<{ fields: DataField[] }> =>
     fetch("/api/datasources/schema", { method: "POST", headers: jsonHeaders, body: JSON.stringify(source) })
       .then(json<{ fields: DataField[] }>),

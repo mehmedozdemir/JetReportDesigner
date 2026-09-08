@@ -6,6 +6,7 @@ import { Canvas } from "./components/Canvas";
 import { Toolbox } from "./components/Toolbox";
 import { DataPanel } from "./components/DataPanel";
 import { ParametersPanel } from "./components/ParametersPanel";
+import { ProblemsPanel } from "./components/ProblemsPanel";
 import { PropertiesPanel } from "./components/PropertiesPanel";
 import { PreviewPane } from "./components/PreviewPane";
 
@@ -200,6 +201,7 @@ export function App() {
         <Toolbox />
         <DataPanel key={reportId ?? "none"} />
         <ParametersPanel />
+        <ProblemsPanel />
       </div>
 
       <div className="center">

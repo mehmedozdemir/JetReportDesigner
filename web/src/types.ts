@@ -215,6 +215,12 @@ export interface ReportSummary {
   updatedAtUtc: string;
 }
 
+export interface ReportIssue {
+  severity: "warning" | "error";
+  message: string;
+  elementId?: string | null;
+}
+
 export interface ReportResponse {
   id: string;
   definition: ReportDefinition;

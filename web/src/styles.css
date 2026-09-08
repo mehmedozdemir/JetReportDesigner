@@ -123,6 +123,19 @@ button.mini { padding: 3px 8px; min-width: 26px; }
 .connections-body { display: flex; flex-direction: column; gap: 4px; padding: 6px; border: 1px solid var(--border); border-radius: 6px; }
 .connections-body input, .connections-body select { padding: 3px 5px; }
 
+.problems { list-style: none; margin: 0; padding: 0; }
+.problems li {
+  display: flex; align-items: flex-start; gap: 6px;
+  padding: 4px 6px; border-radius: 5px; cursor: pointer; font-size: 12px;
+}
+.problems li:hover { background: var(--bg); }
+.problems .dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex: 0 0 auto; }
+.problems li.error .dot { background: #dc2626; }
+.problems li.warning .dot { background: #d97706; }
+.badge { font-size: 10px; padding: 1px 6px; border-radius: 999px; color: #fff; }
+.badge.err { background: #dc2626; }
+.badge.warn { background: #d97706; }
+
 .hint { color: var(--muted); font-size: 12px; }
 .error { color: #b91c1c; }
 .error.small { font-size: 12px; margin-top: 6px; }
