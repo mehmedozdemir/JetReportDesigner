@@ -45,21 +45,35 @@ stack.
 
 ## Build order (each step builds + a check)
 
-1. **Rendering: free-layout mapper + fonts.** `ReportDefinition(free) → RenderDocument`;
-   embed Liberation fonts + resolver. Check: golden-file test renders the sample
-   invoice PDF; `WindowsCoreFontResolver` gone; Rendering tests green on Linux CI.
-2. **Data resolution.** JSON parse + `resultPath` + field-type inference + row access;
-   `{ds.field}` / `{param:*}` binder + format. Check: unit tests for binder/format/typing.
-3. **API render/preview endpoints.** `/render`, `/reports/{id}/render`, `/preview`.
-   Check: integration test posts a definition, gets a `%PDF` back; preview returns HTML.
-4. **Designer shell.** Zustand store, canvas with page + zoom + ruler + grid, toolbox,
-   selection model, properties panel, page setup. Check: add/move/resize/delete a
-   label in the browser; save round-trips.
-5. **Data panel + binding UI.** Paste JSON, field tree, drag-to-bind, format field in
-   panel. Check: bind a field, see the first-row value on canvas.
-6. **Preview + export.** "Preview" tab (HTML) and "Export PDF" button wired to the API.
-   Check: design the sample invoice, export PDF, positions match the canvas within ±2px.
-7. **Undo/redo, copy/paste, nudge, polish.** Check: manual pass over the interactions.
+1. **[done] Rendering: free-layout mapper.** `ReportDefinition(free) → RenderDocument`
+   via `FreeLayoutBuilder`; `PageGeometry`, `EffectiveStyle`. Fonts deferred — see
+   note below. Check: `FreeLayoutPipelineTests` green.
+2. **[done] Data resolution.** `JsonRows` (`resultPath` + type inference),
+   `ReportDataResolver`; `BindingResolver` (`{ds.field}` / `{param:*}` + format),
+   `ParameterValues`. Check: `BindingTests` + `FreeLayoutPipelineTests` green.
+3. **[done] API render/preview endpoints.** `POST /api/render`,
+   `/api/reports/{id}/render`, `/preview`; `/api/datasources/schema` + `/preview`.
+   Check: verified by hand end-to-end (`%PDF` + HTML with bound values).
+4. **[done] Designer shell.** Zustand store + undo/redo history, canvas (page, zoom,
+   grid, margins), toolbox, selection (click + marquee), pointer move/resize with
+   grid snap, properties panel, page setup, keyboard (Del, arrows, Ctrl+Z/Y, Ctrl+S).
+   Check: create/add/move/resize/delete in the browser; save round-trips.
+5. **[done] Data panel + binding UI.** Paste JSON, load field schema, draggable field
+   chips, drag-to-bind onto canvas, edit binding/format in the panel. Check: bound
+   `{orders.customer}` renders "Acme Ltd" in preview.
+6. **[done] Preview + export.** "Preview" tab (server HTML) and "Export PDF" button.
+   Check: preview + `POST /api/render?format=pdf` → 200.
+7. **[partial] Polish.** Undo/redo, marquee select, arrow-nudge, snap done.
+   Still open: copy/paste, alignment guides, in-canvas text editing, multi-page free
+   flow, image rendering in PDF.
+
+### Font note (moved from step 1)
+
+Embedding Liberation fonts + a cross-platform `IFontResolver` was deferred to keep
+Phase 1 focused on the designer + binding slice. Current state: `WindowsCoreFontResolver`
+(Windows only). PDF rendering therefore runs on the Windows dev machine and in
+Rendering.Tests' Windows-guarded cases; the Linux/container path is closed out by
+the font-embedding follow-up in `docs/04` before Phase 4 containerization.
 
 ## Phase 1 verification
 

@@ -1,12 +1,30 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
-import { emptyFreeReport, type ReportResponse, type ReportSummary } from "./types";
+import { useDesigner } from "./store";
+import { emptyFreeReport, type ReportSummary } from "./types";
+import { Canvas } from "./components/Canvas";
+import { Toolbox } from "./components/Toolbox";
+import { DataPanel } from "./components/DataPanel";
+import { PropertiesPanel } from "./components/PropertiesPanel";
+import { PreviewPane } from "./components/PreviewPane";
 
 export function App() {
   const [reports, setReports] = useState<ReportSummary[]>([]);
-  const [selected, setSelected] = useState<ReportResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<"design" | "preview">("design");
+
+  const report = useDesigner((s) => s.report);
+  const reportId = useDesigner((s) => s.reportId);
+  const dirty = useDesigner((s) => s.dirty);
+  const zoom = useDesigner((s) => s.zoom);
+  const setZoom = useDesigner((s) => s.setZoom);
+  const undo = useDesigner((s) => s.undo);
+  const redo = useDesigner((s) => s.redo);
+  const canUndo = useDesigner((s) => s.past.length > 0);
+  const canRedo = useDesigner((s) => s.future.length > 0);
+  const load = useDesigner((s) => s.load);
+  const markSaved = useDesigner((s) => s.markSaved);
 
   const refresh = useCallback(async () => {
     try {
@@ -23,7 +41,8 @@ export function App() {
   const open = async (id: string) => {
     setError(null);
     try {
-      setSelected(await api.getReport(id));
+      load(await api.getReport(id));
+      setTab("design");
     } catch (e) {
       setError(String(e));
     }
@@ -33,10 +52,11 @@ export function App() {
     setBusy(true);
     setError(null);
     try {
-      const name = `Untitled ${new Date().toISOString().slice(0, 19).replace("T", " ")}`;
+      const name = `Untitled ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
       const created = await api.createReport(emptyFreeReport(name));
+      load(created);
       await refresh();
-      setSelected(created);
+      setTab("design");
     } catch (e) {
       setError(String(e));
     } finally {
@@ -45,16 +65,13 @@ export function App() {
   };
 
   const save = async () => {
-    if (!selected) return;
+    const state = useDesigner.getState();
+    if (!state.report || !state.reportId) return;
     setBusy(true);
     setError(null);
     try {
-      const saved = await api.updateReport(
-        selected.id,
-        selected.definition,
-        selected.concurrencyToken,
-      );
-      setSelected(saved);
+      const saved = await api.updateReport(state.reportId, state.report, state.concurrencyToken ?? undefined);
+      markSaved(saved);
       await refresh();
     } catch (e) {
       setError(String(e));
@@ -63,49 +80,97 @@ export function App() {
     }
   };
 
+  const exportPdf = async () => {
+    if (!report) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const blob = await api.renderPdfBlob(report);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${report.name || "report"}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        void save();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="app">
       <div className="topbar">
-        <span>JetReportDesigner</span>
-        <span style={{ color: "var(--muted)", fontWeight: 400 }}>Phase 0 skeleton</span>
-        <div style={{ flex: 1 }} />
-        <button className="primary" onClick={createReport} disabled={busy}>
-          New report
-        </button>
-        <button onClick={save} disabled={busy || !selected}>
-          Save
-        </button>
-      </div>
-
-      <div className="sidebar">
-        <h2>Reports ({reports.length})</h2>
-        <ul className="report-list">
+        <strong>JetReportDesigner</strong>
+        <select
+          className="report-select"
+          value={reportId ?? ""}
+          onChange={(e) => e.target.value && void open(e.target.value)}
+        >
+          <option value="">— open report —</option>
           {reports.map((r) => (
-            <li
-              key={r.id}
-              className={selected?.id === r.id ? "active" : ""}
-              onClick={() => void open(r.id)}
-            >
-              <div>{r.name}</div>
-              <div className="meta">
-                {r.layoutMode} · {new Date(r.updatedAtUtc).toLocaleString()}
-              </div>
-            </li>
+            <option key={r.id} value={r.id}>
+              {r.name}
+            </option>
           ))}
-        </ul>
-      </div>
+        </select>
+        <button onClick={createReport} disabled={busy}>New</button>
+        <button className="primary" onClick={save} disabled={busy || !report || !reportId}>
+          Save{dirty ? " *" : ""}
+        </button>
 
-      <div className="canvas-wrap">
-        <div className="page">
-          <div className="empty-hint">
-            {selected
-              ? `${selected.definition.name} — empty ${selected.definition.layoutMode} canvas (designer arrives in Phase 1)`
-              : "Select or create a report"}
-          </div>
+        <span className="sep" />
+        <button onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">Undo</button>
+        <button onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">Redo</button>
+
+        <span className="sep" />
+        <button onClick={() => setZoom(zoom - 0.1)} disabled={!report}>−</button>
+        <span className="zoom">{Math.round(zoom * 100)}%</span>
+        <button onClick={() => setZoom(zoom + 0.1)} disabled={!report}>+</button>
+
+        <span className="sep" />
+        <div className="tabs">
+          <button className={tab === "design" ? "on" : ""} onClick={() => setTab("design")} disabled={!report}>
+            Design
+          </button>
+          <button className={tab === "preview" ? "on" : ""} onClick={() => setTab("preview")} disabled={!report}>
+            Preview
+          </button>
         </div>
+
+        <div className="spacer" />
+        <button onClick={exportPdf} disabled={busy || !report}>Export PDF</button>
       </div>
 
-      {error && <div className="error">{error}</div>}
+      <div className="left">
+        <Toolbox />
+        <DataPanel />
+      </div>
+
+      <div className="center">
+        {!report && <div className="canvas-wrap empty">Open or create a report to start.</div>}
+        {report && tab === "design" && <Canvas />}
+        {report && tab === "preview" && <PreviewPane />}
+      </div>
+
+      <div className="right">
+        <PropertiesPanel />
+      </div>
+
+      {error && <div className="error toast">{error}</div>}
     </div>
   );
 }

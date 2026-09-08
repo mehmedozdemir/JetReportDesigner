@@ -5,6 +5,31 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added — Phase 1 (free-layout designer + static JSON + PDF)
+- **Rendering pipeline**: `BindingResolver` (`{ds.field}` / `{param:name}` +
+  .NET format strings), `ParameterValues`, `JsonRows` (dotted `resultPath`,
+  scalar mapping, field-type inference), `ReportDataResolver`, `PageGeometry`,
+  `EffectiveStyle`, `FreeLayoutBuilder` (report + data → `RenderDocument`),
+  `HtmlReportRenderer`, and `ReportRenderService` (PDF + HTML).
+- **API**: `POST /api/render`, `/api/reports/{id}/render`, `/api/reports/{id}/preview`,
+  `/api/datasources/schema`, `/api/datasources/preview`; `NotSupportedException`
+  → `501` for banded reports until Phase 2.
+- **Designer** (`web/`): drag/click toolbox (label, field, rectangle, line, image,
+  page-info); canvas with page geometry, zoom, grid, margin guides; pointer
+  move/resize with grid snap; click + marquee selection; properties panel
+  (bounds, text/binding, format, font, colour, background, border, alignment) and
+  page setup; JSON data panel with schema load and drag-to-bind field chips;
+  server-rendered HTML preview tab; Export PDF; undo/redo history, arrow-nudge,
+  Delete, Ctrl+Z/Y, Ctrl+S.
+- Render-model alignment enums renamed to `*Anchor` to avoid colliding with
+  `Core.Model.TextAlign` / `VerticalAlign`.
+
+### Deferred within Phase 1
+- Embedding Liberation fonts + a cross-platform `IFontResolver` (tracked in
+  `docs/04`); PDF rendering is currently Windows-only via `WindowsCoreFontResolver`.
+- Copy/paste, alignment guides, in-canvas text editing, multi-page free flow,
+  image rendering in PDF.
+
 ### Added — Phase 0 (skeleton, contracts, PDF spike)
 - Solution scaffold: `Core`, `DataSources`, `Rendering`, `Storage`, two provider
   migration assemblies, `Api`, and Core/Rendering/Api test projects; central
