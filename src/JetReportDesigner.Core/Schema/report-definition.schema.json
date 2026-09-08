@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jetreportdesigner/schema/report-definition/v1",
+  "title": "ReportDefinition",
+  "description": "Self-contained definition of a JetReportDesigner report (schemaVersion 1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "name", "layoutMode", "page"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "id": { "type": "string", "format": "uuid" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "description": { "type": ["string", "null"], "maxLength": 2000 },
+    "layoutMode": { "enum": ["banded", "free"] },
+    "unit": { "type": "string", "const": "px" },
+    "page": { "$ref": "#/$defs/pageSetup" },
+    "parameters": { "type": "array", "items": { "$ref": "#/$defs/parameter" } },
+    "connections": { "type": "array", "items": { "$ref": "#/$defs/connectionRef" } },
+    "dataSources": { "type": "array", "items": { "$ref": "#/$defs/dataSource" } },
+    "styles": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/style" }
+    },
+    "bands": { "type": "array", "items": { "$ref": "#/$defs/band" } },
+    "body": { "oneOf": [{ "$ref": "#/$defs/body" }, { "type": "null" }] }
+  },
+  "$defs": {
+    "pageSetup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["size", "orientation", "margins"],
+      "properties": {
+        "size": { "enum": ["A4", "A5", "Letter", "Legal", "Custom"] },
+        "orientation": { "enum": ["portrait", "landscape"] },
+        "customWidth": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "customHeight": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "margins": { "$ref": "#/$defs/margins" },
+        "columns": { "type": "integer", "const": 1 }
+      }
+    },
+    "margins": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "top": { "type": "number", "minimum": 0 },
+        "right": { "type": "number", "minimum": 0 },
+        "bottom": { "type": "number", "minimum": 0 },
+        "left": { "type": "number", "minimum": 0 }
+      }
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+        "type": { "enum": ["string", "number", "boolean", "date", "dateTime"] },
+        "label": { "type": ["string", "null"] },
+        "defaultValue": {},
+        "required": { "type": "boolean" },
+        "allowedValues": { "type": ["array", "null"] }
+      }
+    },
+    "connectionRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "connectionId", "provider"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "connectionId": { "type": "string", "format": "uuid" },
+        "provider": { "enum": ["sqlServer", "postgreSql", "oracle"] }
+      }
+    },
+    "dataSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "kind"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+        "kind": { "enum": ["none", "json", "rest", "sql"] },
+        "json": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "inlineData": { "type": "string" },
+            "resultPath": { "type": "string" }
+          }
+        },
+        "rest": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "url": { "type": "string", "format": "uri" },
+            "method": { "enum": ["GET"] },
+            "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+            "query": { "type": "object", "additionalProperties": { "type": "string" } },
+            "resultPath": { "type": "string" }
+          }
+        },
+        "sql": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "connection": { "type": "string" },
+            "commandText": { "type": "string" },
+            "parameters": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string" },
+                  "value": { "type": "string" }
+                }
+              }
+            },
+            "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 600 },
+            "maxRows": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "enum": ["string", "number", "boolean", "date", "dateTime"] }
+            }
+          }
+        }
+      }
+    },
+    "style": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "font": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "family": { "type": ["string", "null"] },
+            "size": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+            "bold": { "type": ["boolean", "null"] },
+            "italic": { "type": ["boolean", "null"] },
+            "underline": { "type": ["boolean", "null"] }
+          }
+        },
+        "color": { "type": ["string", "null"], "pattern": "^#[0-9a-fA-F]{6}$" },
+        "background": { "type": ["string", "null"], "pattern": "^#[0-9a-fA-F]{6}$" },
+        "align": { "enum": ["left", "center", "right", "justify", null] },
+        "vAlign": { "enum": ["top", "middle", "bottom", null] },
+        "border": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "top": { "type": "number", "minimum": 0 },
+            "right": { "type": "number", "minimum": 0 },
+            "bottom": { "type": "number", "minimum": 0 },
+            "left": { "type": "number", "minimum": 0 },
+            "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+          }
+        },
+        "padding": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "top": { "type": "number", "minimum": 0 },
+            "right": { "type": "number", "minimum": 0 },
+            "bottom": { "type": "number", "minimum": 0 },
+            "left": { "type": "number", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "band": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "height"],
+      "properties": {
+        "type": {
+          "enum": ["reportHeader", "pageHeader", "groupHeader", "detail", "groupFooter", "pageFooter", "reportFooter"]
+        },
+        "height": { "type": "number", "minimum": 0 },
+        "visible": { "type": "boolean" },
+        "dataSource": { "type": ["string", "null"] },
+        "group": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "dataSource": { "type": "string" },
+            "expression": { "type": "string" },
+            "sort": { "enum": ["asc", "desc"] }
+          }
+        },
+        "repeatOnEveryPage": { "type": "boolean" },
+        "elements": { "type": "array", "items": { "$ref": "#/$defs/element" } }
+      }
+    },
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["height", "elements"],
+      "properties": {
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "elements": { "type": "array", "items": { "$ref": "#/$defs/element" } }
+      }
+    },
+    "element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "bounds"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["label", "field", "table", "image", "line", "rectangle", "pageInfo"] },
+        "bounds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "width": { "type": "number", "minimum": 0 },
+            "height": { "type": "number", "minimum": 0 }
+          }
+        },
+        "styleRef": { "type": ["string", "null"] },
+        "style": { "oneOf": [{ "$ref": "#/$defs/style" }, { "type": "null" }] },
+        "visibleWhen": { "type": ["string", "null"] },
+        "text": { "type": ["string", "null"] },
+        "value": { "type": ["string", "null"] },
+        "format": { "type": ["string", "null"] },
+        "aggregate": { "enum": ["none", "sum", "count", "average", "min", "max", "first", "last"] },
+        "aggregateScope": { "enum": ["group", "report", "page"] },
+        "image": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "source": { "type": "string" },
+            "fit": { "enum": ["contain", "cover", "fill", "none"] }
+          }
+        },
+        "line": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "orientation": { "enum": ["horizontal", "vertical"] }
+          }
+        },
+        "table": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "dataSource": { "type": "string" },
+            "showHeader": { "type": "boolean" },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "header": { "type": "string" },
+                  "value": { "type": "string" },
+                  "width": { "type": "number", "minimum": 0 },
+                  "format": { "type": ["string", "null"] },
+                  "align": { "enum": ["left", "center", "right", "justify"] }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

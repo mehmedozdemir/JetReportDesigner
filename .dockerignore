@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+web/dist/
+.git/
+.github/
+docs/
+samples/
+tests/
+**/.vs/
+**/*.user
+docker-compose.yml

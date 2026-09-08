@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Phase 0 PDF-engine spike: both candidates referenced side by side so the
+       IPdfRenderer implementations can be benchmarked. One is dropped after the
+       decision in docs/04-pdf-motoru-karari.md. -->
+  <ItemGroup>
+    <PackageReference Include="QuestPDF" />
+    <PackageReference Include="PdfSharp" />
+    <PackageReference Include="PDFsharp-MigraDoc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JetReportDesigner.Core\JetReportDesigner.Core.csproj" />
+  </ItemGroup>
+
+</Project>

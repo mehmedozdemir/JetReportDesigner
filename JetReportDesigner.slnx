@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/JetReportDesigner.Api/JetReportDesigner.Api.csproj" />
+    <Project Path="src/JetReportDesigner.Core/JetReportDesigner.Core.csproj" />
+    <Project Path="src/JetReportDesigner.DataSources/JetReportDesigner.DataSources.csproj" />
+    <Project Path="src/JetReportDesigner.Rendering/JetReportDesigner.Rendering.csproj" />
+    <Project Path="src/JetReportDesigner.Storage.Migrations.PostgreSql/JetReportDesigner.Storage.Migrations.PostgreSql.csproj" />
+    <Project Path="src/JetReportDesigner.Storage.Migrations.SqlServer/JetReportDesigner.Storage.Migrations.SqlServer.csproj" />
+    <Project Path="src/JetReportDesigner.Storage/JetReportDesigner.Storage.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/JetReportDesigner.Api.Tests/JetReportDesigner.Api.Tests.csproj" />
+    <Project Path="tests/JetReportDesigner.Core.Tests/JetReportDesigner.Core.Tests.csproj" />
+    <Project Path="tests/JetReportDesigner.Rendering.Tests/JetReportDesigner.Rendering.Tests.csproj" />
+  </Folder>
+</Solution>
