@@ -1,8 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
   AlignCenter,
+  AlignCenterHorizontal,
+  AlignEndHorizontal,
   AlignLeft,
   AlignRight,
+  AlignStartHorizontal,
   ArrowDown,
   ArrowDownToLine,
   ArrowUp,
@@ -32,6 +35,7 @@ import type {
   PageSize,
   ReportElement,
   TextAlign,
+  VerticalAlign,
 } from "../types";
 import { edge } from "../types";
 
@@ -356,10 +360,12 @@ function ElementProperties({
             <Text label="Font" value={s.font?.family ?? ""} placeholder="Helvetica" onChange={(v) => onPatch((e) => setFont(e, "family", v || null))} />
             <Num label="Size (pt)" value={s.font?.size ?? 10} onChange={(v) => onPatch((e) => setFont(e, "size", v))} />
           </div>
-          <div className="row">
+          <div className="row" style={{ flexWrap: "wrap" }}>
             <Toggle label="B" active={!!s.font?.bold} onClick={() => onPatch((e) => setFont(e, "bold", !e.style?.font?.bold))} />
             <Toggle label="I" active={!!s.font?.italic} onClick={() => onPatch((e) => setFont(e, "italic", !e.style?.font?.italic))} />
+            <span className="align-divider" />
             <AlignPicker value={(s.align as TextAlign) ?? "left"} onChange={(v) => onPatch((e) => setStyle(e, "align", v))} />
+            <VAlignPicker value={(s.vAlign as VerticalAlign) ?? "top"} onChange={(v) => onPatch((e) => setStyle(e, "vAlign", v))} />
           </div>
         </>
       )}
@@ -500,6 +506,30 @@ function AlignPicker({ value, onChange }: { value: TextAlign; onChange: (v: Text
           onClick={() => onChange(a)}
           title={`Align ${a}`}
           aria-label={`Align ${a}`}
+        >
+          <Icon />
+        </button>
+      ))}
+    </span>
+  );
+}
+
+function VAlignPicker({ value, onChange }: { value: VerticalAlign; onChange: (v: VerticalAlign) => void }) {
+  const items: [VerticalAlign, LucideIcon, string][] = [
+    ["top", AlignStartHorizontal, "Align top"],
+    ["middle", AlignCenterHorizontal, "Align middle"],
+    ["bottom", AlignEndHorizontal, "Align bottom"],
+  ];
+  return (
+    <span className="row">
+      {items.map(([a, Icon, label]) => (
+        <button
+          key={a}
+          type="button"
+          className={`mini ${value === a ? "on" : ""}`}
+          onClick={() => onChange(a)}
+          title={label}
+          aria-label={label}
         >
           <Icon />
         </button>

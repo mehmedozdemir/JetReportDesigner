@@ -282,6 +282,8 @@ body {
 .kind-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
 .kind-tabs .mini { flex: 1; }
 
+.align-divider { width: 1px; align-self: stretch; background: var(--border); margin: 2px 2px; }
+
 /* ============================================================
    Data source panel bits
    ============================================================ */
