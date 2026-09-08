@@ -73,6 +73,11 @@ public static partial class BindingResolver
             return string.Empty;
         }
 
+        if (ExpressionEvaluator.IsExpression(expression))
+        {
+            return Format(ExpressionEvaluator.Evaluate(expression, context), format);
+        }
+
         var single = PlaceholderRegex().Match(expression);
         if (single.Success && single.Value.Length == expression.Length)
         {

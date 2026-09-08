@@ -27,9 +27,9 @@ public class PdfEngineSpikeTests
     }
 
     [Fact]
-    public void MigraDoc_Renders_The_Sample_On_Windows()
+    public void MigraDoc_Renders_The_Sample()
     {
-        // PdfSharp has no bundled fonts; on Linux CI it needs provisioned font files
+        // SystemFontResolver reads OS fonts; on Linux the image installs fonts-liberation
         // (a spike finding). Exercised on Windows where the OS fonts resolve.
         if (!OperatingSystem.IsWindows())
         {

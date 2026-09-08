@@ -74,6 +74,10 @@ disproportionate for V1.
 
 ## Follow-ups
 
-- [ ] Phase 1: embed Liberation fonts + cross-platform `IFontResolver`; delete `WindowsCoreFontResolver`.
-- [ ] Verify QuestPDF renders on the `mcr.microsoft.com/dotnet/aspnet:10.0` image (add `libfontconfig1` if needed) so the fallback stays real.
-- [ ] Phase 2 end: confirm or switch; remove the losing package + its renderer.
+- [x] **Phase 3F:** replaced `WindowsCoreFontResolver` with `SystemFontResolver` —
+  OS core fonts on Windows, Liberation/DejaVu on Linux (scans the standard font
+  dirs, metric-compatible with Arial/Times/Courier). The container image installs
+  `fonts-liberation` + `libfontconfig1`. No font files committed to the repo.
+- [ ] Phase 2 end / later: QuestPDF is still referenced as a fallback behind
+  `IPdfRenderer`; confirm PdfSharp is the keeper and drop QuestPDF + its renderer
+  once banded pagination has had real use.

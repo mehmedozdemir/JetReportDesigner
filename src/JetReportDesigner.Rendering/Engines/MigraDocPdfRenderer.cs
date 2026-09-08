@@ -5,14 +5,14 @@ using PdfSharp.Pdf;
 namespace JetReportDesigner.Rendering.Engines;
 
 /// <summary>
-/// PDF engine candidate #2. PdfSharp (MIT, no licence threshold) drawn with
-/// <see cref="XGraphics"/> for absolute placement. Trade-off surfaced by the spike:
-/// PdfSharp has no bundled fonts, so non-Windows hosts need a custom
-/// <see cref="IFontResolver"/> and font files provisioned in the image.
+/// PDF engine (MIT, no licence threshold). PdfSharp <see cref="XGraphics"/> for
+/// absolute placement; fonts come from <see cref="SystemFontResolver"/> (OS core
+/// fonts on Windows, Liberation/DejaVu on Linux — the image installs
+/// <c>fonts-liberation</c>).
 /// </summary>
 public sealed class MigraDocPdfRenderer : IPdfRenderer
 {
-    static MigraDocPdfRenderer() => GlobalFontSettings.FontResolver ??= new WindowsCoreFontResolver();
+    static MigraDocPdfRenderer() => GlobalFontSettings.FontResolver ??= new SystemFontResolver();
 
     public string EngineName => "migradoc";
 
@@ -130,50 +130,5 @@ public sealed class MigraDocPdfRenderer : IPdfRenderer
         var value = hex.TrimStart('#');
         var rgb = int.Parse(value, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture);
         return unchecked((int)(0xFF000000 | (uint)rgb));
-    }
-
-    /// <summary>
-    /// Resolves fonts from the Windows core set (Arial / Times New Roman / Courier New)
-    /// living in %WINDIR%\Fonts. Spike finding: this is Windows-only; a Linux host
-    /// needs font files provisioned in the image and a resolver that reads them —
-    /// see docs/04-pdf-motoru-karari.md.
-    /// </summary>
-    private sealed class WindowsCoreFontResolver : IFontResolver
-    {
-        private static readonly string FontsDir =
-            Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
-
-        public byte[] GetFont(string faceName)
-        {
-            var path = Path.Combine(FontsDir, faceName + ".ttf");
-            if (!OperatingSystem.IsWindows() || !File.Exists(path))
-            {
-                throw new PlatformNotSupportedException(
-                    $"MigraDocPdfRenderer could not load '{faceName}'. PdfSharp has no bundled fonts; "
-                    + "non-Windows hosts must provision font files. See docs/04-pdf-motoru-karari.md.");
-            }
-
-            return File.ReadAllBytes(path);
-        }
-
-        public FontResolverInfo ResolveTypeface(string familyName, bool isBold, bool isItalic)
-        {
-            var family = familyName.ToLowerInvariant();
-            var (regular, bold, italic, boldItalic) =
-                family.Contains("courier") || family.Contains("mono")
-                    ? ("cour", "courbd", "couri", "courbi")
-                    : family.Contains("times") || family.Contains("serif") || family.Contains("georgia")
-                        ? ("times", "timesbd", "timesi", "timesbi")
-                        : ("arial", "arialbd", "ariali", "arialbi");
-
-            var face = (isBold, isItalic) switch
-            {
-                (true, true) => boldItalic,
-                (true, false) => bold,
-                (false, true) => italic,
-                _ => regular,
-            };
-            return new FontResolverInfo(face);
-        }
     }
 }

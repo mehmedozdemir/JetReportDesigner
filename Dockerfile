@@ -18,6 +18,11 @@ RUN dotnet publish src/JetReportDesigner.Api/JetReportDesigner.Api.csproj -c Rel
 
 # ---- Stage 3: runtime (API serving the SPA from wwwroot) ----
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+# fonts-liberation: metric-compatible fonts for the PDF renderer (PdfSharp ships none).
+# libfontconfig1: needed by SkiaSharp if the QuestPDF fallback renderer is ever used.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-liberation libfontconfig1 \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=api /app ./
 COPY --from=web /web/dist ./wwwroot

@@ -5,6 +5,39 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added — Phase 3 (REST + SQL data sources)
+- **REST connector** (`RestDataSourceReader`): GET, `{param:name}` in URL / query /
+  headers, dotted `resultPath`, schema inference. **SSRF guard** (`SsrfGuard`):
+  http/https only; a `SocketsHttpHandler` connect callback re-resolves DNS and
+  rejects any loopback / private / CGNAT / link-local / ULA / multicast address
+  (blocks `169.254.169.254` and RFC1918); redirects off; response + timeout caps;
+  optional `DataSources:Rest:AllowedHosts`.
+- **Registered connections**: `IConnectionRepository` over `StoredConnection`,
+  connection strings encrypted with ASP.NET Data Protection
+  (`IConnectionSecretProtector`); `ConnectionsController` CRUD that never returns
+  the secret.
+- **SQL connector** (`SqlDataSourceReader`): resolves the report's named connection
+  ref, opens the matching ADO.NET provider (SQL Server / PostgreSQL / Oracle),
+  runs a parameterised command (bound, never concatenated), maps rows and infers
+  types, enforces a row cap + timeout, SELECT/WITH-only single statement
+  (`SqlCommandGuard`).
+- **Oracle** brought online: `Oracle.EntityFrameworkCore` 10.x,
+  `Storage.Migrations.Oracle` + provider + migration (NCLOB for the JSON/secret
+  columns), registered in the API; opt-in tests + `docker-compose --profile oracle`.
+- **Designer**: data-source wizard (JSON / REST / SQL / None) with query/header
+  editors, a connections manager, and a "Preview & load fields" action; parameters
+  panel + a runtime parameter bar feeding preview and export.
+- **Expression evaluator**: element values starting with `=` (arithmetic,
+  comparison, `and`/`or`/`not`, `if`, `coalesce`, `format`, `upper`/`lower`/`len`,
+  `pageNumber`/`totalPages`/`now`, field and `param.*` refs).
+- **Fonts**: `SystemFontResolver` (OS fonts on Windows, Liberation/DejaVu on
+  Linux); the container installs `fonts-liberation` + `libfontconfig1`.
+- `IDataSourceReader` now takes a `DataSourceReadContext` (parameters + connection
+  refs); data-source resolution and the render service are scoped.
+- Verified end to end in the browser: a banded report bound to a live PostgreSQL
+  query renders and re-runs when its runtime parameter changes; the stored
+  connection string is ciphertext.
+
 ### Added — Phase 2 (banded reports)
 - **Rendering**: `BandedLayoutBuilder` — single-level grouping (sorted), detail
   iteration, group/page/report aggregates (`AggregateComputer`), page

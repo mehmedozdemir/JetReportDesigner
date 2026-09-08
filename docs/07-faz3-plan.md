@@ -39,9 +39,15 @@
   a small connections manager; a parameters editor and a "run parameters" prompt
   feeding `/api/render`. Check: build a REST-bound and a SQL-bound report in the
   browser and preview them with runtime parameters.
-- **F — Cleanup.** Expression evaluator deferred from Phase 2 (`if`, arithmetic,
-  string concat, `format`), and embedded fonts + a cross-platform `IFontResolver`
-  deferred from Phase 1 (closes the `docs/04` follow-up before containerisation).
+- **[done] F — Cleanup.**
+  - Expression evaluator (`ExpressionEvaluator`): values prefixed with `=` are
+    parsed and evaluated — numbers / strings / `true`/`false`/`null`, field and
+    `param.*` references, `+ - * / %`, comparison, `and`/`or`/`not`, parentheses,
+    and `if` / `coalesce` / `format` / `upper` / `lower` / `len` / `pageNumber` /
+    `totalPages` / `now`. Wired into `BindingResolver.ResolveValue`. 16 tests.
+  - `SystemFontResolver` replaces `WindowsCoreFontResolver` — OS fonts on Windows,
+    Liberation/DejaVu on Linux; the container image installs `fonts-liberation` +
+    `libfontconfig1`. Closes the `docs/04` follow-up.
 
 ## Security notes
 
