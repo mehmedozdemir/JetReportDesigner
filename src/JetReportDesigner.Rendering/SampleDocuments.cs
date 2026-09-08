@@ -38,7 +38,7 @@ public static class SampleDocuments
                     {
                         X = 40, Y = 130, Width = 300, Height = 90,
                         Text = "Hello, world.", FontSizePt = 14,
-                        HAlign = HorizontalAlign.Center, VAlign = VerticalAlign.Middle,
+                        HAlign = HorizontalAnchor.Center, VAlign = VerticalAnchor.Middle,
                     },
                 ],
             },

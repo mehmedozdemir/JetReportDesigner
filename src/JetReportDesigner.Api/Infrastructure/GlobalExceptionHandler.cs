@@ -29,6 +29,10 @@ internal sealed class GlobalExceptionHandler(IProblemDetailsService problemDetai
                 StatusCodes.Status409Conflict,
                 "The report was modified by another writer.",
                 (Dictionary<string, string[]>?)null),
+            NotSupportedException => (
+                StatusCodes.Status501NotImplemented,
+                "That report feature is not implemented yet.",
+                (Dictionary<string, string[]>?)null),
             _ => (0, string.Empty, null),
         };
 

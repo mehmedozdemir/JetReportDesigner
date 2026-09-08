@@ -72,14 +72,14 @@ public sealed class QuestPdfRenderer : IPdfRenderer
 
         box = text.HAlign switch
         {
-            HorizontalAlign.Center => box.AlignCenter(),
-            HorizontalAlign.Right => box.AlignRight(),
+            HorizontalAnchor.Center => box.AlignCenter(),
+            HorizontalAnchor.Right => box.AlignRight(),
             _ => box.AlignLeft(),
         };
         box = text.VAlign switch
         {
-            VerticalAlign.Middle => box.AlignMiddle(),
-            VerticalAlign.Bottom => box.AlignBottom(),
+            VerticalAnchor.Middle => box.AlignMiddle(),
+            VerticalAnchor.Bottom => box.AlignBottom(),
             _ => box.AlignTop(),
         };
 

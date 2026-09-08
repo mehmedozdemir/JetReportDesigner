@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\JetReportDesigner.Core\JetReportDesigner.Core.csproj" />
+    <ProjectReference Include="..\JetReportDesigner.DataSources\JetReportDesigner.DataSources.csproj" />
   </ItemGroup>
 
 </Project>

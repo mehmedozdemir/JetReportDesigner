@@ -2,6 +2,10 @@ using FluentValidation;
 using JetReportDesigner.Api.Infrastructure;
 using JetReportDesigner.Core.Serialization;
 using JetReportDesigner.Core.Validation;
+using JetReportDesigner.DataSources;
+using JetReportDesigner.DataSources.Json;
+using JetReportDesigner.Rendering;
+using JetReportDesigner.Rendering.Engines;
 using JetReportDesigner.Storage;
 using JetReportDesigner.Storage.Migrations.PostgreSql;
 using JetReportDesigner.Storage.Migrations.SqlServer;
@@ -30,6 +34,12 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddValidatorsFromAssemblyContaining<ReportDefinitionValidator>();
+
+// --- Data sources + rendering ---
+builder.Services.AddSingleton<IDataSourceReader, JsonDataSourceReader>();
+builder.Services.AddSingleton<ReportDataResolver>();
+builder.Services.AddSingleton<IPdfRenderer, MigraDocPdfRenderer>();
+builder.Services.AddSingleton<ReportRenderService>();
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<JetReportDesigner.Storage.JetReportDbContext>("storage");

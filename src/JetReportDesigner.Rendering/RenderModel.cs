@@ -44,9 +44,9 @@ public sealed class TextPrimitive : RenderPrimitive
 
     public string ColorHex { get; init; } = "#000000";
 
-    public HorizontalAlign HAlign { get; init; } = HorizontalAlign.Left;
+    public HorizontalAnchor HAlign { get; init; } = HorizontalAnchor.Left;
 
-    public VerticalAlign VAlign { get; init; } = VerticalAlign.Top;
+    public VerticalAnchor VAlign { get; init; } = VerticalAnchor.Top;
 }
 
 public sealed class LinePrimitive : RenderPrimitive
@@ -73,14 +73,14 @@ public sealed class RectanglePrimitive : RenderPrimitive
     public string? FillColorHex { get; init; }
 }
 
-public enum HorizontalAlign
+public enum HorizontalAnchor
 {
     Left,
     Center,
     Right,
 }
 
-public enum VerticalAlign
+public enum VerticalAnchor
 {
     Top,
     Middle,

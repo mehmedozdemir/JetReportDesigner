@@ -89,14 +89,14 @@ public sealed class MigraDocPdfRenderer : IPdfRenderer
         {
             Alignment = text.HAlign switch
             {
-                HorizontalAlign.Center => XStringAlignment.Center,
-                HorizontalAlign.Right => XStringAlignment.Far,
+                HorizontalAnchor.Center => XStringAlignment.Center,
+                HorizontalAnchor.Right => XStringAlignment.Far,
                 _ => XStringAlignment.Near,
             },
             LineAlignment = text.VAlign switch
             {
-                VerticalAlign.Middle => XLineAlignment.Center,
-                VerticalAlign.Bottom => XLineAlignment.Far,
+                VerticalAnchor.Middle => XLineAlignment.Center,
+                VerticalAnchor.Bottom => XLineAlignment.Far,
                 _ => XLineAlignment.Near,
             },
         };
