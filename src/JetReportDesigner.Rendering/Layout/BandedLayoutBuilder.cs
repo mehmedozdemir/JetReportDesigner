@@ -14,7 +14,11 @@ using Row = IReadOnlyDictionary<string, object?>;
 /// </summary>
 public sealed class BandedLayoutBuilder
 {
-    private sealed record BandInstance(Band Band, double Y, Row? Row, IReadOnlyList<Row>? AggregateRows);
+    private sealed record BandInstance(Band Band, double Y, Row? Row, IReadOnlyList<Row>? AggregateRows)
+    {
+        /// <summary>0-based index of this detail row within all rows; -1 for non-detail bands.</summary>
+        public int RowIndex { get; init; } = -1;
+    }
 
     public RenderDocument Build(
         ReportDefinition report,
@@ -158,7 +162,7 @@ public sealed class BandedLayoutBuilder
             Ensure(H(detail), currentGroupRow);
             if (detail is not null)
             {
-                page.Add(new BandInstance(detail, y, row, null));
+                page.Add(new BandInstance(detail, y, row, null) { RowIndex = i });
                 y += H(detail);
             }
 
@@ -182,6 +186,26 @@ public sealed class BandedLayoutBuilder
 
         ClosePage();
 
+        // Per-row group membership, so a group header/footer can aggregate its own rows.
+        var rowToGroup = new Dictionary<Row, IReadOnlyList<Row>>(ReferenceEqualityComparer.Instance);
+        if (grouping)
+        {
+            List<Row> current = [];
+            object? prev = null;
+            for (var i = 0; i < allRows.Count; i++)
+            {
+                var key = GroupKey(groupSpec!.Expression, allRows[i]);
+                if (i == 0 || !KeyEquals(key, prev))
+                {
+                    current = [];
+                    prev = key;
+                }
+
+                current.Add(allRows[i]);
+                rowToGroup[allRows[i]] = current;
+            }
+        }
+
         // ---- emit pass (totalPages now known) ----
         var totalPages = pages.Count;
         var renderPages = new List<RenderPage>(totalPages);
@@ -189,14 +213,31 @@ public sealed class BandedLayoutBuilder
         for (var p = 0; p < totalPages; p++)
         {
             var primitives = new List<RenderPrimitive>();
+            var pageDetailRows = pages[p]
+                .Where(x => x.Band.Type == BandType.Detail && x.Row is not null)
+                .Select(x => x.Row!)
+                .ToList();
+
             foreach (var instance in pages[p])
             {
+                IReadOnlyList<Row> scopeRows = instance.Band.Type switch
+                {
+                    BandType.ReportHeader or BandType.ReportFooter => allRows,
+                    BandType.PageHeader or BandType.PageFooter => instance.AggregateRows ?? pageDetailRows,
+                    BandType.GroupHeader or BandType.GroupFooter => instance.AggregateRows
+                        ?? (instance.Row is { } gr && rowToGroup.TryGetValue(gr, out var g) ? g : allRows),
+                    _ => allRows,
+                };
+
                 var context = new BindingContext(instance.Row, parameters)
                 {
                     PageNumber = p + 1,
                     TotalPages = totalPages,
                     Now = now,
                     Culture = culture,
+                    AggregateRows = scopeRows,
+                    RowNumber = instance.RowIndex >= 0 ? instance.RowIndex + 1 : 0,
+                    TotalRows = scopeRows.Count,
                 };
 
                 string? Aggregate(ReportElement element)

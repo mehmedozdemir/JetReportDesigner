@@ -23,9 +23,13 @@ public sealed class FreeLayoutBuilder
 
         var (pageWidth, pageHeight) = PageGeometry.Resolve(report.Page);
         var primarySource = report.DataSources.FirstOrDefault()?.Name ?? string.Empty;
+        var primaryRows = data.Get(primarySource).Rows;
         var context = new BindingContext(data.Row(primarySource, 0), parameters)
         {
             Culture = CultureResolver.Resolve(report.Culture),
+            AggregateRows = primaryRows,
+            RowNumber = primaryRows.Count > 0 ? 1 : 0,
+            TotalRows = primaryRows.Count,
         };
 
         var primitives = new List<RenderPrimitive>();

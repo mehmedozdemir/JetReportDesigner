@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace JetReportDesigner.Core.Binding;
 
@@ -6,18 +7,50 @@ namespace JetReportDesigner.Core.Binding;
 public sealed class ExpressionException(string message) : Exception(message);
 
 /// <summary>
-/// A small expression language for element values prefixed with <c>=</c>. Supports
-/// numbers, single-quoted strings, <c>true/false/null</c>, field references
-/// (<c>source.field</c> or bare <c>field</c>), <c>param.name</c>, arithmetic
-/// (<c>+ - * / %</c>), comparison, <c>and/or/not</c>, parentheses, and the
-/// functions <c>if</c>, <c>coalesce</c>, <c>format</c>, <c>upper</c>, <c>lower</c>,
-/// <c>len</c>, <c>pageNumber</c>, <c>totalPages</c>, <c>now</c>. Aggregates stay on
-/// the element (<c>aggregate</c>/<c>aggregateScope</c>), not here.
+/// A small expression language for element values. An expression is either prefixed
+/// with <c>=</c> or is a bare call to a known function (e.g. <c>now()</c>,
+/// <c>sum(orders.total)</c>). Supports numbers, single-quoted strings,
+/// <c>true/false/null</c>, field references (<c>source.field</c> or bare
+/// <c>field</c>), <c>param.name</c>, arithmetic, comparison, <c>and/or/not</c>,
+/// parentheses, scalar functions and scope-aware aggregates.
 /// </summary>
-public static class ExpressionEvaluator
+public static partial class ExpressionEvaluator
 {
-    public static bool IsExpression(string? value) =>
-        value is not null && value.Length > 1 && value[0] == '=';
+    /// <summary>Scalar functions (arguments are evaluated before the call).</summary>
+    private static readonly HashSet<string> ScalarFunctions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "if", "iif", "coalesce",
+        "format", "upper", "lower", "len", "trim", "left", "right", "substring", "replace", "contains",
+        "abs", "round", "floor", "ceiling", "ceil", "sqrt", "pow", "sign", "trunc", "mod",
+        "now", "today", "year", "month", "day", "adddays",
+        "pagenumber", "totalpages", "rownumber", "totalrows",
+    };
+
+    /// <summary>Aggregates that iterate the current band's scope rows (argument is lazy).</summary>
+    private static readonly HashSet<string> AggregateFunctions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "sum", "avg", "average", "count", "min", "max", "first", "last",
+    };
+
+    [GeneratedRegex(@"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*\(")]
+    private static partial Regex BareCallRegex();
+
+    public static bool IsExpression(string? value)
+    {
+        if (value is null || value.Length < 2)
+        {
+            return false;
+        }
+
+        if (value[0] == '=')
+        {
+            return true;
+        }
+
+        var m = BareCallRegex().Match(value);
+        return m.Success
+            && (ScalarFunctions.Contains(m.Groups[1].Value) || AggregateFunctions.Contains(m.Groups[1].Value));
+    }
 
     public static object? Evaluate(string expression, BindingContext context)
     {
@@ -268,7 +301,9 @@ public static class ExpressionEvaluator
                     _index++;
                     if (Current.Type == TokenType.LParen)
                     {
-                        return CallFunction(token.Text, ParseArguments());
+                        return AggregateFunctions.Contains(token.Text)
+                            ? CallAggregate(token.Text)
+                            : CallFunction(token.Text, ParseArguments());
                     }
 
                     return ResolveIdentifier(token.Text);
@@ -296,6 +331,67 @@ public static class ExpressionEvaluator
             return args;
         }
 
+        /// <summary>
+        /// An aggregate: re-evaluates its single argument for every row in
+        /// <see cref="BindingContext.AggregateRows"/>. <c>min</c>/<c>max</c> with two or
+        /// more arguments fall back to a scalar minimum/maximum.
+        /// </summary>
+        private object? CallAggregate(string name)
+        {
+            var lname = name.ToLowerInvariant();
+            Expect(TokenType.LParen);
+
+            if (Current.Type == TokenType.RParen)
+            {
+                _index++;
+                return lname == "count" ? (double)context.AggregateRows.Count : 0d;
+            }
+
+            var start = _index;
+            var currentRowValue = ParseExpression();
+
+            if (Current.Type == TokenType.Comma)
+            {
+                var values = new List<object?> { currentRowValue };
+                while (Current.Type == TokenType.Comma)
+                {
+                    _index++;
+                    values.Add(ParseExpression());
+                }
+
+                Expect(TokenType.RParen);
+                return lname switch
+                {
+                    "min" => values.Select(ToNumber).Min(),
+                    "max" => values.Select(ToNumber).Max(),
+                    _ => throw new ExpressionException($"'{lname}' takes a single argument."),
+                };
+            }
+
+            var argTokens = tokens.GetRange(start, _index - start);
+            argTokens.Add(new Token(TokenType.End, string.Empty));
+            Expect(TokenType.RParen);
+
+            var rows = context.AggregateRows;
+            var evaluated = new List<object?>(rows.Count);
+            foreach (var r in rows)
+            {
+                evaluated.Add(new Parser(argTokens, context.WithRow(r)).ParseExpression());
+            }
+
+            return lname switch
+            {
+                "sum" => evaluated.Sum(ToNumber),
+                "avg" or "average" => evaluated.Count == 0 ? 0d : evaluated.Average(ToNumber),
+                "count" => (double)evaluated.Count(v => v is not null && v is not string { Length: 0 }),
+                "min" => evaluated.Where(v => v is not null).Select(ToNumber).DefaultIfEmpty().Min(),
+                "max" => evaluated.Where(v => v is not null).Select(ToNumber).DefaultIfEmpty().Max(),
+                "first" => evaluated.Count > 0 ? evaluated[0] : null,
+                "last" => evaluated.Count > 0 ? evaluated[^1] : null,
+                _ => throw new ExpressionException($"Unknown aggregate '{name}'."),
+            };
+        }
+
         private object? ResolveIdentifier(string name)
         {
             switch (name)
@@ -314,19 +410,76 @@ public static class ExpressionEvaluator
             return context.Row.TryGetValue(field, out var value) ? value : null;
         }
 
-        private object? CallFunction(string name, List<object?> args) => name.ToLowerInvariant() switch
+        private object? CallFunction(string name, List<object?> args)
         {
-            "if" or "iif" => ToBool(args[0]) ? args[1] : args[2],
-            "coalesce" => args.FirstOrDefault(a => a is not null),
-            "format" => BindingResolver.FormatValue(args[0], Convert.ToString(args.ElementAtOrDefault(1), CultureInfo.InvariantCulture), context.Culture),
-            "upper" => Convert.ToString(args[0], context.Culture)?.ToUpper(context.Culture),
-            "lower" => Convert.ToString(args[0], context.Culture)?.ToLower(context.Culture),
-            "len" => (double)(Convert.ToString(args[0], CultureInfo.InvariantCulture)?.Length ?? 0),
-            "pagenumber" => (double)context.PageNumber,
-            "totalpages" => (double)context.TotalPages,
-            "now" => context.Now,
-            _ => throw new ExpressionException($"Unknown function '{name}'."),
-        };
+            string Str(int i) => Convert.ToString(args.ElementAtOrDefault(i), context.Culture) ?? string.Empty;
+            double Nm(int i) => ToNumber(args.ElementAtOrDefault(i));
+            DateTime Dt(int i) => args.ElementAtOrDefault(i) switch
+            {
+                DateTime d => d,
+                DateTimeOffset o => o.DateTime,
+                string s when DateTime.TryParse(s, context.Culture, DateTimeStyles.None, out var d) => d,
+                _ => context.Now,
+            };
+
+            return name.ToLowerInvariant() switch
+            {
+                "if" or "iif" => ToBool(args[0]) ? args[1] : args[2],
+                "coalesce" => args.FirstOrDefault(a => a is not null),
+                "format" => BindingResolver.FormatValue(args[0], Convert.ToString(args.ElementAtOrDefault(1), CultureInfo.InvariantCulture), context.Culture),
+
+                "upper" => Str(0).ToUpper(context.Culture),
+                "lower" => Str(0).ToLower(context.Culture),
+                "trim" => Str(0).Trim(),
+                "len" => (double)Str(0).Length,
+                "left" => Slice(Str(0), 0, (int)Nm(1)),
+                "right" => Slice(Str(0), Math.Max(0, Str(0).Length - (int)Nm(1)), (int)Nm(1)),
+                "substring" => args.Count >= 3
+                    ? Slice(Str(0), (int)Nm(1), (int)Nm(2))
+                    : Slice(Str(0), (int)Nm(1), Str(0).Length),
+                "replace" => Str(0).Replace(Str(1), Str(2), StringComparison.Ordinal),
+                "contains" => Str(0).Contains(Str(1), StringComparison.OrdinalIgnoreCase),
+
+                "abs" => Math.Abs(Nm(0)),
+                "round" => Math.Round(Nm(0), args.Count >= 2 ? (int)Nm(1) : 0, MidpointRounding.AwayFromZero),
+                "floor" => Math.Floor(Nm(0)),
+                "ceiling" or "ceil" => Math.Ceiling(Nm(0)),
+                "sqrt" => Math.Sqrt(Nm(0)),
+                "pow" => Math.Pow(Nm(0), Nm(1)),
+                "sign" => (double)Math.Sign(Nm(0)),
+                "trunc" => Math.Truncate(Nm(0)),
+                "mod" => Nm(1) == 0 ? 0d : Nm(0) % Nm(1),
+
+                "now" => context.Now,
+                "today" => context.Now.Date,
+                "year" => (double)Dt(0).Year,
+                "month" => (double)Dt(0).Month,
+                "day" => (double)Dt(0).Day,
+                "adddays" => Dt(0).AddDays(Nm(1)),
+
+                "pagenumber" => (double)context.PageNumber,
+                "totalpages" => (double)context.TotalPages,
+                "rownumber" => (double)context.RowNumber,
+                "totalrows" => (double)context.TotalRows,
+
+                _ => throw new ExpressionException($"Unknown function '{name}'."),
+            };
+        }
+
+        private static string Slice(string s, int start, int length)
+        {
+            if (start < 0)
+            {
+                start = 0;
+            }
+
+            if (start >= s.Length || length <= 0)
+            {
+                return string.Empty;
+            }
+
+            return s.Substring(start, Math.Min(length, s.Length - start));
+        }
 
         private bool IsKeyword(string keyword) =>
             Current.Type == TokenType.Identifier && string.Equals(Current.Text, keyword, StringComparison.OrdinalIgnoreCase);
@@ -338,9 +491,26 @@ public static class ExpressionEvaluator
             null => 0,
             double d => d,
             bool b => b ? 1 : 0,
-            IConvertible c => c.ToDouble(CultureInfo.InvariantCulture),
+            DateTime dt => dt.ToOADate(),
+            IConvertible c => SafeToDouble(c),
             _ => double.TryParse(value.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var n) ? n : 0,
         };
+
+        private static double SafeToDouble(IConvertible c)
+        {
+            try
+            {
+                return c.ToDouble(CultureInfo.InvariantCulture);
+            }
+            catch (FormatException)
+            {
+                return 0;
+            }
+            catch (InvalidCastException)
+            {
+                return 0;
+            }
+        }
 
         private static bool ToBool(object? value) => value switch
         {

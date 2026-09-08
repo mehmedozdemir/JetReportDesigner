@@ -15,6 +15,9 @@ public sealed class BindingContext(
     private static readonly IReadOnlyDictionary<string, object?> Empty =
         new Dictionary<string, object?>();
 
+    private static readonly IReadOnlyList<IReadOnlyDictionary<string, object?>> NoRows =
+        Array.Empty<IReadOnlyDictionary<string, object?>>();
+
     public IReadOnlyDictionary<string, object?> Row { get; } = row ?? Empty;
 
     public IReadOnlyDictionary<string, object?> Parameters { get; } = parameters ?? Empty;
@@ -28,11 +31,28 @@ public sealed class BindingContext(
     /// <summary>Culture applied to number/date formatting and case functions.</summary>
     public CultureInfo Culture { get; init; } = CultureInfo.CurrentCulture;
 
+    /// <summary>Rows that <c>sum()/avg()/count()/min()/max()</c> iterate — the natural scope of the element's band.</summary>
+    public IReadOnlyList<IReadOnlyDictionary<string, object?>> AggregateRows { get; init; } = NoRows;
+
+    /// <summary>1-based position of the current detail row; 0 outside a detail band.</summary>
+    public int RowNumber { get; init; }
+
+    /// <summary>Number of rows in the current aggregate scope.</summary>
+    public int TotalRows { get; init; }
+
     public BindingContext WithRow(IReadOnlyDictionary<string, object?>? newRow) =>
-        new(newRow, Parameters) { PageNumber = PageNumber, TotalPages = TotalPages, Now = Now, Culture = Culture };
+        new(newRow, Parameters)
+        {
+            PageNumber = PageNumber, TotalPages = TotalPages, Now = Now, Culture = Culture,
+            AggregateRows = AggregateRows, RowNumber = RowNumber, TotalRows = TotalRows,
+        };
 
     public BindingContext WithPaging(int pageNumber, int totalPages) =>
-        new(Row, Parameters) { PageNumber = pageNumber, TotalPages = totalPages, Now = Now, Culture = Culture };
+        new(Row, Parameters)
+        {
+            PageNumber = pageNumber, TotalPages = totalPages, Now = Now, Culture = Culture,
+            AggregateRows = AggregateRows, RowNumber = RowNumber, TotalRows = TotalRows,
+        };
 }
 
 /// <summary>

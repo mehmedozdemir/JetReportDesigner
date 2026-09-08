@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { useDesigner } from "../store";
 import { FormatField } from "./FormatDialog";
+import { FormulaField } from "./FormulaDialog";
 import { ConditionalFormatDialog } from "./ConditionalFormatDialog";
 import type {
   AggregateFunction,
@@ -358,6 +359,7 @@ function ElementProperties({
 }) {
   const sources = useDesigner((st) => st.report!.dataSources);
   const culture = useDesigner((st) => st.report?.culture) || undefined;
+  const fieldNames = sources.flatMap((src) => src.fields.map((f) => f.name));
   const s = element.style ?? {};
   const isText = element.type === "label" || element.type === "field" || element.type === "pageInfo";
   const inFooter = bandType === "groupFooter" || bandType === "pageFooter" || bandType === "reportFooter";
@@ -395,11 +397,21 @@ function ElementProperties({
       </div>
 
       {element.type === "label" && (
-        <Text label="Text" value={element.text ?? ""} onChange={(v) => onPatch((e) => (e.text = v))} />
+        <FormulaField
+          label="Text"
+          value={element.text ?? ""}
+          fields={fieldNames}
+          onChange={(v) => onPatch((e) => (e.text = v))}
+        />
       )}
       {(element.type === "field" || element.type === "pageInfo") && (
         <>
-          <Text label="Value / binding" value={element.value ?? ""} onChange={(v) => onPatch((e) => (e.value = v))} />
+          <FormulaField
+            label="Value / binding"
+            value={element.value ?? ""}
+            fields={fieldNames}
+            onChange={(v) => onPatch((e) => (e.value = v))}
+          />
           <FormatField
             value={element.format ?? ""}
             locale={culture}

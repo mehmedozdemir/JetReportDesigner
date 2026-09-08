@@ -129,7 +129,7 @@ public static class ElementEmitter
         }
 
         var text =
-            element.Type == ElementType.Label ? BindingResolver.ResolveText(element.Text, context)
+            element.Type == ElementType.Label ? BindingResolver.ResolveValue(element.Text, element.Format, context)
             : element.Aggregate != AggregateFunction.None && aggregateText?.Invoke(element) is { } agg ? agg
             : BindingResolver.ResolveValue(element.Value, element.Format, context);
 

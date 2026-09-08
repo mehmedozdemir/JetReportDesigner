@@ -679,6 +679,45 @@ body {
 .start-empty svg { width: 26px; height: 26px; opacity: 0.6; }
 .start-empty p { margin: 0; font-size: 12px; }
 
+/* formula editor */
+.formula-dialog { width: 620px; }
+.formula-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.formula-input {
+  width: 100%; resize: vertical;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.5;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  background: var(--bg-surface); color: var(--text-primary);
+}
+.formula-input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-muted); }
+.formula-body > .hint code,
+.formula-doc code {
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px;
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px;
+}
+.formula-cats { display: flex; flex-wrap: wrap; gap: 4px; }
+.formula-cats button {
+  font: inherit; font-size: 11.5px; padding: 4px 9px;
+  border: 1px solid var(--border-strong); border-radius: 999px;
+  background: var(--bg-surface); color: var(--text-secondary); cursor: pointer;
+}
+.formula-cats button:hover:not(:disabled) { border-color: var(--accent); color: var(--text-primary); }
+.formula-cats button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.formula-cats button:disabled { opacity: 0.4; cursor: default; }
+.formula-list {
+  list-style: none; margin: 0; padding: 6px; height: 168px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-elevated);
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; align-content: start;
+}
+.formula-list button {
+  width: 100%; text-align: left; font: inherit; cursor: pointer;
+  padding: 5px 8px; border: 1px solid transparent; border-radius: var(--radius-sm);
+  background: var(--bg-surface); color: var(--text-primary);
+}
+.formula-list button:hover { border-color: var(--accent); }
+.formula-sig { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; }
+.formula-doc { margin: 0; min-height: 32px; font-size: 11.5px; color: var(--text-secondary); }
+
 /* settings dialog */
 .settings-dialog { width: 460px; }
 .settings-body { padding: 6px 14px 14px; overflow-y: auto; max-height: 66vh; }
