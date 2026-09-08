@@ -43,6 +43,10 @@ internal sealed class GlobalExceptionHandler(IProblemDetailsService problemDetai
                 StatusCodes.Status422UnprocessableEntity,
                 "The report's data source could not be resolved.",
                 new Dictionary<string, string[]> { ["dataSource"] = [exception.Message] }),
+            System.Data.Common.DbException => (
+                StatusCodes.Status422UnprocessableEntity,
+                "The data source could not be queried.",
+                new Dictionary<string, string[]> { ["dataSource"] = [exception.Message] }),
             _ => (0, string.Empty, null),
         };
 

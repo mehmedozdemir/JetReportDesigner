@@ -488,6 +488,10 @@ function ConnectionsManager({
             <button className="mini" onClick={create} disabled={!add.name.trim() || !add.connStr.trim()}>
               <Plus /> Add
             </button>
+            <p className="hint" style={{ margin: "2px 0 0" }}>
+              SQL Server with a self-signed certificate needs{" "}
+              <code>TrustServerCertificate=True;Encrypt=False</code> in the string.
+            </p>
           </div>
 
           {err && (

@@ -8,10 +8,30 @@ import type {
   ReportSummary,
 } from "./types";
 
+/** Pull a readable message out of an RFC 7807 ProblemDetails body, falling back to the raw text. */
+function problemMessage(body: string): string {
+  try {
+    const p = JSON.parse(body) as {
+      title?: string;
+      detail?: string;
+      errors?: Record<string, string[] | string>;
+    };
+    const fieldErrors = p.errors
+      ? Object.values(p.errors)
+          .flatMap((v) => (Array.isArray(v) ? v : [v]))
+          .filter(Boolean)
+      : [];
+    const parts = [p.title ?? p.detail, ...fieldErrors].filter(Boolean) as string[];
+    return parts.length ? parts.join(" — ") : body;
+  } catch {
+    return body;
+  }
+}
+
 async function json<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`${response.status} ${response.statusText}${body ? `: ${body}` : ""}`);
+    throw new Error(body ? problemMessage(body) : `${response.status} ${response.statusText}`);
   }
   return (await response.json()) as T;
 }
@@ -99,7 +119,7 @@ export const api = {
       headers: jsonHeaders,
       body: JSON.stringify({ definition, parameters }),
     }).then(async (r) => {
-      if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
       return r.text();
     }),
 
@@ -109,7 +129,7 @@ export const api = {
       headers: jsonHeaders,
       body: JSON.stringify({ definition, parameters }),
     }).then(async (r) => {
-      if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
       return r.blob();
     }),
 };
