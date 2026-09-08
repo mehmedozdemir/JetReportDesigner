@@ -1,5 +1,6 @@
 using FluentValidation;
 using JetReportDesigner.Api.Infrastructure;
+using Microsoft.AspNetCore.DataProtection;
 using JetReportDesigner.Core.Serialization;
 using JetReportDesigner.Core.Validation;
 using JetReportDesigner.DataSources;
@@ -35,6 +36,12 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddValidatorsFromAssemblyContaining<ReportDefinitionValidator>();
+
+// Connection strings for registered database connections are encrypted at rest.
+builder.Services.AddDataProtection().SetApplicationName("JetReportDesigner");
+builder.Services.AddSingleton<
+    JetReportDesigner.Storage.Connections.IConnectionSecretProtector,
+    JetReportDesigner.Api.Infrastructure.DataProtectionSecretProtector>();
 
 // --- Data sources + rendering ---
 var restOptions = builder.Configuration.GetSection(RestSourceOptions.SectionName).Get<RestSourceOptions>()

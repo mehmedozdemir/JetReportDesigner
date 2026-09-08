@@ -1,3 +1,4 @@
+using JetReportDesigner.Storage.Connections;
 using JetReportDesigner.Storage.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,7 @@ public static class DependencyInjection
         services.TryAddSingletonTimeProvider();
         services.AddDbContext<JetReportDbContext>(builder => provider.Configure(builder, options.ConnectionString));
         services.AddScoped<IReportRepository, ReportRepository>();
+        services.AddScoped<IConnectionRepository, ConnectionRepository>();
         return services;
     }
 
