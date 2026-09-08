@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { api } from "./api";
 import { useDesigner } from "./store";
+import { usePrefs } from "./prefs";
 import { emptyBandedReport, emptyFreeReport, type ReportDefinition, type ReportSummary } from "./types";
 import { Canvas } from "./components/Canvas";
+import { SettingsDialog } from "./components/SettingsDialog";
 import { StartScreen } from "./components/StartScreen";
 import { Toolbar } from "./components/Toolbar";
 import { Toolbox } from "./components/Toolbox";
@@ -21,6 +23,8 @@ export function App() {
   const [tab, setTab] = useState<"design" | "preview">("design");
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const [showStart, setShowStart] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const autoSaveSeconds = usePrefs((s) => s.autoSaveSeconds);
 
   const report = useDesigner((s) => s.report);
   const reportId = useDesigner((s) => s.reportId);
@@ -95,13 +99,14 @@ export function App() {
     }
   };
 
-  const createReport = async (mode: "free" | "banded" = "free") => {
+  const createReport = async (mode?: "free" | "banded") => {
+    const layout = mode ?? usePrefs.getState().defaultLayout;
     setBusy(true);
     setError(null);
     try {
       const name = `Untitled ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
       const created = await api.createReport(
-        mode === "banded" ? emptyBandedReport(name) : emptyFreeReport(name),
+        layout === "banded" ? emptyBandedReport(name) : emptyFreeReport(name),
       );
       load(created);
       await refresh();
@@ -161,14 +166,33 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (autoSaveSeconds <= 0) return;
+    let running = false;
+    const id = window.setInterval(async () => {
+      if (running) return;
+      const s = useDesigner.getState();
+      if (!s.dirty || !s.reportId) return;
+      running = true;
+      try {
+        await save();
+      } finally {
+        running = false;
+      }
+    }, autoSaveSeconds * 1000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSaveSeconds]);
+
   return (
     <div className="app">
       <Toolbar
         tab={tab}
         busy={busy}
         onSetTab={setTab}
-        onNew={() => void createReport("free")}
+        onNew={() => void createReport()}
         onShowStart={() => setShowStart(true)}
+        onSettings={() => setShowSettings(true)}
         onSave={() => void save()}
         onExport={() => void exportPdf()}
       />
@@ -225,6 +249,8 @@ export function App() {
           />
         </div>
       )}
+
+      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
 
       {error && (
         <div className="toast" role="alert">

@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { AlignEndHorizontal, AlignStartHorizontal, Rows2, Rows3, Table2 } from "lucide-react";
 import { useDesigner, type ElementLocation } from "../store";
+import { usePrefs } from "../prefs";
 import { pageDimensions, type Band, type ElementType } from "../types";
 import { ElementView } from "./ElementView";
+import { Ruler } from "./Ruler";
 
 const BAND_META: Record<Band["type"], { label: string; Icon: LucideIcon }> = {
   reportHeader: { label: "Report header", Icon: AlignStartHorizontal },
@@ -15,8 +17,18 @@ const BAND_META: Record<Band["type"], { label: string; Icon: LucideIcon }> = {
   reportFooter: { label: "Report footer", Icon: AlignEndHorizontal },
 };
 
+type Refs = {
+  wrapRef: React.RefObject<HTMLDivElement>;
+  pageRef: React.RefObject<HTMLDivElement>;
+};
+
 export function Canvas({ active = true }: { active?: boolean }) {
   const layoutMode = useDesigner((s) => s.report?.layoutMode);
+  const showRulers = usePrefs((s) => s.showRulers);
+  const showGrid = usePrefs((s) => s.showGrid);
+  const unit = usePrefs((s) => s.rulerUnit);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -62,11 +74,30 @@ export function Canvas({ active = true }: { active?: boolean }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [active]);
 
-  if (!layoutMode) return <div className="canvas-wrap empty">Select or create a report</div>;
-  return layoutMode === "free" ? <FreeCanvas /> : <BandedCanvas />;
+  if (!layoutMode) {
+    return (
+      <div className="canvas-frame">
+        <div className="canvas-wrap empty">Select or create a report</div>
+      </div>
+    );
+  }
+
+  const refs: Refs = { wrapRef, pageRef };
+  return (
+    <div className={`canvas-frame${showRulers ? " ruled" : ""}${showGrid ? "" : " no-grid"}`}>
+      {showRulers && (
+        <>
+          <div className="ruler-corner">{unit}</div>
+          <Ruler axis="x" wrapRef={wrapRef} pageRef={pageRef} />
+          <Ruler axis="y" wrapRef={wrapRef} pageRef={pageRef} />
+        </>
+      )}
+      {layoutMode === "free" ? <FreeCanvas {...refs} /> : <BandedCanvas {...refs} />}
+    </div>
+  );
 }
 
-function useDropHandler(pageRef: React.RefObject<HTMLDivElement | null>, location: ElementLocation) {
+function useDropHandler(pageRef: React.RefObject<HTMLDivElement>, location: ElementLocation) {
   const zoom = useDesigner((s) => s.zoom);
   const addElement = useDesigner((s) => s.addElement);
   const mutateElement = useDesigner((s) => s.mutateElement);
@@ -89,12 +120,11 @@ function useDropHandler(pageRef: React.RefObject<HTMLDivElement | null>, locatio
   };
 }
 
-function FreeCanvas() {
+function FreeCanvas({ wrapRef, pageRef }: Refs) {
   const report = useDesigner((s) => s.report)!;
   const zoom = useDesigner((s) => s.zoom);
   const select = useDesigner((s) => s.select);
   const guides = useDesigner((s) => s.guides);
-  const pageRef = useRef<HTMLDivElement>(null);
   const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
   const { width, height } = pageDimensions(report.page);
   const onDrop = useDropHandler(pageRef, { container: "body" });
@@ -131,7 +161,7 @@ function FreeCanvas() {
   };
 
   return (
-    <div className="canvas-wrap" onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+    <div className="canvas-wrap" ref={wrapRef} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
       <div
         className="page"
         ref={pageRef}
@@ -160,15 +190,19 @@ function FreeCanvas() {
   );
 }
 
-function BandedCanvas() {
+function BandedCanvas({ wrapRef, pageRef }: Refs) {
   const report = useDesigner((s) => s.report)!;
   const zoom = useDesigner((s) => s.zoom);
   const { width } = pageDimensions(report.page);
   const usableWidth = width - report.page.margins.left - report.page.margins.right;
 
   return (
-    <div className="canvas-wrap">
-      <div className="band-stack" style={{ width: usableWidth, transform: `scale(${zoom})`, transformOrigin: "top center" }}>
+    <div className="canvas-wrap" ref={wrapRef}>
+      <div
+        className="band-stack"
+        ref={pageRef}
+        style={{ width: usableWidth, transform: `scale(${zoom})`, transformOrigin: "top center" }}
+      >
         {report.bands.length === 0 && (
           <div className="empty-hint-block">
             <Rows3 />
@@ -242,4 +276,3 @@ function Margins() {
   const m = report.page.margins;
   return <div className="page-margins" style={{ inset: `${m.top}px ${m.right}px ${m.bottom}px ${m.left}px` }} />;
 }
-

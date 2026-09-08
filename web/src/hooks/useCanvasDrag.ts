@@ -1,13 +1,20 @@
 import { useCallback } from "react";
 import { useDesigner } from "../store";
+import { usePrefs } from "../prefs";
 import { pageDimensions } from "../types";
 import type { Bounds, ReportElement } from "../types";
 
 export type ResizeHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
 
-const GRID = 4;
-const SNAP = 5;
-const snap = (v: number) => Math.round(v / GRID) * GRID;
+const GUIDE_TOLERANCE = 5;
+
+/** A grid-snap function honouring the current preferences (read at drag start). */
+function gridSnapper(): (v: number) => number {
+  const p = usePrefs.getState();
+  if (!p.snapToGrid) return (v) => Math.round(v);
+  const g = Math.max(1, Math.round(p.gridSize));
+  return (v) => Math.round(v / g) * g;
+}
 
 function allElements(): ReportElement[] {
   const r = useDesigner.getState().report;
@@ -41,7 +48,7 @@ function snapAxis(edges: number[], targets: number[]): { delta: number; guide: n
   for (const edge of edges) {
     for (const t of targets) {
       const d = t - edge;
-      if (Math.abs(d) <= SNAP && (best === null || Math.abs(d) < Math.abs(best.delta))) {
+      if (Math.abs(d) <= GUIDE_TOLERANCE && (best === null || Math.abs(d) < Math.abs(best.delta))) {
         best = { delta: d, guide: t };
       }
     }
@@ -74,6 +81,8 @@ export function useCanvasDrag() {
       const py = e.clientY;
       checkpoint();
       const setGuides = useDesigner.getState().setGuides;
+      const snap = gridSnapper();
+      const useGuides = usePrefs.getState().snapToGuides;
 
       const onMove = (ev: PointerEvent) => {
         let dx = snap((ev.clientX - px) / zoom);
@@ -81,7 +90,7 @@ export function useCanvasDrag() {
         let guideX: number | null = null;
         let guideY: number | null = null;
 
-        if (primary && !ev.altKey) {
+        if (primary && !ev.altKey && useGuides) {
           const sx = snapAxis([primary.x + dx, primary.x + primary.width / 2 + dx, primary.x + primary.width + dx], targets.xs);
           const sy = snapAxis([primary.y + dy, primary.y + primary.height / 2 + dy, primary.y + primary.height + dy], targets.ys);
           dx += sx.delta;
@@ -126,6 +135,7 @@ export function useCanvasDrag() {
       const px = e.clientX;
       const py = e.clientY;
       checkpoint();
+      const snap = gridSnapper();
 
       const onMove = (ev: PointerEvent) => {
         const dx = (ev.clientX - px) / zoom;

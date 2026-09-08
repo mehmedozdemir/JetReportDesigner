@@ -9,6 +9,7 @@ import {
   Redo2,
   Rows3,
   Save,
+  Settings,
   SquareDashed,
   Undo2,
   ZoomIn,
@@ -33,6 +34,7 @@ interface ToolbarProps {
   onSetTab: (tab: "design" | "preview") => void;
   onNew: () => void;
   onShowStart: () => void;
+  onSettings: () => void;
   onSave: () => void;
   onExport: () => void;
 }
@@ -43,6 +45,7 @@ export function Toolbar({
   onSetTab,
   onNew,
   onShowStart,
+  onSettings,
   onSave,
   onExport,
 }: ToolbarProps) {
@@ -184,6 +187,10 @@ export function Toolbar({
       </div>
 
       <div className="spacer" />
+
+      <button className="btn icon" onClick={onSettings} title="Settings" aria-label="Settings">
+        <Settings />
+      </button>
 
       <button className="btn outline" onClick={onExport} disabled={busy || !report} title="Export as PDF">
         <FileDown />
