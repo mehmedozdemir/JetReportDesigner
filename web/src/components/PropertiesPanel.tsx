@@ -19,6 +19,10 @@ import {
   Layers,
   Minus,
   MousePointerSquareDashed,
+  PanelBottom,
+  PanelLeft,
+  PanelRight,
+  PanelTop,
   Plus,
   Rows3,
   Square,
@@ -33,13 +37,13 @@ import type {
   AggregateFunction,
   AggregateScope,
   Band,
+  BorderSpec,
   ElementType,
   PageSize,
   ReportElement,
   TextAlign,
   VerticalAlign,
 } from "../types";
-import { edge } from "../types";
 
 const ELEMENT_ICON: Record<ElementType, LucideIcon> = {
   label: TypeIcon,
@@ -148,10 +152,7 @@ function MultiProperties() {
   const align = common(elements, (e) => (e.style?.align as TextAlign | undefined) ?? undefined);
   const vAlign = common(elements, (e) => (e.style?.vAlign as VerticalAlign | undefined) ?? undefined);
   const color = common(elements, (e) => e.style?.color ?? null);
-  const borderW = common(elements, (e) => {
-    const b = e.style?.border;
-    return b ? Math.max(b.top, b.right, b.bottom, b.left) : 0;
-  });
+  const borderMixed = common(elements, (e) => JSON.stringify(e.style?.border ?? null)) === undefined;
 
   return (
     <div className="panel">
@@ -190,26 +191,16 @@ function MultiProperties() {
         </>
       )}
 
-      <div className="grid2">
-        <label className="field">
-          <span>Color{color === undefined ? " — mixed" : ""}</span>
-          <input type="color" value={color ?? "#111827"} onChange={(e) => mutateSelected((el) => setStyle(el, "color", e.target.value))} />
-        </label>
-        <label className="field">
-          <span>Border{borderW === undefined ? " — mixed" : ""}</span>
-          <input
-            type="number"
-            value={borderW ?? ""}
-            placeholder="mixed"
-            onChange={(e) =>
-              mutateSelected((el) => {
-                const w = Number(e.target.value) || 0;
-                setStyle(el, "border", w > 0 ? edge(w, el.style?.border?.color ?? "#111827") : null);
-              })
-            }
-          />
-        </label>
-      </div>
+      <label className="field">
+        <span>Color{color === undefined ? " — mixed" : ""}</span>
+        <input type="color" value={color ?? "#111827"} onChange={(e) => mutateSelected((el) => setStyle(el, "color", e.target.value))} />
+      </label>
+
+      <BorderPicker
+        border={elements[0]?.style?.border ?? null}
+        mixed={borderMixed}
+        onChange={(next) => mutateSelected((el) => setStyle(el, "border", next))}
+      />
     </div>
   );
 }
@@ -496,14 +487,7 @@ function ElementProperties({
         <Color label="Background" value={s.background ?? "#ffffff"} onChange={(v) => onPatch((e) => setStyle(e, "background", v))} allowClear cleared={!s.background} onClear={() => onPatch((e) => setStyle(e, "background", null))} />
       </div>
 
-      <div className="grid2">
-        <Num
-          label="Border"
-          value={s.border ? Math.max(s.border.top, s.border.right, s.border.bottom, s.border.left) : 0}
-          onChange={(v) => onPatch((e) => setStyle(e, "border", v > 0 ? edge(v, e.style?.border?.color ?? "#111827") : null))}
-        />
-        <Color label="Border color" value={s.border?.color ?? "#111827"} onChange={(v) => onPatch((e) => { if (e.style?.border) e.style.border.color = v; })} />
-      </div>
+      <BorderPicker border={s.border} onChange={(next) => onPatch((e) => setStyle(e, "border", next))} />
     </div>
   );
 }
@@ -656,6 +640,98 @@ function VAlignPicker({ value, onChange }: { value: VerticalAlign; onChange: (v:
         </button>
       ))}
     </span>
+  );
+}
+
+type Sides = { top: boolean; right: boolean; bottom: boolean; left: boolean };
+const ALL_SIDES: Sides = { top: true, right: true, bottom: true, left: true };
+
+/** Border width + per-side toggles + colour. Emits a full BorderSpec, or null when nothing is enabled. */
+function BorderPicker({
+  border,
+  onChange,
+  mixed,
+}: {
+  border: BorderSpec | null | undefined;
+  onChange: (next: BorderSpec | null) => void;
+  mixed?: boolean;
+}) {
+  const b = border ?? null;
+  const width = b ? Math.max(b.top, b.right, b.bottom, b.left) : 0;
+  const on: Sides = {
+    top: !!b && b.top > 0,
+    right: !!b && b.right > 0,
+    bottom: !!b && b.bottom > 0,
+    left: !!b && b.left > 0,
+  };
+  const anySide = on.top || on.right || on.bottom || on.left;
+  const color = b?.color ?? "#111827";
+
+  const compose = (sides: Sides, w: number, c: string): BorderSpec | null =>
+    w <= 0 || !(sides.top || sides.right || sides.bottom || sides.left)
+      ? null
+      : {
+          top: sides.top ? w : 0,
+          right: sides.right ? w : 0,
+          bottom: sides.bottom ? w : 0,
+          left: sides.left ? w : 0,
+          color: c,
+        };
+
+  const items: [keyof Sides, LucideIcon, string][] = [
+    ["top", PanelTop, "Top border"],
+    ["left", PanelLeft, "Left border"],
+    ["bottom", PanelBottom, "Bottom border"],
+    ["right", PanelRight, "Right border"],
+  ];
+
+  return (
+    <div className="field">
+      <span>Border{mixed ? " — mixed" : ""}</span>
+      <div className="border-ctl">
+        <input
+          type="number"
+          min={0}
+          value={width || ""}
+          placeholder="0"
+          title="Border width (pt)"
+          onChange={(e) => onChange(compose(anySide ? on : ALL_SIDES, Number(e.target.value) || 0, color))}
+        />
+        <span className="border-sides">
+          {items.map(([side, Icon, label]) => (
+            <button
+              key={side}
+              type="button"
+              className={`mini ${on[side] ? "on" : ""}`}
+              title={label}
+              aria-label={label}
+              aria-pressed={on[side]}
+              onClick={() => onChange(compose({ ...on, [side]: !on[side] }, width > 0 ? width : 1, color))}
+            >
+              <Icon />
+            </button>
+          ))}
+        </span>
+        <input
+          type="color"
+          value={color}
+          title="Border colour"
+          onChange={(e) => onChange(compose(anySide ? on : ALL_SIDES, width, e.target.value))}
+        />
+      </div>
+      <span className="row" style={{ gap: 4, marginTop: 4 }}>
+        <button
+          type="button"
+          className="mini"
+          onClick={() => onChange(compose(ALL_SIDES, width > 0 ? width : 1, color))}
+        >
+          All
+        </button>
+        <button type="button" className="mini" onClick={() => onChange(null)}>
+          None
+        </button>
+      </span>
+    </div>
   );
 }
 

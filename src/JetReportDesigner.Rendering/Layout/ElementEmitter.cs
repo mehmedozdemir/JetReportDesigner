@@ -50,23 +50,33 @@ public static class ElementEmitter
             }
 
             case ElementType.Rectangle:
-                yield return new RectanglePrimitive
-                {
-                    X = x, Y = y, Width = b.Width, Height = b.Height,
-                    FillColorHex = style.Background,
-                    BorderThicknessPx = style.Border is { } rb ? MaxEdge(rb) : 1,
-                    BorderColorHex = style.Border?.Color ?? style.Color,
-                };
-                yield break;
-
-            case ElementType.Image:
-                if (style.Border is { } ib)
+            {
+                if (style.Background is { } rbg)
                 {
                     yield return new RectanglePrimitive
                     {
                         X = x, Y = y, Width = b.Width, Height = b.Height,
-                        BorderThicknessPx = MaxEdge(ib), BorderColorHex = ib.Color,
+                        FillColorHex = rbg, BorderThicknessPx = 0,
                     };
+                }
+
+                var rectBorder = style.Border
+                    ?? new BorderSpec { Top = 1, Right = 1, Bottom = 1, Left = 1, Color = style.Color };
+                foreach (var p in BorderPrimitives(x, y, b.Width, b.Height, rectBorder))
+                {
+                    yield return p;
+                }
+
+                yield break;
+            }
+
+            case ElementType.Image:
+                if (style.Border is { } ib)
+                {
+                    foreach (var p in BorderPrimitives(x, y, b.Width, b.Height, ib))
+                    {
+                        yield return p;
+                    }
                 }
 
                 yield break;
@@ -106,7 +116,10 @@ public static class ElementEmitter
 
         if (style.Border is { } border && MaxEdge(border) > 0)
         {
-            yield return new RectanglePrimitive { X = x, Y = y, Width = b.Width, Height = b.Height, BorderThicknessPx = MaxEdge(border), BorderColorHex = border.Color };
+            foreach (var p in BorderPrimitives(x, y, b.Width, b.Height, border))
+            {
+                yield return p;
+            }
         }
 
         var text =
@@ -153,4 +166,42 @@ public static class ElementEmitter
     }
 
     internal static double MaxEdge(BorderSpec b) => Math.Max(Math.Max(b.Top, b.Right), Math.Max(b.Bottom, b.Left));
+
+    /// <summary>
+    /// Border render primitives for a box. A uniform border (all four edges equal and
+    /// positive) is one stroked rectangle; otherwise each positive edge is its own line.
+    /// </summary>
+    internal static IEnumerable<RenderPrimitive> BorderPrimitives(
+        double x, double y, double w, double h, BorderSpec border)
+    {
+        if (border.Top > 0 && border.Top == border.Right && border.Right == border.Bottom && border.Bottom == border.Left)
+        {
+            yield return new RectanglePrimitive
+            {
+                X = x, Y = y, Width = w, Height = h,
+                BorderThicknessPx = border.Top, BorderColorHex = border.Color,
+            };
+            yield break;
+        }
+
+        if (border.Top > 0)
+        {
+            yield return new LinePrimitive { X = x, Y = y, X2 = x + w, Y2 = y, ThicknessPx = border.Top, ColorHex = border.Color };
+        }
+
+        if (border.Bottom > 0)
+        {
+            yield return new LinePrimitive { X = x, Y = y + h, X2 = x + w, Y2 = y + h, ThicknessPx = border.Bottom, ColorHex = border.Color };
+        }
+
+        if (border.Left > 0)
+        {
+            yield return new LinePrimitive { X = x, Y = y, X2 = x, Y2 = y + h, ThicknessPx = border.Left, ColorHex = border.Color };
+        }
+
+        if (border.Right > 0)
+        {
+            yield return new LinePrimitive { X = x + w, Y = y, X2 = x + w, Y2 = y + h, ThicknessPx = border.Right, ColorHex = border.Color };
+        }
+    }
 }
