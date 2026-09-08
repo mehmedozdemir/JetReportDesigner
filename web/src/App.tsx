@@ -177,8 +177,16 @@ export function App() {
             ))}
           </div>
         )}
-        {report && tab === "design" && <Canvas />}
-        {report && tab === "preview" && <PreviewPane parameters={paramValues} />}
+        {report && (
+          <>
+            <div style={{ flex: 1, minHeight: 0, display: tab === "design" ? "flex" : "none" }}>
+              <Canvas active={tab === "design"} />
+            </div>
+            <div style={{ flex: 1, minHeight: 0, display: tab === "preview" ? "flex" : "none" }}>
+              <PreviewPane parameters={paramValues} active={tab === "preview"} />
+            </div>
+          </>
+        )}
       </div>
 
       <div className="right">

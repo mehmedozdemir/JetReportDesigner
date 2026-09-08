@@ -3,14 +3,20 @@ import { AlertTriangle, Eye, Loader2 } from "lucide-react";
 import { api } from "../api";
 import { useDesigner } from "../store";
 
-export function PreviewPane({ parameters }: { parameters: Record<string, unknown> }) {
+export function PreviewPane({
+  parameters,
+  active,
+}: {
+  parameters: Record<string, unknown>;
+  active: boolean;
+}) {
   const report = useDesigner((s) => s.report);
   const [html, setHtml] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!report) return;
+    if (!report || !active) return;
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -22,7 +28,7 @@ export function PreviewPane({ parameters }: { parameters: Record<string, unknown
     return () => {
       cancelled = true;
     };
-  }, [report, parameters]);
+  }, [report, parameters, active]);
 
   return (
     <div className="preview-wrap">

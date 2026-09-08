@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   AlignCenter,
@@ -82,15 +83,134 @@ export function PropertiesPanel() {
   }
 
   if (selectedIds.length > 1) {
-    return (
-      <div className="panel">
-        <h2><BoxSelect /> Selection</h2>
-        <p className="hint">{selectedIds.length} elements selected</p>
-      </div>
-    );
+    return <MultiProperties />;
   }
 
   return <PageProperties />;
+}
+
+const FONT_FAMILIES = [
+  "Helvetica",
+  "Arial",
+  "Verdana",
+  "Times New Roman",
+  "Georgia",
+  "Courier New",
+  "Consolas",
+];
+
+function FontFamilySelect({
+  value,
+  onChange,
+}: {
+  value: string | null | undefined;
+  onChange: (v: string | null) => void;
+}) {
+  const known = value && FONT_FAMILIES.includes(value);
+  return (
+    <label className="field">
+      <span>Font</span>
+      <select value={known ? (value as string) : ""} onChange={(e) => onChange(e.target.value || null)}>
+        <option value="">— inherit{value && !known ? ` (${value})` : ""} —</option>
+        {FONT_FAMILIES.map((f) => (
+          <option key={f} value={f}>{f}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/** The value shared by every element (via getter), or undefined when they differ. */
+function common<T>(elements: ReportElement[], getter: (el: ReportElement) => T): T | undefined {
+  if (elements.length === 0) return undefined;
+  const first = getter(elements[0]);
+  return elements.every((el) => Object.is(getter(el), first)) ? first : undefined;
+}
+
+function MultiProperties() {
+  const report = useDesigner((s) => s.report);
+  const selectedIds = useDesigner((s) => s.selectedIds);
+  const mutateSelected = useDesigner((s) => s.mutateSelected);
+
+  const elements = useMemo(() => {
+    if (!report) return [] as ReportElement[];
+    const all = [...(report.body?.elements ?? []), ...report.bands.flatMap((b) => b.elements)];
+    const set = new Set(selectedIds);
+    return all.filter((e) => set.has(e.id));
+  }, [report, selectedIds]);
+
+  const textCount = elements.filter((e) => e.type === "label" || e.type === "field" || e.type === "pageInfo").length;
+  const fontFamily = common(elements, (e) => e.style?.font?.family ?? null);
+  const fontSize = common(elements, (e) => e.style?.font?.size ?? null);
+  const bold = common(elements, (e) => !!e.style?.font?.bold);
+  const italic = common(elements, (e) => !!e.style?.font?.italic);
+  const align = common(elements, (e) => (e.style?.align as TextAlign | undefined) ?? undefined);
+  const vAlign = common(elements, (e) => (e.style?.vAlign as VerticalAlign | undefined) ?? undefined);
+  const color = common(elements, (e) => e.style?.color ?? null);
+  const borderW = common(elements, (e) => {
+    const b = e.style?.border;
+    return b ? Math.max(b.top, b.right, b.bottom, b.left) : 0;
+  });
+
+  return (
+    <div className="panel">
+      <h2><BoxSelect /> {selectedIds.length} selected</h2>
+      <p className="hint">Edits apply to all selected elements.</p>
+
+      {textCount > 0 && (
+        <>
+          <FontFamilySelect
+            value={fontFamily ?? ""}
+            onChange={(v) => mutateSelected((e) => setFont(e, "family", v))}
+          />
+          <div className="grid2">
+            <label className="field">
+              <span>Size (pt){fontSize === undefined ? " — mixed" : ""}</span>
+              <input
+                type="number"
+                value={fontSize ?? ""}
+                placeholder="mixed"
+                onChange={(e) => e.target.value && mutateSelected((el) => setFont(el, "size", Number(e.target.value)))}
+              />
+            </label>
+            <div className="field">
+              <span>Style</span>
+              <div className="row">
+                <Toggle label="B" active={!!bold} onClick={() => mutateSelected((e) => setFont(e, "bold", !bold))} />
+                <Toggle label="I" active={!!italic} onClick={() => mutateSelected((e) => setFont(e, "italic", !italic))} />
+              </div>
+            </div>
+          </div>
+          <div className="row" style={{ flexWrap: "wrap", marginBottom: 10 }}>
+            <AlignPicker value={align ?? "left"} onChange={(v) => mutateSelected((e) => setStyle(e, "align", v))} />
+            <span className="align-divider" />
+            <VAlignPicker value={vAlign ?? "top"} onChange={(v) => mutateSelected((e) => setStyle(e, "vAlign", v))} />
+          </div>
+        </>
+      )}
+
+      <div className="grid2">
+        <label className="field">
+          <span>Color{color === undefined ? " — mixed" : ""}</span>
+          <input type="color" value={color ?? "#111827"} onChange={(e) => mutateSelected((el) => setStyle(el, "color", e.target.value))} />
+        </label>
+        <label className="field">
+          <span>Border{borderW === undefined ? " — mixed" : ""}</span>
+          <input
+            type="number"
+            value={borderW ?? ""}
+            placeholder="mixed"
+            onChange={(e) =>
+              mutateSelected((el) => {
+                const w = Number(e.target.value) || 0;
+                setStyle(el, "border", w > 0 ? edge(w, el.style?.border?.color ?? "#111827") : null);
+              })
+            }
+          />
+        </label>
+      </div>
+    </div>
+  );
 }
 
 function BandProperties({ index }: { index: number }) {
@@ -357,7 +477,7 @@ function ElementProperties({
       {isText && (
         <>
           <div className="grid2">
-            <Text label="Font" value={s.font?.family ?? ""} placeholder="Helvetica" onChange={(v) => onPatch((e) => setFont(e, "family", v || null))} />
+            <FontFamilySelect value={s.font?.family} onChange={(v) => onPatch((e) => setFont(e, "family", v))} />
             <Num label="Size (pt)" value={s.font?.size ?? 10} onChange={(v) => onPatch((e) => setFont(e, "size", v))} />
           </div>
           <div className="row" style={{ flexWrap: "wrap" }}>

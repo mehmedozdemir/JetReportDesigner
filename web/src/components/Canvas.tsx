@@ -15,11 +15,12 @@ const BAND_META: Record<Band["type"], { label: string; Icon: LucideIcon }> = {
   reportFooter: { label: "Report footer", Icon: AlignEndHorizontal },
 };
 
-export function Canvas() {
+export function Canvas({ active = true }: { active?: boolean }) {
   const layoutMode = useDesigner((s) => s.report?.layoutMode);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (!active) return;
       const t = e.target as HTMLElement;
       if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable) return;
       const s = useDesigner.getState();
@@ -59,7 +60,7 @@ export function Canvas() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [active]);
 
   if (!layoutMode) return <div className="canvas-wrap empty">Select or create a report</div>;
   return layoutMode === "free" ? <FreeCanvas /> : <BandedCanvas />;

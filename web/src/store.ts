@@ -54,6 +54,8 @@ interface DesignerState {
   elementsOf(location: ElementLocation): ReportElement[];
   locate(id: string): ElementLocation | null;
   mutateElement(id: string, recipe: (el: ReportElement) => void, history?: boolean): void;
+  /** Apply a recipe to every currently-selected element (one history entry). */
+  mutateSelected(recipe: (el: ReportElement) => void): void;
 
   addElement(type: ElementType, x: number, y: number, location?: ElementLocation): void;
   removeSelected(): void;
@@ -225,6 +227,18 @@ export const useDesigner = create<DesignerState>((set, get) => ({
         }
       }
     }, history);
+  },
+
+  mutateSelected: (recipe) => {
+    const ids = new Set(get().selectedIds);
+    if (ids.size === 0) return;
+    get().mutate((r) => {
+      const apply = (el: ReportElement) => {
+        if (ids.has(el.id)) recipe(el);
+      };
+      r.body?.elements.forEach(apply);
+      (r.bands as Band[]).forEach((band) => band.elements.forEach(apply));
+    });
   },
 
   addElement: (type, x, y, location) => {
