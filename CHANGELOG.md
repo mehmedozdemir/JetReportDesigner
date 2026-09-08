@@ -5,6 +5,28 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added — Phase 4 (hardening & polish)
+- **Report versioning**: `ReportVersions` table (per-provider migration); a
+  snapshot is written on create and every update; `GET /api/reports/{id}/versions`,
+  `GET .../versions/{v}`, `POST .../versions/{v}/restore`.
+- **Filesystem report store**: `FileSystemReportRepository` (JSON files +
+  `v{n}.json` snapshots) selected by `Storage:ReportStore = filesystem` /
+  `Storage:FileSystemPath`. Registered connections stay in the database.
+- **Designer UX**: marquee selection restored; copy / paste / duplicate
+  (Ctrl+C/V/D, +12px offset); alignment guides + edge/centre/margin snap while
+  dragging (Alt disables); double-click to edit a label/field in place; z-order
+  (Ctrl+]/[, Ctrl+Shift+]/[, and a button row in the inspector).
+- **Validation surfaces**: `ReportInspector` (non-throwing) — unknown data
+  source / parameter in a binding, empty table, unknown style, group band with
+  no expression, out-of-band elements; `POST /api/reports/validate`; a Problems
+  panel that lists issues and selects the offending element.
+- **Ops**: Data Protection keys persist to `DataProtection:KeyPath` when set;
+  built-in sample reports embedded in the API (`GET /api/meta/samples`, a
+  "Sample…" picker); `MigraDocPdfRenderer` serialises renders behind a lock and a
+  concurrency test fires 20 parallel `/api/render` calls.
+- **Removed**: QuestPDF, `QuestPdfRenderer`, and the Phase 0 spike/benchmark
+  tests — PdfSharp/MigraDoc is the engine.
+
 ### Added — Phase 3 (REST + SQL data sources)
 - **REST connector** (`RestDataSourceReader`): GET, `{param:name}` in URL / query /
   headers, dotted `resultPath`, schema inference. **SSRF guard** (`SsrfGuard`):

@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Samples\*.sample.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\JetReportDesigner.Core\JetReportDesigner.Core.csproj" />
     <ProjectReference Include="..\JetReportDesigner.DataSources\JetReportDesigner.DataSources.csproj" />
     <ProjectReference Include="..\JetReportDesigner.Rendering\JetReportDesigner.Rendering.csproj" />

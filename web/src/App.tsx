@@ -12,6 +12,7 @@ import { PreviewPane } from "./components/PreviewPane";
 
 export function App() {
   const [reports, setReports] = useState<ReportSummary[]>([]);
+  const [samples, setSamples] = useState<{ name: string; definition: import("./types").ReportDefinition }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"design" | "preview">("design");
@@ -41,7 +42,27 @@ export function App() {
 
   useEffect(() => {
     void refresh();
+    void api.listSamples().then(setSamples).catch(() => undefined);
   }, [refresh]);
+
+  const createFromSample = async (name: string) => {
+    const sample = samples.find((s) => s.name === name);
+    if (!sample) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { id, ...definition } = sample.definition;
+      void id;
+      const created = await api.createReport({ ...definition, name: `${definition.name} ${new Date().toISOString().slice(11, 19)}` });
+      load(created);
+      await refresh();
+      setTab("design");
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const open = async (id: string) => {
     setError(null);
@@ -133,6 +154,19 @@ export function App() {
           ))}
         </select>
         <button onClick={createReport} disabled={busy}>New</button>
+        {samples.length > 0 && (
+          <select
+            className="report-select"
+            value=""
+            onChange={(e) => e.target.value && void createFromSample(e.target.value)}
+            disabled={busy}
+          >
+            <option value="">Sample…</option>
+            {samples.map((s) => (
+              <option key={s.name} value={s.name}>{s.name}</option>
+            ))}
+          </select>
+        )}
         <button className="primary" onClick={save} disabled={busy || !report || !reportId}>
           Save{dirty ? " *" : ""}
         </button>

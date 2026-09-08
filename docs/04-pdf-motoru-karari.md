@@ -1,9 +1,9 @@
 # PDF Engine Decision (Phase 0 Spike)
 
-> Status: **Decided (provisional)** — PdfSharp/MigraDoc is primary; QuestPDF stays
-> referenced as a fallback and the choice is re-confirmed at the end of Phase 2,
-> once banded pagination stress is known. The `IPdfRenderer` abstraction keeps the
-> swap cheap.
+> Status: **Final (Phase 4E)** — PdfSharp/MigraDoc is the engine. QuestPDF and the
+> spike/benchmark code were removed once banded pagination proved fine with
+> PdfSharp. `IPdfRenderer` + `MigraDocPdfRenderer` remain; renders are serialised
+> behind a lock (PdfSharp keeps process-global caches).
 
 ## Why a spike
 
@@ -78,6 +78,6 @@ disproportionate for V1.
   OS core fonts on Windows, Liberation/DejaVu on Linux (scans the standard font
   dirs, metric-compatible with Arial/Times/Courier). The container image installs
   `fonts-liberation` + `libfontconfig1`. No font files committed to the repo.
-- [ ] Phase 2 end / later: QuestPDF is still referenced as a fallback behind
-  `IPdfRenderer`; confirm PdfSharp is the keeper and drop QuestPDF + its renderer
-  once banded pagination has had real use.
+- [x] Phase 4E: QuestPDF, `QuestPdfRenderer`, `PdfEngineSpikeTests` and
+  `PdfEngineBenchmark` removed. `MigraDocPdfRenderer` serialises renders with a
+  `Lock`.

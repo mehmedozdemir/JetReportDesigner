@@ -23,6 +23,9 @@ export type ParamValues = Record<string, unknown>;
 export const api = {
   listReports: (): Promise<ReportSummary[]> => fetch("/api/reports").then(json<ReportSummary[]>),
 
+  listSamples: (): Promise<{ name: string; definition: ReportDefinition }[]> =>
+    fetch("/api/meta/samples").then(json<{ name: string; definition: ReportDefinition }[]>),
+
   getReport: (id: string): Promise<ReportResponse> =>
     fetch(`/api/reports/${id}`).then(json<ReportResponse>),
 

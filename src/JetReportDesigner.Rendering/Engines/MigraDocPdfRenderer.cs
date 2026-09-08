@@ -12,6 +12,10 @@ namespace JetReportDesigner.Rendering.Engines;
 /// </summary>
 public sealed class MigraDocPdfRenderer : IPdfRenderer
 {
+    // PdfSharp keeps process-global font/state caches that are not thread-safe.
+    // Rendering is fast; serialise it for correctness.
+    private static readonly Lock RenderGate = new();
+
     static MigraDocPdfRenderer() => GlobalFontSettings.FontResolver ??= new SystemFontResolver();
 
     public string EngineName => "migradoc";
@@ -19,7 +23,14 @@ public sealed class MigraDocPdfRenderer : IPdfRenderer
     public byte[] Render(RenderDocument document)
     {
         ArgumentNullException.ThrowIfNull(document);
+        lock (RenderGate)
+        {
+            return RenderCore(document);
+        }
+    }
 
+    private static byte[] RenderCore(RenderDocument document)
+    {
         using var pdf = new PdfDocument();
         var widthPt = RenderUnits.ToPoints(document.PageWidthPx);
         var heightPt = RenderUnits.ToPoints(document.PageHeightPx);

@@ -40,7 +40,15 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddValidatorsFromAssemblyContaining<ReportDefinitionValidator>();
 
 // Connection strings for registered database connections are encrypted at rest.
-builder.Services.AddDataProtection().SetApplicationName("JetReportDesigner");
+// In a container, set DataProtection:KeyPath to a mounted volume so the key ring
+// survives restarts (otherwise stored secrets become undecryptable).
+var dataProtection = builder.Services.AddDataProtection().SetApplicationName("JetReportDesigner");
+var keyPath = builder.Configuration["DataProtection:KeyPath"];
+if (!string.IsNullOrWhiteSpace(keyPath))
+{
+    Directory.CreateDirectory(keyPath);
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keyPath));
+}
 builder.Services.AddSingleton<
     JetReportDesigner.Storage.Connections.IConnectionSecretProtector,
     JetReportDesigner.Api.Infrastructure.DataProtectionSecretProtector>();

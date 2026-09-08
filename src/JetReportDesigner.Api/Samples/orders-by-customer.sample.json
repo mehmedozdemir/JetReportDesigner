@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "name": "Sample — Orders by customer",
+  "layoutMode": "banded",
+  "unit": "px",
+  "page": { "size": "A4", "orientation": "portrait", "margins": { "top": 40, "right": 40, "bottom": 40, "left": 40 }, "columns": 1 },
+  "parameters": [
+    { "name": "minTotal", "type": "number", "label": "Minimum total", "defaultValue": 0, "required": false }
+  ],
+  "connections": [],
+  "styles": {},
+  "body": null,
+  "dataSources": [
+    {
+      "name": "orders",
+      "kind": "json",
+      "fields": [],
+      "json": {
+        "inlineData": "[{\"customer\":\"Acme\",\"total\":120.5,\"orderDate\":\"2026-02-01\"},{\"customer\":\"Acme\",\"total\":200,\"orderDate\":\"2026-03-05\"},{\"customer\":\"Borg\",\"total\":80,\"orderDate\":\"2026-02-03\"},{\"customer\":\"Borg\",\"total\":410,\"orderDate\":\"2026-03-12\"},{\"customer\":\"Cyberdyne\",\"total\":45.25,\"orderDate\":\"2026-03-09\"}]",
+        "resultPath": "$"
+      }
+    }
+  ],
+  "bands": [
+    { "type": "pageHeader", "height": 30, "visible": true, "repeatOnEveryPage": false, "elements": [
+      { "id": "h", "type": "label", "text": "Orders by customer", "bounds": { "x": 0, "y": 4, "width": 300, "height": 20 }, "style": { "font": { "size": 14, "bold": true } } }
+    ] },
+    { "type": "groupHeader", "height": 22, "visible": true, "repeatOnEveryPage": true,
+      "group": { "dataSource": "orders", "expression": "{orders.customer}", "sort": "asc" },
+      "elements": [ { "id": "gh", "type": "field", "value": "{orders.customer}", "bounds": { "x": 0, "y": 2, "width": 200, "height": 18 }, "style": { "font": { "bold": true } } } ] },
+    { "type": "detail", "height": 20, "visible": true, "repeatOnEveryPage": false, "dataSource": "orders", "elements": [
+      { "id": "d1", "type": "field", "value": "{orders.orderDate}", "format": "yyyy-MM-dd", "bounds": { "x": 20, "y": 1, "width": 120, "height": 16 } },
+      { "id": "d2", "type": "field", "value": "{orders.total}", "format": "n2", "bounds": { "x": 200, "y": 1, "width": 100, "height": 16 }, "style": { "align": "right" } }
+    ] },
+    { "type": "groupFooter", "height": 22, "visible": true, "repeatOnEveryPage": false,
+      "group": { "dataSource": "orders", "expression": "{orders.customer}", "sort": "asc" },
+      "elements": [
+        { "id": "gfl", "type": "label", "text": "Subtotal", "bounds": { "x": 20, "y": 2, "width": 80, "height": 16 } },
+        { "id": "gf", "type": "field", "value": "{orders.total}", "format": "n2", "aggregate": "sum", "aggregateScope": "group", "bounds": { "x": 200, "y": 2, "width": 100, "height": 16 }, "style": { "align": "right", "font": { "bold": true } } }
+      ] },
+    { "type": "pageFooter", "height": 24, "visible": true, "repeatOnEveryPage": false, "elements": [
+      { "id": "pf", "type": "field", "value": "Page {pageNumber()} / {totalPages()}", "bounds": { "x": 0, "y": 4, "width": 200, "height": 16 } }
+    ] },
+    { "type": "reportFooter", "height": 26, "visible": true, "repeatOnEveryPage": false, "elements": [
+      { "id": "rfl", "type": "label", "text": "GRAND TOTAL", "bounds": { "x": 20, "y": 4, "width": 120, "height": 16 }, "style": { "font": { "bold": true } } },
+      { "id": "rf", "type": "field", "value": "{orders.total}", "format": "n2", "aggregate": "sum", "aggregateScope": "report", "bounds": { "x": 200, "y": 4, "width": 100, "height": 16 }, "style": { "align": "right", "font": { "bold": true } } }
+    ] }
+  ]
+}

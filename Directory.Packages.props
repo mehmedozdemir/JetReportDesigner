@@ -34,8 +34,7 @@
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
   </ItemGroup>
 
-  <ItemGroup Label="PDF rendering (Phase 0 spike)">
-    <PackageVersion Include="QuestPDF" Version="2026.8.0" />
+  <ItemGroup Label="PDF rendering">
     <PackageVersion Include="PdfSharp" Version="6.2.4" />
     <PackageVersion Include="PDFsharp-MigraDoc" Version="6.2.4" />
   </ItemGroup>

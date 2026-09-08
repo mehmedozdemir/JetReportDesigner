@@ -48,7 +48,17 @@ Development settings point at the `docker compose` SQL Server. To use PostgreSQL
 instead, set `Storage:Provider=PostgreSql` and `Storage:ConnectionString`
 (`Host=localhost;Port=5433;Database=jetreportdesigner;Username=jet;Password=jet`).
 The compose file maps PostgreSQL to host port **5433** to avoid clashing with a
-local 5432.
+local 5432. Oracle is opt-in: `docker compose --profile oracle up -d`.
+
+### Selected configuration keys
+
+| Key | Meaning |
+|-----|---------|
+| `Storage:Provider` | `SqlServer` \| `PostgreSql` \| `Oracle` |
+| `Storage:ReportStore` | `database` (default) \| `filesystem` (needs `Storage:FileSystemPath`) |
+| `Storage:MigrateOnStartup` | apply pending EF migrations at boot |
+| `DataProtection:KeyPath` | directory for the encryption key ring — set to a mounted volume in containers so registered connection secrets survive restarts |
+| `DataSources:Rest:AllowedHosts` | optional allow-list for REST data source hosts |
 
 ## Test
 

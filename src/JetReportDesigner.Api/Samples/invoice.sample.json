@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "name": "Sample — Invoice",
+  "layoutMode": "free",
+  "unit": "px",
+  "page": { "size": "A4", "orientation": "portrait", "margins": { "top": 40, "right": 40, "bottom": 40, "left": 40 }, "columns": 1 },
+  "parameters": [],
+  "connections": [],
+  "styles": {},
+  "bands": [],
+  "dataSources": [
+    {
+      "name": "lines",
+      "kind": "json",
+      "fields": [],
+      "json": {
+        "inlineData": "[{\"item\":\"Design consultation\",\"qty\":8,\"unit\":120,\"total\":960},{\"item\":\"Implementation\",\"qty\":40,\"unit\":110,\"total\":4400},{\"item\":\"Support (monthly)\",\"qty\":1,\"unit\":300,\"total\":300}]",
+        "resultPath": "$"
+      }
+    }
+  ],
+  "body": {
+    "height": 1000,
+    "elements": [
+      { "id": "title", "type": "label", "text": "INVOICE", "bounds": { "x": 40, "y": 30, "width": 300, "height": 34 }, "style": { "font": { "size": 24, "bold": true }, "color": "#111827" } },
+      { "id": "sub", "type": "label", "text": "Acme Consulting Ltd", "bounds": { "x": 40, "y": 70, "width": 400, "height": 18 }, "style": { "color": "#6b7280" } },
+      { "id": "rule", "type": "line", "bounds": { "x": 40, "y": 100, "width": 515, "height": 0 }, "style": { "border": { "top": 1, "right": 1, "bottom": 1, "left": 1, "color": "#d1d5db" } } },
+      {
+        "id": "table", "type": "table",
+        "bounds": { "x": 40, "y": 120, "width": 515, "height": 160 },
+        "style": { "border": { "top": 1, "right": 1, "bottom": 1, "left": 1, "color": "#cbd5e1" } },
+        "table": {
+          "dataSource": "lines",
+          "showHeader": true,
+          "columns": [
+            { "header": "Item", "value": "{lines.item}", "width": 260, "align": "left" },
+            { "header": "Qty", "value": "{lines.qty}", "width": 70, "align": "right" },
+            { "header": "Unit", "value": "{lines.unit}", "width": 90, "align": "right", "format": "n2" },
+            { "header": "Total", "value": "{lines.total}", "width": 95, "align": "right", "format": "n2" }
+          ]
+        }
+      }
+    ]
+  }
+}
