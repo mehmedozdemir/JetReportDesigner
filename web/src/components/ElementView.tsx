@@ -57,7 +57,7 @@ export function ElementView({ element }: { element: ReportElement }) {
     color: s.color ?? undefined,
     background:
       element.type === "line"
-        ? s.border?.color ?? s.color ?? "#111827"
+        ? s.border?.color ?? s.color ?? "currentColor"
         : s.background ?? undefined,
     border:
       element.type === "line"
