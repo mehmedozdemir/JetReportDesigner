@@ -6,6 +6,7 @@ import type {
   ReportIssue,
   ReportResponse,
   ReportSummary,
+  SqlQueryResponse,
 } from "./types";
 
 /** Pull a readable message out of an RFC 7807 ProblemDetails body, falling back to the raw text. */
@@ -109,6 +110,29 @@ export const api = {
 
   deleteConnection: (id: string): Promise<void> =>
     fetch(`/api/connections/${id}`, { method: "DELETE" }).then((r) => {
+      if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
+    }),
+
+  // --- saved SQL queries ---
+  listSqlQueries: (connectionId: string): Promise<SqlQueryResponse[]> =>
+    fetch(`/api/sqlqueries?connectionId=${connectionId}`).then(json<SqlQueryResponse[]>),
+
+  createSqlQuery: (connectionId: string, name: string, commandText: string): Promise<SqlQueryResponse> =>
+    fetch("/api/sqlqueries", {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({ connectionId, name, commandText }),
+    }).then(json<SqlQueryResponse>),
+
+  updateSqlQuery: (id: string, name: string, commandText: string): Promise<SqlQueryResponse> =>
+    fetch(`/api/sqlqueries/${id}`, {
+      method: "PUT",
+      headers: jsonHeaders,
+      body: JSON.stringify({ name, commandText }),
+    }).then(json<SqlQueryResponse>),
+
+  deleteSqlQuery: (id: string): Promise<void> =>
+    fetch(`/api/sqlqueries/${id}`, { method: "DELETE" }).then((r) => {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
 

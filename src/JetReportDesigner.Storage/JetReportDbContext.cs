@@ -11,6 +11,8 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
 
     public DbSet<StoredConnection> Connections => Set<StoredConnection>();
 
+    public DbSet<StoredSqlQuery> SqlQueries => Set<StoredSqlQuery>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(JetReportDbContext).Assembly);
@@ -23,6 +25,7 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
             modelBuilder.Entity<Entities.StoredReport>().Property(r => r.DefinitionJson).HasColumnType("NCLOB");
             modelBuilder.Entity<Entities.StoredReportVersion>().Property(v => v.DefinitionJson).HasColumnType("NCLOB");
             modelBuilder.Entity<Entities.StoredConnection>().Property(c => c.EncryptedConnectionString).HasColumnType("NCLOB");
+            modelBuilder.Entity<Entities.StoredSqlQuery>().Property(q => q.CommandText).HasColumnType("NCLOB");
         }
 
         base.OnModelCreating(modelBuilder);

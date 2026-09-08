@@ -1,15 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
   Ban,
-  Check,
-  ChevronDown,
-  ChevronRight,
   Database,
   FileJson,
   Globe,
-  Pencil,
+  ListTree,
   Play,
   Plug,
   Plus,
@@ -19,12 +16,15 @@ import {
 } from "lucide-react";
 import { api } from "../api";
 import { useDesigner } from "../store";
+import { ConnectionsDialog } from "./ConnectionsDialog";
+import { SavedQueriesDialog } from "./SavedQueriesDialog";
 import type {
   ConnectionRef,
   ConnectionResponse,
   DataField,
   DataSourceDefinition,
   DataSourceKind,
+  SqlQueryResponse,
 } from "../types";
 
 export const KIND_META: Record<DataSourceKind, { Icon: LucideIcon; label: string }> = {
@@ -67,14 +67,31 @@ export function DataSourceDialog({ onClose }: { onClose: () => void }) {
     (existing?.sql?.parameters ?? []).map((p) => ({ key: p.name, value: p.value })),
   );
   const [connections, setConnections] = useState<ConnectionResponse[]>([]);
+  const [savedQueries, setSavedQueries] = useState<SqlQueryResponse[]>([]);
+  const [savedQueryId, setSavedQueryId] = useState("");
+  const [showConns, setShowConns] = useState(false);
+  const [showQueries, setShowQueries] = useState(false);
   const [fields, setFields] = useState<DataField[]>(existing?.fields ?? []);
   const [preview, setPreview] = useState<Record<string, unknown>[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const selectedConn = useMemo(
+    () => connections.find((c) => c.name === connectionName) ?? null,
+    [connections, connectionName],
+  );
+
   useEffect(() => {
     void api.listConnections().then(setConnections).catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    if (!selectedConn) {
+      setSavedQueries([]);
+      return;
+    }
+    void api.listSqlQueries(selectedConn.id).then(setSavedQueries).catch(() => setSavedQueries([]));
+  }, [selectedConn]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -130,6 +147,7 @@ export function DataSourceDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
+    <>
     <div className="modal-backdrop" onMouseDown={onClose}>
       <div
         className="modal ds-dialog"
@@ -224,27 +242,79 @@ export function DataSourceDialog({ onClose }: { onClose: () => void }) {
               <>
                 <label className="field">
                   <span>Connection</span>
-                  <select value={connectionName} onChange={(e) => setConnectionName(e.target.value)}>
-                    <option value="">— pick a connection —</option>
-                    {connections.map((c) => (
-                      <option key={c.id} value={c.name}>
-                        {c.name} ({c.provider})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="row">
+                    <select
+                      style={{ flex: 1 }}
+                      value={connectionName}
+                      onChange={(e) => {
+                        setConnectionName(e.target.value);
+                        setSavedQueryId("");
+                      }}
+                    >
+                      <option value="">— pick a connection —</option>
+                      {connections.map((c) => (
+                        <option key={c.id} value={c.name}>
+                          {c.name} ({providerLabel(c.provider)})
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className="mini"
+                      title="Manage connections"
+                      aria-label="Manage connections"
+                      onClick={() => setShowConns(true)}
+                    >
+                      <Plug />
+                    </button>
+                  </div>
                 </label>
+
+                {selectedConn && (
+                  <label className="field">
+                    <span>Saved query</span>
+                    <div className="row">
+                      <select
+                        style={{ flex: 1 }}
+                        value={savedQueryId}
+                        onChange={(e) => {
+                          setSavedQueryId(e.target.value);
+                          const q = savedQueries.find((x) => x.id === e.target.value);
+                          if (q) setCommand(q.commandText);
+                        }}
+                      >
+                        <option value="">— new / unsaved —</option>
+                        {savedQueries.map((q) => (
+                          <option key={q.id} value={q.id}>
+                            {q.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        className="mini"
+                        title="Manage saved queries"
+                        aria-label="Manage saved queries"
+                        onClick={() => setShowQueries(true)}
+                      >
+                        <ListTree />
+                      </button>
+                    </div>
+                  </label>
+                )}
+
                 <label className="field">
                   <span>SELECT query</span>
                   <textarea
                     rows={8}
                     spellCheck={false}
                     value={command}
-                    onChange={(e) => setCommand(e.target.value)}
+                    onChange={(e) => {
+                      setCommand(e.target.value);
+                      setSavedQueryId("");
+                    }}
                     placeholder="SELECT id, customer, total FROM orders WHERE order_date >= :from"
                   />
                 </label>
                 <KVEditor label="Parameters" rows={sqlParams} onChange={setSqlParams} placeholder="from · {param:from}" />
-                <ConnectionsManager connections={connections} onChange={setConnections} />
               </>
             )}
 
@@ -311,6 +381,30 @@ export function DataSourceDialog({ onClose }: { onClose: () => void }) {
         </footer>
       </div>
     </div>
+
+    {showConns && (
+      <ConnectionsDialog
+        connections={connections}
+        onChange={setConnections}
+        onClose={() => setShowConns(false)}
+      />
+    )}
+    {showQueries && selectedConn && (
+      <SavedQueriesDialog
+        connectionId={selectedConn.id}
+        connectionName={selectedConn.name}
+        seedText={command}
+        onPick={(t) => {
+          setCommand(t);
+          setSavedQueryId("");
+        }}
+        onClose={() => {
+          setShowQueries(false);
+          void api.listSqlQueries(selectedConn.id).then(setSavedQueries).catch(() => undefined);
+        }}
+      />
+    )}
+    </>
   );
 }
 
@@ -352,155 +446,3 @@ const PROVIDERS: { value: string; label: string }[] = [
 ];
 const providerLabel = (v: string) => PROVIDERS.find((p) => p.value === v)?.label ?? v;
 
-type ConnForm = { name: string; provider: string; connStr: string };
-const EMPTY_FORM: ConnForm = { name: "", provider: "sqlServer", connStr: "" };
-
-function ConnectionsManager({
-  connections,
-  onChange,
-}: {
-  connections: ConnectionResponse[];
-  onChange: (c: ConnectionResponse[]) => void;
-}) {
-  const [open, setOpen] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [edit, setEdit] = useState<ConnForm>(EMPTY_FORM);
-  const [add, setAdd] = useState<ConnForm>(EMPTY_FORM);
-  const [err, setErr] = useState<string | null>(null);
-
-  const refresh = async () => onChange(await api.listConnections());
-
-  const beginEdit = (c: ConnectionResponse) => {
-    setErr(null);
-    setEditingId(c.id);
-    setEdit({ name: c.name, provider: c.provider, connStr: "" });
-  };
-
-  const saveEdit = async () => {
-    setErr(null);
-    try {
-      await api.updateConnection(
-        editingId!,
-        edit.name.trim(),
-        edit.provider,
-        edit.connStr.trim() ? edit.connStr : null,
-      );
-      setEditingId(null);
-      await refresh();
-    } catch (e) {
-      setErr(String(e));
-    }
-  };
-
-  const remove = async (id: string) => {
-    setErr(null);
-    try {
-      await api.deleteConnection(id);
-      if (editingId === id) setEditingId(null);
-      await refresh();
-    } catch (e) {
-      setErr(String(e));
-    }
-  };
-
-  const create = async () => {
-    setErr(null);
-    try {
-      await api.createConnection(add.name.trim(), add.provider, add.connStr);
-      setAdd(EMPTY_FORM);
-      await refresh();
-    } catch (e) {
-      setErr(String(e));
-    }
-  };
-
-  return (
-    <div className="connections">
-      <button className="mini" onClick={() => setOpen(!open)}>
-        {open ? <ChevronDown /> : <ChevronRight />}
-        <Plug size={13} /> Connections
-        <span className="count-badge">{connections.length}</span>
-      </button>
-      {open && (
-        <div className="connections-body">
-          {connections.length === 0 && <p className="hint">No connections yet.</p>}
-
-          {connections.map((c) =>
-            editingId === c.id ? (
-              <div key={c.id} className="conn-edit">
-                <input
-                  placeholder="Name"
-                  value={edit.name}
-                  onChange={(e) => setEdit({ ...edit, name: e.target.value })}
-                />
-                <select value={edit.provider} onChange={(e) => setEdit({ ...edit, provider: e.target.value })}>
-                  {PROVIDERS.map((p) => (
-                    <option key={p.value} value={p.value}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  placeholder="New connection string — blank keeps the current one"
-                  value={edit.connStr}
-                  onChange={(e) => setEdit({ ...edit, connStr: e.target.value })}
-                />
-                <div className="row">
-                  <button className="mini" onClick={saveEdit} disabled={!edit.name.trim()}>
-                    <Check /> Save
-                  </button>
-                  <button className="mini ghost" onClick={() => setEditingId(null)}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div key={c.id} className="conn-row">
-                <span>
-                  {c.name} <em>{providerLabel(c.provider)}</em>
-                  <span className="conn-date">added {new Date(c.createdAtUtc).toLocaleDateString()}</span>
-                </span>
-                <button className="mini" onClick={() => beginEdit(c)} aria-label="Edit connection">
-                  <Pencil />
-                </button>
-                <button className="mini danger" onClick={() => remove(c.id)} aria-label="Delete connection">
-                  <Trash2 />
-                </button>
-              </div>
-            ),
-          )}
-
-          <div className="conn-add">
-            <span className="conn-add-label">Add connection</span>
-            <input placeholder="Name" value={add.name} onChange={(e) => setAdd({ ...add, name: e.target.value })} />
-            <select value={add.provider} onChange={(e) => setAdd({ ...add, provider: e.target.value })}>
-              {PROVIDERS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-            <input
-              placeholder="Connection string"
-              value={add.connStr}
-              onChange={(e) => setAdd({ ...add, connStr: e.target.value })}
-            />
-            <button className="mini" onClick={create} disabled={!add.name.trim() || !add.connStr.trim()}>
-              <Plus /> Add
-            </button>
-            <p className="hint" style={{ margin: "2px 0 0" }}>
-              SQL Server with a self-signed certificate needs{" "}
-              <code>TrustServerCertificate=True;Encrypt=False</code> in the string.
-            </p>
-          </div>
-
-          {err && (
-            <div className="error small">
-              <AlertTriangle /> <span>{err}</span>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}

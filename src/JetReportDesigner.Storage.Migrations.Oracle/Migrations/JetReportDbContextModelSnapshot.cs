@@ -122,6 +122,36 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
 
                     b.ToTable("ReportVersions", (string)null);
                 });
+
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.StoredSqlQuery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<string>("CommandText")
+                        .IsRequired()
+                        .HasColumnType("NCLOB");
+
+                    b.Property<Guid>("ConnectionId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("NVARCHAR2(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConnectionId");
+
+                    b.HasIndex("ConnectionId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("SqlQueries", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }

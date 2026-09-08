@@ -205,6 +205,14 @@ export interface ConnectionResponse {
   createdAtUtc: string;
 }
 
+export interface SqlQueryResponse {
+  id: string;
+  connectionId: string;
+  name: string;
+  commandText: string;
+  createdAtUtc: string;
+}
+
 export interface PageSetup {
   size: PageSize;
   orientation: Orientation;

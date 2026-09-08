@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.TryAddSingletonTimeProvider();
         services.AddDbContext<JetReportDbContext>(builder => provider.Configure(builder, options.ConnectionString));
         services.AddScoped<IConnectionRepository, ConnectionRepository>();
+        services.AddScoped<ISqlQueryRepository, SqlQueryRepository>();
 
         if (options.ReportStore.Equals("filesystem", StringComparison.OrdinalIgnoreCase))
         {
