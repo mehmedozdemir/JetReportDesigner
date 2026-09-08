@@ -279,9 +279,6 @@ body {
 .mini.ghost { border-color: transparent; }
 .mini.danger:hover:not(:disabled) { background: var(--error-bg); color: var(--error); border-color: var(--error); }
 
-.kind-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
-.kind-tabs .mini { flex: 1; }
-
 .align-divider { width: 1px; align-self: stretch; background: var(--border); margin: 2px 2px; }
 
 /* ============================================================
@@ -495,3 +492,55 @@ body {
 .format-input input { flex: 1; }
 .format-input .mini { height: auto; align-self: stretch; }
 .format-preview { color: var(--text-secondary); font-size: 11px; margin-top: 4px; }
+
+/* data source summary card (left panel) */
+.ds-card {
+  width: 100%; display: flex; flex-direction: column; gap: 7px; align-items: stretch;
+  padding: 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  background: var(--bg-surface); color: var(--text-primary); font: inherit; text-align: left; cursor: pointer;
+}
+.ds-card:hover { border-color: var(--accent); }
+.ds-card-main { display: flex; align-items: center; gap: 7px; }
+.ds-card-main svg { color: var(--text-secondary); flex: 0 0 auto; }
+.ds-card-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-kind-tag {
+  margin-left: auto; flex: 0 0 auto;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--text-secondary); background: var(--bg-elevated);
+  border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px;
+}
+.ds-card-foot { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.ds-card-status.ok { color: var(--success); }
+.ds-card-status.warn { color: var(--warning); }
+.ds-card-edit { margin-left: auto; display: flex; align-items: center; gap: 4px; color: var(--text-secondary); }
+.ds-empty { display: flex; flex-direction: column; gap: 8px; }
+
+/* data source dialog */
+.ds-dialog { width: 720px; }
+.ds-body { display: flex; min-height: 360px; max-height: 68vh; }
+.ds-kinds {
+  list-style: none; margin: 0; padding: 8px; width: 116px; flex: 0 0 auto;
+  border-right: 1px solid var(--border); background: var(--bg-elevated);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.ds-kinds button {
+  width: 100%; display: flex; align-items: center; gap: 6px;
+  padding: 7px 9px; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--text-primary); font: inherit; font-size: 12px; cursor: pointer;
+}
+.ds-kinds button:hover { background: var(--bg-surface); }
+.ds-kinds button.on { background: var(--accent); color: #fff; }
+.ds-form { flex: 1; padding: 14px; overflow-y: auto; }
+.ds-form .field textarea { min-height: 110px; }
+.ds-form code {
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px;
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px;
+}
+.ds-fieldgrid { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.ds-field {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 8px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--bg-elevated); font-size: 11px;
+}
+.ds-field svg { color: var(--text-secondary); }
+.ds-field em { color: var(--text-secondary); font-style: normal; font-size: 10px; }
