@@ -3,6 +3,7 @@ using JetReportDesigner.Api.Infrastructure;
 using JetReportDesigner.Core.Serialization;
 using JetReportDesigner.Core.Validation;
 using JetReportDesigner.DataSources;
+using JetReportDesigner.DataSources.Http;
 using JetReportDesigner.DataSources.Json;
 using JetReportDesigner.Rendering;
 using JetReportDesigner.Rendering.Engines;
@@ -36,7 +37,13 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddValidatorsFromAssemblyContaining<ReportDefinitionValidator>();
 
 // --- Data sources + rendering ---
+var restOptions = builder.Configuration.GetSection(RestSourceOptions.SectionName).Get<RestSourceOptions>()
+    ?? new RestSourceOptions();
+var ssrfGuard = new SsrfGuard(restOptions.AllowedHosts);
+builder.Services.AddSingleton(ssrfGuard);
 builder.Services.AddSingleton<IDataSourceReader, JsonDataSourceReader>();
+builder.Services.AddSingleton<IDataSourceReader>(_ =>
+    new RestDataSourceReader(RestHttp.CreateClient(ssrfGuard, restOptions), ssrfGuard));
 builder.Services.AddSingleton<ReportDataResolver>();
 builder.Services.AddSingleton<IPdfRenderer, MigraDocPdfRenderer>();
 builder.Services.AddSingleton<ReportRenderService>();
