@@ -194,7 +194,22 @@
           }
         },
         "repeatOnEveryPage": { "type": "boolean" },
+        "formatRules": { "type": "array", "items": { "$ref": "#/$defs/formatRule" } },
         "elements": { "type": "array", "items": { "$ref": "#/$defs/element" } }
+      }
+    },
+    "formatRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "op"],
+      "properties": {
+        "field": { "type": "string" },
+        "op": {
+          "enum": ["eq", "ne", "gt", "ge", "lt", "le", "contains", "startsWith", "endsWith", "isEmpty", "isNotEmpty"]
+        },
+        "value": { "type": "string" },
+        "style": { "$ref": "#/$defs/style" },
+        "hidden": { "type": "boolean" }
       }
     },
     "body": {
@@ -227,6 +242,7 @@
         "styleRef": { "type": ["string", "null"] },
         "style": { "oneOf": [{ "$ref": "#/$defs/style" }, { "type": "null" }] },
         "visibleWhen": { "type": ["string", "null"] },
+        "formatRules": { "type": "array", "items": { "$ref": "#/$defs/formatRule" } },
         "text": { "type": ["string", "null"] },
         "value": { "type": ["string", "null"] },
         "format": { "type": ["string", "null"] },

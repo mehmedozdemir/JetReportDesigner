@@ -22,6 +22,9 @@ public sealed class Band
     /// <summary>Repeat this header band at the top of every page it spans (group/report headers).</summary>
     public bool RepeatOnEveryPage { get; set; }
 
+    /// <summary>Conditional-formatting rules for the band row: paint its background and cascade style to its elements.</summary>
+    public List<FormatRule> FormatRules { get; set; } = [];
+
     public List<ReportElement> Elements { get; set; } = [];
 }
 

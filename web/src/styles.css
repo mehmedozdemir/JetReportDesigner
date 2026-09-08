@@ -508,6 +508,34 @@ body {
 .format-input .mini { height: auto; align-self: stretch; }
 .format-preview { color: var(--text-secondary); font-size: 11px; margin-top: 4px; }
 
+/* conditional formatting dialog */
+.cf-dialog { width: 640px; }
+.cf-body { padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; max-height: 62vh; }
+.cf-rule {
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  background: var(--bg-surface); padding: 8px; display: flex; flex-direction: column; gap: 7px;
+}
+.cf-cond, .cf-format { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cf-when, .cf-then {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-secondary); min-width: 34px;
+}
+.cf-cond input { flex: 1 1 90px; min-width: 80px; }
+.cf-cond select { flex: 0 1 auto; }
+.cf-cond input, .cf-cond select,
+.cf-format input, .cf-format select {
+  font: inherit; font-size: 12px; padding: 5px 7px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--bg-surface);
+}
+.cf-swatch { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+.cf-swatch input[type="color"] { padding: 2px; height: 26px; width: 34px; cursor: pointer; }
+.cf-swatch .mini { height: 26px; min-width: 26px; padding: 0; }
+.cf-hide { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-secondary); }
+.cf-preview {
+  margin-left: auto; padding: 3px 10px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); font-size: 12px; white-space: nowrap;
+}
+
 /* border width + per-side toggles + colour */
 .border-ctl { display: flex; align-items: center; gap: 6px; }
 .border-ctl > input[type="number"] { width: 52px; flex: 0 0 auto; }

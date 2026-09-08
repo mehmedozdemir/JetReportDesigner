@@ -26,7 +26,7 @@ public static class TableEmitter
             yield break;
         }
 
-        var style = EffectiveStyle.Resolve(element, styles);
+        var style = EffectiveStyle.Resolve(element, styles, context);
         var rowHeight = Math.Max(16, style.FontSizePt * (96.0 / 72.0) * 1.5);
         var totalWidth = table.Columns.Sum(c => c.Width);
         var x0 = element.Bounds.X + offsetX;

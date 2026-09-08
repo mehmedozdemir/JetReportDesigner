@@ -1,3 +1,4 @@
+using JetReportDesigner.Core.Binding;
 using JetReportDesigner.Core.Model;
 
 namespace JetReportDesigner.Rendering.Layout;
@@ -17,12 +18,54 @@ public sealed class EffectiveStyle
     public BorderSpec? Border { get; init; }
     public Spacing Padding { get; init; } = new();
 
-    public static EffectiveStyle Resolve(ReportElement element, IReadOnlyDictionary<string, ReportStyle> named)
+    /// <summary>A matching conditional-formatting rule asked for the element to be hidden.</summary>
+    public bool Hidden { get; init; }
+
+    /// <summary>
+    /// Resolves the effective style. Layers, lowest first: named style, the element's
+    /// inline style, any <paramref name="inherited"/> styles (e.g. from a band's matching
+    /// rules), then the element's own matching conditional-formatting rules in order.
+    /// </summary>
+    public static EffectiveStyle Resolve(
+        ReportElement element,
+        IReadOnlyDictionary<string, ReportStyle> named,
+        BindingContext context,
+        IReadOnlyList<ReportStyle>? inherited = null)
     {
         ReportStyle? baseStyle = element.StyleRef is { } key && named.TryGetValue(key, out var s) ? s : null;
-        var inline = element.Style;
+        var (ruleStyles, hidden) = FormatRuleEvaluator.Apply(element.FormatRules, context);
 
-        FontSpec? font = Merge(baseStyle?.Font, inline?.Font);
+        List<ReportStyle?> layers = [baseStyle, element.Style];
+        if (inherited is { Count: > 0 })
+        {
+            layers.AddRange(inherited);
+        }
+
+        layers.AddRange(ruleStyles);
+
+        FontSpec? font = null;
+        string? color = null;
+        string? background = null;
+        TextAlign? align = null;
+        VerticalAlign? vAlign = null;
+        BorderSpec? border = null;
+        Spacing? padding = null;
+
+        foreach (var layer in layers)
+        {
+            if (layer is null)
+            {
+                continue;
+            }
+
+            font = Merge(font, layer.Font);
+            color = layer.Color ?? color;
+            background = layer.Background ?? background;
+            align = layer.Align ?? align;
+            vAlign = layer.VAlign ?? vAlign;
+            border = layer.Border ?? border;
+            padding = layer.Padding ?? padding;
+        }
 
         return new EffectiveStyle
         {
@@ -31,12 +74,13 @@ public sealed class EffectiveStyle
             Bold = font?.Bold ?? false,
             Italic = font?.Italic ?? false,
             Underline = font?.Underline ?? false,
-            Color = inline?.Color ?? baseStyle?.Color ?? "#000000",
-            Background = inline?.Background ?? baseStyle?.Background,
-            Align = inline?.Align ?? baseStyle?.Align ?? TextAlign.Left,
-            VAlign = inline?.VAlign ?? baseStyle?.VAlign ?? VerticalAlign.Top,
-            Border = inline?.Border ?? baseStyle?.Border,
-            Padding = inline?.Padding ?? baseStyle?.Padding ?? new Spacing(),
+            Color = color ?? "#000000",
+            Background = background,
+            Align = align ?? TextAlign.Left,
+            VAlign = vAlign ?? VerticalAlign.Top,
+            Border = border,
+            Padding = padding ?? new Spacing(),
+            Hidden = hidden,
         };
     }
 

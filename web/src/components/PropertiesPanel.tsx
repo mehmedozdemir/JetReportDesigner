@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   AlignCenter,
@@ -17,6 +17,7 @@ import {
   Hash,
   Image as ImageIcon,
   Layers,
+  ListChecks,
   Minus,
   MousePointerSquareDashed,
   PanelBottom,
@@ -33,17 +34,53 @@ import {
 } from "lucide-react";
 import { useDesigner } from "../store";
 import { FormatField } from "./FormatDialog";
+import { ConditionalFormatDialog } from "./ConditionalFormatDialog";
 import type {
   AggregateFunction,
   AggregateScope,
   Band,
   BorderSpec,
   ElementType,
+  FormatRule,
   PageSize,
   ReportElement,
   TextAlign,
   VerticalAlign,
 } from "../types";
+
+const EMPTY_RULES: FormatRule[] = [];
+
+/** "Conditional formatting" button + rule count, opening the editor dialog. */
+function ConditionalFormatButton({
+  rules,
+  fields,
+  allowHidden,
+  onChange,
+}: {
+  rules: FormatRule[];
+  fields: string[];
+  allowHidden: boolean;
+  onChange: (rules: FormatRule[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button className="mini" style={{ width: "100%", marginTop: 4 }} onClick={() => setOpen(true)}>
+        <ListChecks /> Conditional formatting
+        {rules.length > 0 && <span className="count-badge">{rules.length}</span>}
+      </button>
+      {open && (
+        <ConditionalFormatDialog
+          rules={rules}
+          fields={fields}
+          allowHidden={allowHidden}
+          onChange={onChange}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
+}
 
 const ELEMENT_ICON: Record<ElementType, LucideIcon> = {
   label: TypeIcon,
@@ -296,6 +333,13 @@ function BandProperties({ index }: { index: number }) {
           <span>Repeat on every page</span>
         </label>
       )}
+
+      <ConditionalFormatButton
+        rules={band.formatRules ?? EMPTY_RULES}
+        fields={sources.flatMap((s) => s.fields.map((f) => f.name))}
+        allowHidden={false}
+        onChange={(next) => patchBand(index, (b) => (b.formatRules = next))}
+      />
     </div>
   );
 }
@@ -488,6 +532,13 @@ function ElementProperties({
       </div>
 
       <BorderPicker border={s.border} onChange={(next) => onPatch((e) => setStyle(e, "border", next))} />
+
+      <ConditionalFormatButton
+        rules={element.formatRules ?? EMPTY_RULES}
+        fields={sources.flatMap((src) => src.fields.map((f) => f.name))}
+        allowHidden
+        onChange={(next) => onPatch((e) => (e.formatRules = next))}
+      />
     </div>
   );
 }

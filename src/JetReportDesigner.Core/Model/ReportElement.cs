@@ -23,6 +23,9 @@ public sealed class ReportElement
     /// <summary>Optional boolean expression; when it evaluates false the element is not rendered.</summary>
     public string? VisibleWhen { get; set; }
 
+    /// <summary>Conditional-formatting rules evaluated per row; all matches layer on, in order.</summary>
+    public List<FormatRule> FormatRules { get; set; } = [];
+
     // ---- type-specific ----
 
     /// <summary>Static text for <see cref="ElementType.Label"/>.</summary>

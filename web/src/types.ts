@@ -74,6 +74,27 @@ export interface TableSpec {
   columns: TableColumn[];
 }
 
+export type ComparisonOp =
+  | "eq"
+  | "ne"
+  | "gt"
+  | "ge"
+  | "lt"
+  | "le"
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "isEmpty"
+  | "isNotEmpty";
+
+export interface FormatRule {
+  field: string;
+  op: ComparisonOp;
+  value: string;
+  style: ReportStyle;
+  hidden?: boolean;
+}
+
 export interface ReportElement {
   id: string;
   type: ElementType;
@@ -81,6 +102,7 @@ export interface ReportElement {
   styleRef?: string | null;
   style?: ReportStyle | null;
   visibleWhen?: string | null;
+  formatRules?: FormatRule[];
   text?: string | null;
   value?: string | null;
   format?: string | null;
@@ -113,6 +135,7 @@ export interface Band {
   dataSource?: string;
   group?: GroupSpec;
   repeatOnEveryPage: boolean;
+  formatRules?: FormatRule[];
   elements: ReportElement[];
 }
 

@@ -214,6 +214,25 @@ public sealed class BandedLayoutBuilder
                     return BindingResolver.FormatValue(value, element.Format);
                 }
 
+                // conditional formatting on the band row: paint its background, then
+                // cascade the matched styles onto every element in the band.
+                var bandRuleStyles = FormatRuleEvaluator.Apply(instance.Band.FormatRules, context).Styles;
+                foreach (var ruleStyle in bandRuleStyles)
+                {
+                    if (ruleStyle.Background is { } bg)
+                    {
+                        primitives.Add(new RectanglePrimitive
+                        {
+                            X = margins.Left,
+                            Y = instance.Y,
+                            Width = pageWidth - margins.Left - margins.Right,
+                            Height = instance.Band.Height,
+                            FillColorHex = bg,
+                            BorderThicknessPx = 0,
+                        });
+                    }
+                }
+
                 foreach (var element in instance.Band.Elements)
                 {
                     if (element.Type == ElementType.Table)
@@ -225,7 +244,8 @@ public sealed class BandedLayoutBuilder
                     else
                     {
                         primitives.AddRange(
-                            ElementEmitter.Emit(element, report.Styles, context, margins.Left, instance.Y, Aggregate));
+                            ElementEmitter.Emit(
+                                element, report.Styles, context, margins.Left, instance.Y, Aggregate, bandRuleStyles));
                     }
                 }
             }

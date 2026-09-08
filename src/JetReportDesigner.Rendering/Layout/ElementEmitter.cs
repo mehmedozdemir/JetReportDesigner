@@ -19,7 +19,8 @@ public static class ElementEmitter
         BindingContext context,
         double offsetX,
         double offsetY,
-        Func<ReportElement, string?>? aggregateText = null)
+        Func<ReportElement, string?>? aggregateText = null,
+        IReadOnlyList<ReportStyle>? inheritedStyles = null)
     {
         if (!IsVisible(element, context))
         {
@@ -29,7 +30,12 @@ public static class ElementEmitter
         var b = element.Bounds;
         var x = b.X + offsetX;
         var y = b.Y + offsetY;
-        var style = EffectiveStyle.Resolve(element, styles);
+        var style = EffectiveStyle.Resolve(element, styles, context, inheritedStyles);
+
+        if (style.Hidden)
+        {
+            yield break;
+        }
 
         switch (element.Type)
         {
