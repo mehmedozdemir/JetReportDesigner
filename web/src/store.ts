@@ -3,10 +3,13 @@ import {
   defaultElement,
   type Band,
   type BandType,
+  type ConnectionRef,
+  type DataSourceDefinition,
   type ElementType,
   type LayoutMode,
   type ReportDefinition,
   type ReportElement,
+  type ReportParameter,
   type ReportResponse,
 } from "./types";
 
@@ -62,6 +65,11 @@ interface DesignerState {
   removeBand(index: number): void;
   moveBand(index: number, direction: -1 | 1): void;
   patchBand(index: number, recipe: (band: Band) => void): void;
+
+  setDataSource(source: DataSourceDefinition | null, connectionRef?: ConnectionRef | null): void;
+  addParameter(): void;
+  patchParameter(index: number, recipe: (p: ReportParameter) => void): void;
+  removeParameter(index: number): void;
 }
 
 function clone(report: ReportDefinition): ReportDefinition {
@@ -295,6 +303,39 @@ export const useDesigner = create<DesignerState>((set, get) => ({
     get().mutate((r) => {
       const band = (r.bands as Band[])[index];
       if (band) recipe(band);
+    });
+  },
+
+  setDataSource: (source, connectionRef) => {
+    get().mutate((r) => {
+      r.dataSources = source ? [source] : [];
+      r.connections = connectionRef ? [connectionRef] : [];
+      // keep detail/group bands pointed at the (single) source
+      const name = source?.name;
+      r.bands.forEach((b) => {
+        if (b.type === "detail") b.dataSource = name;
+        if (b.group) b.group.dataSource = name ?? "";
+      });
+    });
+  },
+
+  addParameter: () => {
+    get().mutate((r) => {
+      const n = r.parameters.length + 1;
+      r.parameters.push({ name: `param${n}`, type: "string", label: "", required: false, defaultValue: null });
+    });
+  },
+
+  patchParameter: (index, recipe) => {
+    get().mutate((r) => {
+      const p = r.parameters[index];
+      if (p) recipe(p);
+    });
+  },
+
+  removeParameter: (index) => {
+    get().mutate((r) => {
+      r.parameters = r.parameters.filter((_, i) => i !== index);
     });
   },
 }));

@@ -126,13 +126,60 @@ export interface JsonSourceConfig {
   resultPath: string;
 }
 
+export interface RestSourceConfig {
+  url: string;
+  method: "GET";
+  headers: Record<string, string>;
+  query: Record<string, string>;
+  resultPath: string;
+}
+
+export interface SqlSourceParameter {
+  name: string;
+  value: string;
+}
+
+export interface SqlSourceConfig {
+  connection: string;
+  commandText: string;
+  parameters: SqlSourceParameter[];
+  timeoutSeconds: number;
+  maxRows: number;
+}
+
+export type DataSourceKind = "none" | "json" | "rest" | "sql";
+
 export interface DataSourceDefinition {
   name: string;
-  kind: "none" | "json" | "rest" | "sql";
+  kind: DataSourceKind;
   json?: JsonSourceConfig | null;
-  rest?: unknown | null;
-  sql?: unknown | null;
+  rest?: RestSourceConfig | null;
+  sql?: SqlSourceConfig | null;
   fields: DataField[];
+}
+
+export type ParameterType = "string" | "number" | "boolean" | "date" | "dateTime";
+
+export interface ReportParameter {
+  name: string;
+  type: ParameterType;
+  label?: string | null;
+  defaultValue?: unknown;
+  required: boolean;
+  allowedValues?: unknown[] | null;
+}
+
+export interface ConnectionRef {
+  name: string;
+  connectionId: string;
+  provider: "sqlServer" | "postgreSql" | "oracle";
+}
+
+export interface ConnectionResponse {
+  id: string;
+  name: string;
+  provider: "sqlServer" | "postgreSql" | "oracle";
+  createdAtUtc: string;
 }
 
 export interface PageSetup {
@@ -152,8 +199,8 @@ export interface ReportDefinition {
   layoutMode: LayoutMode;
   unit: "px";
   page: PageSetup;
-  parameters: unknown[];
-  connections: unknown[];
+  parameters: ReportParameter[];
+  connections: ConnectionRef[];
   dataSources: DataSourceDefinition[];
   styles: Record<string, ReportStyle>;
   bands: Band[];

@@ -1,4 +1,5 @@
 import type {
+  ConnectionResponse,
   DataField,
   DataSourceDefinition,
   ReportDefinition,
@@ -15,6 +16,8 @@ async function json<T>(response: Response): Promise<T> {
 }
 
 const jsonHeaders = { "Content-Type": "application/json" };
+
+export type ParamValues = Record<string, unknown>;
 
 export const api = {
   listReports: (): Promise<ReportSummary[]> => fetch("/api/reports").then(json<ReportSummary[]>),
@@ -38,25 +41,53 @@ export const api = {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
 
+  // --- data sources ---
   schema: (source: DataSourceDefinition): Promise<{ fields: DataField[] }> =>
     fetch("/api/datasources/schema", { method: "POST", headers: jsonHeaders, body: JSON.stringify(source) })
       .then(json<{ fields: DataField[] }>),
 
-  renderHtml: (definition: ReportDefinition): Promise<string> =>
+  previewSource: (
+    source: DataSourceDefinition,
+    take = 20,
+  ): Promise<{ fields: DataField[]; rows: Record<string, unknown>[] }> =>
+    fetch(`/api/datasources/preview?take=${take}`, {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify(source),
+    }).then(json<{ fields: DataField[]; rows: Record<string, unknown>[] }>),
+
+  // --- connections ---
+  listConnections: (): Promise<ConnectionResponse[]> =>
+    fetch("/api/connections").then(json<ConnectionResponse[]>),
+
+  createConnection: (name: string, provider: string, connectionString: string): Promise<ConnectionResponse> =>
+    fetch("/api/connections", {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({ name, provider, connectionString }),
+    }).then(json<ConnectionResponse>),
+
+  deleteConnection: (id: string): Promise<void> =>
+    fetch(`/api/connections/${id}`, { method: "DELETE" }).then((r) => {
+      if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
+    }),
+
+  // --- render ---
+  renderHtml: (definition: ReportDefinition, parameters: ParamValues = {}): Promise<string> =>
     fetch("/api/render?format=html", {
       method: "POST",
       headers: jsonHeaders,
-      body: JSON.stringify({ definition, parameters: {} }),
+      body: JSON.stringify({ definition, parameters }),
     }).then(async (r) => {
       if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
       return r.text();
     }),
 
-  renderPdfBlob: (definition: ReportDefinition): Promise<Blob> =>
+  renderPdfBlob: (definition: ReportDefinition, parameters: ParamValues = {}): Promise<Blob> =>
     fetch("/api/render?format=pdf", {
       method: "POST",
       headers: jsonHeaders,
-      body: JSON.stringify({ definition, parameters: {} }),
+      body: JSON.stringify({ definition, parameters }),
     }).then(async (r) => {
       if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
       return r.blob();

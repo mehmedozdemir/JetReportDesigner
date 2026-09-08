@@ -5,6 +5,7 @@ import { emptyFreeReport, type ReportSummary } from "./types";
 import { Canvas } from "./components/Canvas";
 import { Toolbox } from "./components/Toolbox";
 import { DataPanel } from "./components/DataPanel";
+import { ParametersPanel } from "./components/ParametersPanel";
 import { PropertiesPanel } from "./components/PropertiesPanel";
 import { PreviewPane } from "./components/PreviewPane";
 
@@ -13,6 +14,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"design" | "preview">("design");
+  const [paramValues, setParamValues] = useState<Record<string, string>>({});
 
   const report = useDesigner((s) => s.report);
   const reportId = useDesigner((s) => s.reportId);
@@ -87,7 +89,7 @@ export function App() {
     setBusy(true);
     setError(null);
     try {
-      const blob = await api.renderPdfBlob(report);
+      const blob = await api.renderPdfBlob(report, paramValues);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -197,12 +199,27 @@ export function App() {
       <div className="left">
         <Toolbox />
         <DataPanel key={reportId ?? "none"} />
+        <ParametersPanel />
       </div>
 
       <div className="center">
         {!report && <div className="canvas-wrap empty">Open or create a report to start.</div>}
+        {report && (report.parameters?.length ?? 0) > 0 && (
+          <div className="param-bar">
+            {report.parameters.map((p) => (
+              <label key={p.name}>
+                {p.label || p.name}
+                <input
+                  value={paramValues[p.name] ?? ""}
+                  placeholder={p.defaultValue == null ? "" : String(p.defaultValue)}
+                  onChange={(e) => setParamValues((v) => ({ ...v, [p.name]: e.target.value }))}
+                />
+              </label>
+            ))}
+          </div>
+        )}
         {report && tab === "design" && <Canvas />}
-        {report && tab === "preview" && <PreviewPane />}
+        {report && tab === "preview" && <PreviewPane parameters={paramValues} />}
       </div>
 
       <div className="right">

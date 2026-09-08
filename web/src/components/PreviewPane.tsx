@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useDesigner } from "../store";
 
-export function PreviewPane() {
+export function PreviewPane({ parameters }: { parameters: Record<string, unknown> }) {
   const report = useDesigner((s) => s.report);
   const [html, setHtml] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
@@ -14,14 +14,14 @@ export function PreviewPane() {
     setLoading(true);
     setError(null);
     api
-      .renderHtml(report)
+      .renderHtml(report, parameters)
       .then((h) => !cancelled && setHtml(h))
       .catch((e) => !cancelled && setError(String(e)))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [report]);
+  }, [report, parameters]);
 
   return (
     <div className="preview-wrap">

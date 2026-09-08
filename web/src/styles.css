@@ -100,6 +100,29 @@ button.mini { padding: 3px 8px; min-width: 26px; }
 }
 .field-chip em { color: var(--muted); font-style: normal; font-size: 11px; }
 
+.data-preview { margin-top: 8px; overflow: auto; max-height: 160px; border: 1px solid var(--border); border-radius: 6px; }
+.data-preview table { border-collapse: collapse; font-size: 11px; width: 100%; }
+.data-preview th, .data-preview td { border: 1px solid var(--border); padding: 2px 5px; white-space: nowrap; }
+.data-preview th { background: #f1f5f9; position: sticky; top: 0; }
+
+.param-row { padding: 6px 0; border-bottom: 1px dashed var(--border); display: flex; flex-direction: column; gap: 3px; }
+.param-row input, .param-row select { padding: 3px 5px; }
+
+.param-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.param-bar label { display: flex; flex-direction: column; font-size: 11px; color: var(--muted); gap: 2px; }
+.param-bar input { padding: 4px 6px; border: 1px solid var(--border); border-radius: 5px; }
+
+.connections { margin-top: 8px; }
+.connections-body { display: flex; flex-direction: column; gap: 4px; padding: 6px; border: 1px solid var(--border); border-radius: 6px; }
+.connections-body input, .connections-body select { padding: 3px 5px; }
+
 .hint { color: var(--muted); font-size: 12px; }
 .error { color: #b91c1c; }
 .error.small { font-size: 12px; margin-top: 6px; }

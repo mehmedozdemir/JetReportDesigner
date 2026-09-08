@@ -3,6 +3,7 @@ import type { ReportElement, ReportStyle } from "../types";
 import { useCanvasDrag, type ResizeHandle } from "../hooks/useCanvasDrag";
 
 const HANDLES: ResizeHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+const EMPTY_STYLES: Record<string, ReportStyle> = {};
 
 function effectiveStyle(el: ReportElement, styles: Record<string, ReportStyle>): ReportStyle {
   const base = el.styleRef ? styles[el.styleRef] ?? {} : {};
@@ -19,7 +20,7 @@ function effectiveStyle(el: ReportElement, styles: Record<string, ReportStyle>):
 export function ElementView({ element }: { element: ReportElement }) {
   const selectedIds = useDesigner((s) => s.selectedIds);
   const select = useDesigner((s) => s.select);
-  const styles = useDesigner((s) => s.report?.styles ?? {});
+  const styles = useDesigner((s) => s.report?.styles) ?? EMPTY_STYLES;
   const { beginMove, beginResize } = useCanvasDrag();
 
   const selected = selectedIds.includes(element.id);
