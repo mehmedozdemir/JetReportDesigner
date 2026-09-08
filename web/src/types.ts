@@ -49,6 +49,31 @@ export interface ReportStyle {
   padding?: Spacing | null;
 }
 
+export type AggregateFunction =
+  | "none"
+  | "sum"
+  | "count"
+  | "average"
+  | "min"
+  | "max"
+  | "first"
+  | "last";
+export type AggregateScope = "group" | "report" | "page";
+
+export interface TableColumn {
+  header: string;
+  value: string;
+  width: number;
+  format?: string | null;
+  align: TextAlign;
+}
+
+export interface TableSpec {
+  dataSource: string;
+  showHeader: boolean;
+  columns: TableColumn[];
+}
+
 export interface ReportElement {
   id: string;
   type: ElementType;
@@ -59,11 +84,36 @@ export interface ReportElement {
   text?: string | null;
   value?: string | null;
   format?: string | null;
-  aggregate?: string;
-  aggregateScope?: string;
+  aggregate?: AggregateFunction;
+  aggregateScope?: AggregateScope;
   image?: { source: string; fit: string } | null;
   line?: { orientation: "horizontal" | "vertical" } | null;
-  table?: unknown | null;
+  table?: TableSpec | null;
+}
+
+export type BandType =
+  | "reportHeader"
+  | "pageHeader"
+  | "groupHeader"
+  | "detail"
+  | "groupFooter"
+  | "pageFooter"
+  | "reportFooter";
+
+export interface GroupSpec {
+  dataSource: string;
+  expression: string;
+  sort: "asc" | "desc";
+}
+
+export interface Band {
+  type: BandType;
+  height: number;
+  visible: boolean;
+  dataSource?: string;
+  group?: GroupSpec;
+  repeatOnEveryPage: boolean;
+  elements: ReportElement[];
 }
 
 export interface DataField {
@@ -106,7 +156,7 @@ export interface ReportDefinition {
   connections: unknown[];
   dataSources: DataSourceDefinition[];
   styles: Record<string, ReportStyle>;
-  bands: unknown[];
+  bands: Band[];
   body: { height: number; elements: ReportElement[] } | null;
 }
 

@@ -1,17 +1,44 @@
 import { useDesigner } from "../store";
-import type { PageSize, ReportElement, TextAlign } from "../types";
+import type {
+  AggregateFunction,
+  AggregateScope,
+  Band,
+  PageSize,
+  ReportElement,
+  TextAlign,
+} from "../types";
 import { edge } from "../types";
 
 export function PropertiesPanel() {
   const report = useDesigner((s) => s.report);
   const selectedIds = useDesigner((s) => s.selectedIds);
-  const mutate = useDesigner((s) => s.mutate);
+  const selectedBand = useDesigner((s) => s.selectedBand);
+  const mutateElement = useDesigner((s) => s.mutateElement);
+  const locate = useDesigner((s) => s.locate);
 
   if (!report) return null;
 
+  if (selectedBand !== null && report.bands[selectedBand]) {
+    return <BandProperties index={selectedBand} />;
+  }
+
   if (selectedIds.length === 1) {
-    const el = report.body?.elements.find((e) => e.id === selectedIds[0]);
-    if (el) return <ElementProperties element={el} onPatch={(fn) => mutate((r) => applyToElement(r, el.id, fn))} />;
+    const id = selectedIds[0];
+    const el =
+      report.body?.elements.find((e) => e.id === id) ??
+      report.bands.flatMap((b) => b.elements).find((e) => e.id === id);
+    if (el) {
+      const loc = locate(id);
+      const bandType =
+        loc?.container === "band" ? report.bands[loc.bandIndex]?.type : undefined;
+      return (
+        <ElementProperties
+          element={el}
+          bandType={bandType}
+          onPatch={(fn) => mutateElement(id, fn)}
+        />
+      );
+    }
   }
 
   if (selectedIds.length > 1) {
@@ -26,24 +53,110 @@ export function PropertiesPanel() {
   return <PageProperties />;
 }
 
-function applyToElement(
-  report: NonNullable<ReturnType<typeof useDesigner.getState>["report"]>,
-  id: string,
-  fn: (el: ReportElement) => void,
-) {
-  const el = report.body?.elements.find((e) => e.id === id);
-  if (el) fn(el);
+function BandProperties({ index }: { index: number }) {
+  const band = useDesigner((s) => s.report!.bands[index]) as Band;
+  const sources = useDesigner((s) => s.report!.dataSources);
+  const patchBand = useDesigner((s) => s.patchBand);
+  const removeBand = useDesigner((s) => s.removeBand);
+  const moveBand = useDesigner((s) => s.moveBand);
+  const bandCount = useDesigner((s) => s.report!.bands.length);
+  const isGroup = band.type === "groupHeader" || band.type === "groupFooter";
+
+  return (
+    <div className="panel">
+      <h2>{band.type} band</h2>
+      <div className="row">
+        <button className="mini" onClick={() => moveBand(index, -1)} disabled={index === 0}>↑</button>
+        <button className="mini" onClick={() => moveBand(index, 1)} disabled={index === bandCount - 1}>↓</button>
+        <button className="mini" onClick={() => removeBand(index)}>Delete</button>
+      </div>
+
+      <label className="field">
+        <span>Height</span>
+        <input
+          type="number"
+          value={Math.round(band.height)}
+          onChange={(e) => patchBand(index, (b) => (b.height = Math.max(8, Number(e.target.value) || 8)))}
+        />
+      </label>
+
+      {band.type === "detail" && (
+        <label className="field">
+          <span>Data source</span>
+          <select
+            value={band.dataSource ?? ""}
+            onChange={(e) => patchBand(index, (b) => (b.dataSource = e.target.value || undefined))}
+          >
+            <option value="">—</option>
+            {sources.map((s) => (
+              <option key={s.name}>{s.name}</option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {isGroup && (
+        <>
+          <label className="field">
+            <span>Group by</span>
+            <input
+              value={band.group?.expression ?? ""}
+              placeholder="{orders.customer}"
+              onChange={(e) =>
+                patchBand(index, (b) => {
+                  b.group ??= { dataSource: sources[0]?.name ?? "", expression: "", sort: "asc" };
+                  b.group.expression = e.target.value;
+                })
+              }
+            />
+          </label>
+          <label className="field">
+            <span>Sort</span>
+            <select
+              value={band.group?.sort ?? "asc"}
+              onChange={(e) =>
+                patchBand(index, (b) => {
+                  b.group ??= { dataSource: sources[0]?.name ?? "", expression: "", sort: "asc" };
+                  b.group.sort = e.target.value as "asc" | "desc";
+                })
+              }
+            >
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+            </select>
+          </label>
+        </>
+      )}
+
+      {(band.type === "groupHeader" || band.type === "reportHeader" || band.type === "pageHeader") && (
+        <label className="row" style={{ marginTop: 6 }}>
+          <input
+            type="checkbox"
+            checked={band.repeatOnEveryPage}
+            onChange={(e) => patchBand(index, (b) => (b.repeatOnEveryPage = e.target.checked))}
+          />
+          <span>Repeat on every page</span>
+        </label>
+      )}
+    </div>
+  );
 }
+
+const AGG_FUNCS: AggregateFunction[] = ["none", "sum", "count", "average", "min", "max", "first", "last"];
+const AGG_SCOPES: AggregateScope[] = ["group", "page", "report"];
 
 function ElementProperties({
   element,
+  bandType,
   onPatch,
 }: {
   element: ReportElement;
+  bandType?: Band["type"];
   onPatch: (fn: (el: ReportElement) => void) => void;
 }) {
   const s = element.style ?? {};
   const isText = element.type === "label" || element.type === "field" || element.type === "pageInfo";
+  const inFooter = bandType === "groupFooter" || bandType === "pageFooter" || bandType === "reportFooter";
 
   return (
     <div className="panel">
@@ -64,6 +177,34 @@ function ElementProperties({
           <Text label="Value / binding" value={element.value ?? ""} onChange={(v) => onPatch((e) => (e.value = v))} />
           <Text label="Format" value={element.format ?? ""} placeholder="n2, dd.MM.yyyy, c" onChange={(v) => onPatch((e) => (e.format = v || null))} />
         </>
+      )}
+
+      {inFooter && element.type === "field" && (
+        <div className="grid2">
+          <label className="field">
+            <span>Aggregate</span>
+            <select
+              value={element.aggregate ?? "none"}
+              onChange={(e) => onPatch((el) => (el.aggregate = e.target.value as AggregateFunction))}
+            >
+              {AGG_FUNCS.map((f) => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>Scope</span>
+            <select
+              value={element.aggregateScope ?? "group"}
+              onChange={(e) => onPatch((el) => (el.aggregateScope = e.target.value as AggregateScope))}
+              disabled={(element.aggregate ?? "none") === "none"}
+            >
+              {AGG_SCOPES.map((sc) => (
+                <option key={sc} value={sc}>{sc}</option>
+              ))}
+            </select>
+          </label>
+        </div>
       )}
       {element.type === "image" && (
         <Text label="Source (URL / data URI)" value={element.image?.source ?? ""} onChange={(v) => onPatch((e) => (e.image = { source: v, fit: e.image?.fit ?? "contain" }))} />

@@ -19,6 +19,8 @@ export function App() {
   const dirty = useDesigner((s) => s.dirty);
   const zoom = useDesigner((s) => s.zoom);
   const setZoom = useDesigner((s) => s.setZoom);
+  const setLayoutMode = useDesigner((s) => s.setLayoutMode);
+  const addBand = useDesigner((s) => s.addBand);
   const undo = useDesigner((s) => s.undo);
   const redo = useDesigner((s) => s.redo);
   const canUndo = useDesigner((s) => s.past.length > 0);
@@ -137,6 +139,43 @@ export function App() {
         <button onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">Redo</button>
 
         <span className="sep" />
+        <div className="tabs">
+          <button
+            className={report?.layoutMode === "free" ? "on" : ""}
+            disabled={!report}
+            onClick={() => setLayoutMode("free")}
+          >
+            Free
+          </button>
+          <button
+            className={report?.layoutMode === "banded" ? "on" : ""}
+            disabled={!report}
+            onClick={() => setLayoutMode("banded")}
+          >
+            Banded
+          </button>
+        </div>
+        {report?.layoutMode === "banded" && (
+          <select
+            className="add-band"
+            value=""
+            onChange={(e) => {
+              if (e.target.value) addBand(e.target.value as never);
+              e.currentTarget.value = "";
+            }}
+          >
+            <option value="">+ band…</option>
+            <option value="reportHeader">Report header</option>
+            <option value="pageHeader">Page header</option>
+            <option value="groupHeader">Group header</option>
+            <option value="detail">Detail</option>
+            <option value="groupFooter">Group footer</option>
+            <option value="pageFooter">Page footer</option>
+            <option value="reportFooter">Report footer</option>
+          </select>
+        )}
+
+        <span className="sep" />
         <button onClick={() => setZoom(zoom - 0.1)} disabled={!report}>−</button>
         <span className="zoom">{Math.round(zoom * 100)}%</span>
         <button onClick={() => setZoom(zoom + 0.1)} disabled={!report}>+</button>
@@ -157,7 +196,7 @@ export function App() {
 
       <div className="left">
         <Toolbox />
-        <DataPanel />
+        <DataPanel key={reportId ?? "none"} />
       </div>
 
       <div className="center">

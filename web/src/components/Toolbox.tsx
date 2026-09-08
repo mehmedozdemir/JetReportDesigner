@@ -12,7 +12,24 @@ const TOOLS: { type: ElementType; label: string }[] = [
 
 export function Toolbox() {
   const addElement = useDesigner((s) => s.addElement);
-  const hasReport = useDesigner((s) => !!s.report?.body);
+  const report = useDesigner((s) => s.report);
+  const selectedBand = useDesigner((s) => s.selectedBand);
+  const hasReport = !!report;
+
+  const add = (type: ElementType) => {
+    const location =
+      report?.layoutMode === "banded" && selectedBand !== null
+        ? ({ container: "band", bandIndex: selectedBand } as const)
+        : undefined;
+    addElement(type, 40, 8, location);
+  };
+
+  const hint =
+    report?.layoutMode === "banded"
+      ? selectedBand !== null
+        ? "Adds to the selected band"
+        : "Adds to the detail band (or drag onto a band)"
+      : "Drag onto the page, or click to drop at 40,8";
 
   return (
     <div className="panel">
@@ -25,8 +42,8 @@ export function Toolbox() {
             disabled={!hasReport}
             draggable={hasReport}
             onDragStart={(e) => e.dataTransfer.setData("application/x-tool", t.type)}
-            onClick={() => addElement(t.type, 60, 60)}
-            title={`Drag onto the page, or click to drop at 60,60`}
+            onClick={() => add(t.type)}
+            title={hint}
           >
             {t.label}
           </button>
