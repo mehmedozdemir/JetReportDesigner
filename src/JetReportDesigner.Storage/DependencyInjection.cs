@@ -31,8 +31,24 @@ public static class DependencyInjection
 
         services.TryAddSingletonTimeProvider();
         services.AddDbContext<JetReportDbContext>(builder => provider.Configure(builder, options.ConnectionString));
-        services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<IConnectionRepository, ConnectionRepository>();
+
+        if (options.ReportStore.Equals("filesystem", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(options.FileSystemPath))
+            {
+                throw new InvalidOperationException("Storage:FileSystemPath is required when Storage:ReportStore is 'filesystem'.");
+            }
+
+            var root = options.FileSystemPath;
+            services.AddSingleton<IReportRepository>(sp =>
+                new FileSystemReportRepository(root, sp.GetRequiredService<TimeProvider>()));
+        }
+        else
+        {
+            services.AddScoped<IReportRepository, ReportRepository>();
+        }
+
         return services;
     }
 

@@ -5,6 +5,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="JetReportDesigner.Storage.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\JetReportDesigner.Core\JetReportDesigner.Core.csproj" />
   </ItemGroup>
 

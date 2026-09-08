@@ -14,5 +14,6 @@
     <Project Path="tests/JetReportDesigner.Core.Tests/JetReportDesigner.Core.Tests.csproj" />
     <Project Path="tests/JetReportDesigner.DataSources.Tests/JetReportDesigner.DataSources.Tests.csproj" />
     <Project Path="tests/JetReportDesigner.Rendering.Tests/JetReportDesigner.Rendering.Tests.csproj" />
+    <Project Path="tests/JetReportDesigner.Storage.Tests/JetReportDesigner.Storage.Tests.csproj" />
   </Folder>
 </Solution>

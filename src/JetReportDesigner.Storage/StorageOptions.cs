@@ -14,6 +14,12 @@ public sealed class StorageOptions
 
     /// <summary>Apply pending EF Core migrations on startup. Convenient for dev; disable for controlled deployments.</summary>
     public bool MigrateOnStartup { get; set; }
+
+    /// <summary>Where report definitions live: <c>database</c> (default) or <c>filesystem</c>. Connections stay in the database either way.</summary>
+    public string ReportStore { get; set; } = "database";
+
+    /// <summary>Root directory for the filesystem report store.</summary>
+    public string FileSystemPath { get; set; } = string.Empty;
 }
 
 /// <summary>
