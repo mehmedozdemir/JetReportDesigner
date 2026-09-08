@@ -45,6 +45,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         };
 
         db.Reports.Add(row);
+        db.ReportVersions.Add(NewVersion(row, version: 1));
         await db.SaveChangesAsync(cancellationToken);
         return ToRecord(row);
     }
@@ -74,6 +75,9 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         row.UpdatedAtUtc = clock.GetUtcNow().UtcDateTime;
         row.ConcurrencyToken = Guid.NewGuid();
 
+        var nextVersion = await NextVersionNumberAsync(id, cancellationToken);
+        db.ReportVersions.Add(NewVersion(row, nextVersion));
+
         try
         {
             await db.SaveChangesAsync(cancellationToken);
@@ -88,9 +92,63 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
+        await db.ReportVersions.Where(v => v.ReportId == id).ExecuteDeleteAsync(cancellationToken);
         var deleted = await db.Reports.Where(r => r.Id == id).ExecuteDeleteAsync(cancellationToken);
         return deleted > 0;
     }
+
+    public async Task<IReadOnlyList<ReportVersionInfo>> ListVersionsAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var rows = await db.ReportVersions
+            .AsNoTracking()
+            .Where(v => v.ReportId == id)
+            .OrderByDescending(v => v.Version)
+            .Select(v => new { v.Version, v.Name, v.SavedAtUtc })
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(v => new ReportVersionInfo(v.Version, v.Name, v.SavedAtUtc)).ToList();
+    }
+
+    public async Task<ReportVersionRecord?> GetVersionAsync(Guid id, int version, CancellationToken cancellationToken)
+    {
+        var row = await db.ReportVersions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(v => v.ReportId == id && v.Version == version, cancellationToken);
+
+        return row is null
+            ? null
+            : new ReportVersionRecord(row.Version, row.Name, row.SavedAtUtc, ReportJson.Deserialize(row.DefinitionJson));
+    }
+
+    public async Task<ReportRecord?> RestoreVersionAsync(Guid id, int version, CancellationToken cancellationToken)
+    {
+        var snapshot = await GetVersionAsync(id, version, cancellationToken);
+        if (snapshot is null)
+        {
+            return null;
+        }
+
+        return await UpdateAsync(id, snapshot.Definition, expectedToken: null, cancellationToken);
+    }
+
+    private async Task<int> NextVersionNumberAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var max = await db.ReportVersions
+            .Where(v => v.ReportId == id)
+            .Select(v => (int?)v.Version)
+            .MaxAsync(cancellationToken);
+        return (max ?? 0) + 1;
+    }
+
+    private StoredReportVersion NewVersion(StoredReport row, int version) => new()
+    {
+        Id = Guid.NewGuid(),
+        ReportId = row.Id,
+        Version = version,
+        Name = row.Name,
+        DefinitionJson = row.DefinitionJson,
+        SavedAtUtc = clock.GetUtcNow().UtcDateTime,
+    };
 
     private static ReportRecord ToRecord(StoredReport row) => new(
         row.Id,

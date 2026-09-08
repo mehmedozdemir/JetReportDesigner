@@ -67,6 +67,38 @@ public sealed class ReportsController(IReportRepository repository, IValidator<R
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
         await repository.DeleteAsync(id, cancellationToken) ? NoContent() : NotFound();
 
+    [HttpGet("{id:guid}/versions")]
+    public async Task<ActionResult<IReadOnlyList<ReportVersionResponse>>> Versions(Guid id, CancellationToken cancellationToken)
+    {
+        if (await repository.GetAsync(id, cancellationToken) is null)
+        {
+            return NotFound();
+        }
+
+        var versions = await repository.ListVersionsAsync(id, cancellationToken);
+        return Ok(versions.Select(ReportVersionResponse.From).ToList());
+    }
+
+    [HttpGet("{id:guid}/versions/{version:int}")]
+    public async Task<ActionResult<ReportVersionDetailResponse>> Version(Guid id, int version, CancellationToken cancellationToken)
+    {
+        var snapshot = await repository.GetVersionAsync(id, version, cancellationToken);
+        return snapshot is null ? NotFound() : Ok(ReportVersionDetailResponse.From(snapshot));
+    }
+
+    [HttpPost("{id:guid}/versions/{version:int}/restore")]
+    public async Task<ActionResult<ReportResponse>> Restore(Guid id, int version, CancellationToken cancellationToken)
+    {
+        var restored = await repository.RestoreVersionAsync(id, version, cancellationToken);
+        if (restored is null)
+        {
+            return NotFound();
+        }
+
+        Response.Headers.ETag = $"\"{restored.ConcurrencyToken}\"";
+        return Ok(ReportResponse.From(restored));
+    }
+
     private static Guid? ParseIfMatch(IEnumerable<string?> headerValues)
     {
         var raw = headerValues.FirstOrDefault()?.Trim().Trim('"');

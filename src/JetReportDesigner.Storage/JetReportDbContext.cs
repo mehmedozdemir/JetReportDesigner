@@ -7,6 +7,8 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
 {
     public DbSet<StoredReport> Reports => Set<StoredReport>();
 
+    public DbSet<StoredReportVersion> ReportVersions => Set<StoredReportVersion>();
+
     public DbSet<StoredConnection> Connections => Set<StoredConnection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -19,6 +21,7 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
         if (Database.ProviderName?.Contains("Oracle", StringComparison.OrdinalIgnoreCase) == true)
         {
             modelBuilder.Entity<Entities.StoredReport>().Property(r => r.DefinitionJson).HasColumnType("NCLOB");
+            modelBuilder.Entity<Entities.StoredReportVersion>().Property(v => v.DefinitionJson).HasColumnType("NCLOB");
             modelBuilder.Entity<Entities.StoredConnection>().Property(c => c.EncryptedConnectionString).HasColumnType("NCLOB");
         }
 

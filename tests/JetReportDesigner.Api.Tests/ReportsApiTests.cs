@@ -108,6 +108,46 @@ public abstract class ReportsApiTestsBase(DatabaseFixture fixture)
     }
 
     [Fact]
+    public async Task Report_Versions_Are_Tracked_And_Restorable()
+    {
+        if (!fixture.Available)
+        {
+            return;
+        }
+
+        await using var factory = CreateFactory();
+        var client = factory.CreateClient();
+
+        var definition = new ReportDefinition { Name = "v1", LayoutMode = LayoutMode.Free, Body = new ReportBody { Height = 800, Elements = [] } };
+        var created = await (await client.PostAsJsonAsync("/api/reports", definition, Json)).Content.ReadFromJsonAsync<ReportResponse>(Json);
+
+        async Task Rename(string name)
+        {
+            var current = await client.GetFromJsonAsync<ReportResponse>($"/api/reports/{created!.Id}", Json);
+            current!.Definition.Name = name;
+            var response = await client.PutAsJsonAsync($"/api/reports/{created.Id}", current.Definition, Json);
+            response.EnsureSuccessStatusCode();
+        }
+
+        await Rename("v2");
+        await Rename("v3");
+
+        var versions = await client.GetFromJsonAsync<List<ReportVersionResponse>>($"/api/reports/{created!.Id}/versions", Json);
+        Assert.Equal(3, versions!.Count);
+        Assert.Equal([3, 2, 1], versions.Select(v => v.Version).ToArray());
+        Assert.Equal("v1", versions.Single(v => v.Version == 1).Name);
+
+        var v1 = await client.GetFromJsonAsync<ReportVersionDetailResponse>($"/api/reports/{created.Id}/versions/1", Json);
+        Assert.Equal("v1", v1!.Definition.Name);
+
+        var restored = await (await client.PostAsync($"/api/reports/{created.Id}/versions/1/restore", null)).Content.ReadFromJsonAsync<ReportResponse>(Json);
+        Assert.Equal("v1", restored!.Definition.Name);
+
+        var afterRestore = await client.GetFromJsonAsync<List<ReportVersionResponse>>($"/api/reports/{created.Id}/versions", Json);
+        Assert.Equal(4, afterRestore!.Count); // the restore itself is a new version
+    }
+
+    [Fact]
     public async Task Invalid_Definition_Returns_422()
     {
         if (!fixture.Available)

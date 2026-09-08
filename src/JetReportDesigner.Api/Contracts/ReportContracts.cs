@@ -28,3 +28,14 @@ public sealed record ReportResponse(
     public static ReportResponse From(ReportRecord r) => new(
         r.Id, r.Definition, r.CreatedAtUtc, r.UpdatedAtUtc, r.ConcurrencyToken);
 }
+
+public sealed record ReportVersionResponse(int Version, string Name, DateTime SavedAtUtc)
+{
+    public static ReportVersionResponse From(ReportVersionInfo v) => new(v.Version, v.Name, v.SavedAtUtc);
+}
+
+public sealed record ReportVersionDetailResponse(int Version, string Name, DateTime SavedAtUtc, ReportDefinition Definition)
+{
+    public static ReportVersionDetailResponse From(ReportVersionRecord v) =>
+        new(v.Version, v.Name, v.SavedAtUtc, v.Definition);
+}

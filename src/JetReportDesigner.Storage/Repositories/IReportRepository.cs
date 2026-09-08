@@ -16,6 +16,10 @@ public sealed record ReportRecord(
     DateTime UpdatedAtUtc,
     Guid ConcurrencyToken);
 
+public sealed record ReportVersionInfo(int Version, string Name, DateTime SavedAtUtc);
+
+public sealed record ReportVersionRecord(int Version, string Name, DateTime SavedAtUtc, ReportDefinition Definition);
+
 /// <summary>Thrown by <see cref="IReportRepository.UpdateAsync"/> when the supplied concurrency token is stale.</summary>
 public sealed class ReportConcurrencyException(Guid id)
     : Exception($"Report {id} was modified by another writer.");
@@ -36,4 +40,11 @@ public interface IReportRepository
         CancellationToken cancellationToken);
 
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<ReportVersionInfo>> ListVersionsAsync(Guid id, CancellationToken cancellationToken);
+
+    Task<ReportVersionRecord?> GetVersionAsync(Guid id, int version, CancellationToken cancellationToken);
+
+    /// <summary>Makes the given version the current definition (which itself becomes a new version). Null when the report or version does not exist.</summary>
+    Task<ReportRecord?> RestoreVersionAsync(Guid id, int version, CancellationToken cancellationToken);
 }

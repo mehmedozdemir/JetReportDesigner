@@ -91,6 +91,37 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
 
                     b.ToTable("Reports", (string)null);
                 });
+
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.StoredReportVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<string>("DefinitionJson")
+                        .IsRequired()
+                        .HasColumnType("NCLOB");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("NVARCHAR2(200)");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<DateTime>("SavedAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("NUMBER(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportId", "Version")
+                        .IsUnique();
+
+                    b.ToTable("ReportVersions", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }

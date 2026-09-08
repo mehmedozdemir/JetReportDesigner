@@ -91,6 +91,37 @@ namespace JetReportDesigner.Storage.Migrations.SqlServer.Migrations
 
                     b.ToTable("Reports", (string)null);
                 });
+
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.StoredReportVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DefinitionJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("SavedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportId", "Version")
+                        .IsUnique();
+
+                    b.ToTable("ReportVersions", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }
