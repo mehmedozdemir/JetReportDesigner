@@ -119,20 +119,6 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
           </section>
 
           <section className="settings-section">
-            <h3>New reports</h3>
-            <Row label="Default layout">
-              <Segmented
-                value={p.defaultLayout}
-                onChange={(v) => set("defaultLayout", v)}
-                options={[
-                  { value: "free", label: "Free" },
-                  { value: "banded", label: "Banded" },
-                ]}
-              />
-            </Row>
-          </section>
-
-          <section className="settings-section">
             <h3>Auto-save</h3>
             <Row label="Save edited reports">
               <select

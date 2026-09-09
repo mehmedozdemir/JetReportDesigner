@@ -1,7 +1,19 @@
 import { useState } from "react";
+import {
+  ArrowDown,
+  ArrowDownToLine,
+  ArrowUp,
+  ArrowUpToLine,
+  ClipboardPaste,
+  Copy,
+  CopyPlus,
+  Scissors,
+  Trash2,
+} from "lucide-react";
 import { useDesigner } from "../store";
 import type { ReportElement, ReportStyle } from "../types";
 import { useCanvasDrag, type ResizeHandle } from "../hooks/useCanvasDrag";
+import { ContextMenu, type MenuItem } from "./ContextMenu";
 
 const HANDLES: ResizeHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
 const EMPTY_STYLES: Record<string, ReportStyle> = {};
@@ -28,6 +40,7 @@ export function ElementView({ element }: { element: ReportElement }) {
   const { beginMove, beginResize } = useCanvasDrag();
   const [editing, setEditing] = useState(false);
   const [lastDown, setLastDown] = useState(0);
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
 
   const isLabel = element.type === "label";
   const currentText = isLabel ? element.text ?? "" : element.value ?? "";
@@ -79,6 +92,7 @@ export function ElementView({ element }: { element: ReportElement }) {
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
     const now = Date.now();
     if (now - lastDown < 300 && EDITABLE.has(element.type)) {
       setLastDown(0);
@@ -94,10 +108,35 @@ export function ElementView({ element }: { element: ReportElement }) {
     beginMove(e, ids);
   };
 
+  const onContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!selected) select([element.id]);
+    setMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const menuItems = (): MenuItem[] => {
+    const st = useDesigner.getState();
+    return [
+      { label: "Cut", icon: Scissors, onClick: () => { st.copySelection(); st.removeSelected(); } },
+      { label: "Copy", icon: Copy, onClick: () => st.copySelection() },
+      { label: "Paste", icon: ClipboardPaste, onClick: () => st.paste() },
+      { label: "Duplicate", icon: CopyPlus, onClick: () => st.duplicateSelection() },
+      { sep: true },
+      { label: "Bring to front", icon: ArrowUpToLine, onClick: () => st.reorderSelection("front") },
+      { label: "Bring forward", icon: ArrowUp, onClick: () => st.reorderSelection("forward") },
+      { label: "Send backward", icon: ArrowDown, onClick: () => st.reorderSelection("backward") },
+      { label: "Send to back", icon: ArrowDownToLine, onClick: () => st.reorderSelection("back") },
+      { sep: true },
+      { label: "Delete", icon: Trash2, danger: true, onClick: () => st.removeSelected() },
+    ];
+  };
+
   return (
     <div
       style={boxStyle}
       onPointerDown={editing ? undefined : onPointerDown}
+      onContextMenu={onContextMenu}
       onDoubleClick={() => EDITABLE.has(element.type) && setEditing(true)}
       data-el-id={element.id}
     >
@@ -153,6 +192,10 @@ export function ElementView({ element }: { element: ReportElement }) {
             onPointerDown={(e) => beginResize(e, element.id, h)}
           />
         ))}
+
+      {menu && (
+        <ContextMenu x={menu.x} y={menu.y} items={menuItems()} onClose={() => setMenu(null)} />
+      )}
     </div>
   );
 }

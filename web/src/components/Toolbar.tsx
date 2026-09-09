@@ -5,7 +5,6 @@ import {
   FilePlus2,
   LayoutGrid,
   PencilRuler,
-  Plus,
   Redo2,
   Rows3,
   Save,
@@ -16,17 +15,6 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { useDesigner } from "../store";
-import type { BandType } from "../types";
-
-const BAND_OPTIONS: { value: BandType; label: string }[] = [
-  { value: "reportHeader", label: "Report header" },
-  { value: "pageHeader", label: "Page header" },
-  { value: "groupHeader", label: "Group header" },
-  { value: "detail", label: "Detail" },
-  { value: "groupFooter", label: "Group footer" },
-  { value: "pageFooter", label: "Page footer" },
-  { value: "reportFooter", label: "Report footer" },
-];
 
 interface ToolbarProps {
   tab: "design" | "preview";
@@ -56,7 +44,6 @@ export function Toolbar({
   const zoom = useDesigner((s) => s.zoom);
   const setZoom = useDesigner((s) => s.setZoom);
   const setLayoutMode = useDesigner((s) => s.setLayoutMode);
-  const addBand = useDesigner((s) => s.addBand);
   const undo = useDesigner((s) => s.undo);
   const redo = useDesigner((s) => s.redo);
   const canUndo = useDesigner((s) => s.past.length > 0);
@@ -144,25 +131,6 @@ export function Toolbar({
           <Rows3 /> Banded
         </button>
       </div>
-
-      {report?.layoutMode === "banded" && (
-        <label className="menu-select" title="Add a band">
-          <Plus />
-          <select
-            value=""
-            onChange={(e) => {
-              if (e.target.value) addBand(e.target.value as BandType);
-              e.currentTarget.value = "";
-            }}
-            aria-label="Add band"
-          >
-            <option value="">Band…</option>
-            {BAND_OPTIONS.map((b) => (
-              <option key={b.value} value={b.value}>{b.label}</option>
-            ))}
-          </select>
-        </label>
-      )}
 
       <div className="divider" />
 

@@ -11,7 +11,6 @@ export interface Prefs {
   snapToGrid: boolean;
   gridSize: number;
   snapToGuides: boolean;
-  defaultLayout: "free" | "banded";
   theme: ThemePref;
   autoSaveSeconds: number; // 0 = off
 }
@@ -23,7 +22,6 @@ export const DEFAULT_PREFS: Prefs = {
   snapToGrid: true,
   gridSize: 4,
   snapToGuides: true,
-  defaultLayout: "free",
   theme: "light",
   autoSaveSeconds: 0,
 };

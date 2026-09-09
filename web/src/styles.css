@@ -424,6 +424,27 @@ body {
   box-shadow: var(--shadow-lg); z-index: 50;
 }
 
+/* right-click context menu */
+.ctx-menu {
+  position: fixed; z-index: 200; min-width: 184px;
+  padding: 4px; border: 1px solid var(--border);
+  background: var(--bg-surface); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: 12.5px; color: var(--text-primary);
+}
+.ctx-item {
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  padding: 6px 9px; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.ctx-item:hover:not(:disabled) { background: var(--accent); color: #fff; }
+.ctx-item:disabled { opacity: 0.4; cursor: default; }
+.ctx-item.danger { color: var(--error); }
+.ctx-item.danger:hover:not(:disabled) { background: var(--error); color: #fff; }
+.ctx-item svg { width: 14px; height: 14px; flex: 0 0 auto; }
+.ctx-check { width: 15px; flex: 0 0 auto; display: inline-flex; align-items: center; }
+.ctx-sep { height: 1px; margin: 4px 2px; background: var(--border); }
+
 /* ============================================================
    Canvas
    ============================================================ */

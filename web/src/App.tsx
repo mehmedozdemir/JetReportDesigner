@@ -99,8 +99,8 @@ export function App() {
     }
   };
 
-  const createReport = async (mode?: "free" | "banded") => {
-    const layout = mode ?? usePrefs.getState().defaultLayout;
+  const createReport = async (mode: "free" | "banded" = "free") => {
+    const layout = mode;
     setBusy(true);
     setError(null);
     try {

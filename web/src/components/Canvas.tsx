@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { AlignEndHorizontal, AlignStartHorizontal, Rows2, Rows3, Table2 } from "lucide-react";
+import { AlignEndHorizontal, AlignStartHorizontal, ClipboardPaste, Rows2, Rows3, Table2 } from "lucide-react";
 import { useDesigner, type ElementLocation } from "../store";
 import { usePrefs } from "../prefs";
-import { pageDimensions, type Band, type ElementType } from "../types";
+import { pageDimensions, type Band, type BandType, type ElementType } from "../types";
+import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { ElementView } from "./ElementView";
 import { Ruler } from "./Ruler";
 
@@ -17,9 +18,20 @@ const BAND_META: Record<Band["type"], { label: string; Icon: LucideIcon }> = {
   reportFooter: { label: "Report footer", Icon: AlignEndHorizontal },
 };
 
+const BAND_ORDER: BandType[] = [
+  "reportHeader",
+  "pageHeader",
+  "groupHeader",
+  "detail",
+  "groupFooter",
+  "pageFooter",
+  "reportFooter",
+];
+
 type Refs = {
   wrapRef: React.RefObject<HTMLDivElement>;
   pageRef: React.RefObject<HTMLDivElement>;
+  onBgContextMenu: (e: React.MouseEvent) => void;
 };
 
 export function Canvas({ active = true }: { active?: boolean }) {
@@ -29,6 +41,14 @@ export function Canvas({ active = true }: { active?: boolean }) {
   const unit = usePrefs((s) => s.rulerUnit);
   const wrapRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const onBgContextMenu = (e: React.MouseEvent) => {
+    // ignore right-clicks that land on an element or a resize handle
+    if ((e.target as HTMLElement).closest("[data-el-id], .handle, .band-resize")) return;
+    e.preventDefault();
+    setMenu({ x: e.clientX, y: e.clientY });
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -82,7 +102,7 @@ export function Canvas({ active = true }: { active?: boolean }) {
     );
   }
 
-  const refs: Refs = { wrapRef, pageRef };
+  const refs: Refs = { wrapRef, pageRef, onBgContextMenu };
   return (
     <div className={`canvas-frame${showRulers ? " ruled" : ""}${showGrid ? "" : " no-grid"}`}>
       {showRulers && (
@@ -93,8 +113,42 @@ export function Canvas({ active = true }: { active?: boolean }) {
         </>
       )}
       {layoutMode === "free" ? <FreeCanvas {...refs} /> : <BandedCanvas {...refs} />}
+      {menu && (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          items={layoutMode === "banded" ? bandMenuItems() : freeMenuItems()}
+          onClose={() => setMenu(null)}
+        />
+      )}
     </div>
   );
+}
+
+function bandMenuItems(): MenuItem[] {
+  const s = useDesigner.getState();
+  const bands = s.report?.bands ?? [];
+  return BAND_ORDER.map((type) => {
+    const idx = bands.findIndex((b) => b.type === type);
+    return {
+      label: BAND_META[type].label,
+      icon: BAND_META[type].Icon,
+      checked: idx >= 0,
+      onClick: () => (idx >= 0 ? s.removeBand(idx) : s.addBand(type)),
+    };
+  });
+}
+
+function freeMenuItems(): MenuItem[] {
+  const s = useDesigner.getState();
+  return [
+    { label: "Paste", icon: ClipboardPaste, onClick: () => s.paste() },
+    { sep: true },
+    {
+      label: "Select all",
+      onClick: () => s.select((s.report?.body?.elements ?? []).map((e) => e.id)),
+    },
+  ];
 }
 
 function useDropHandler(pageRef: React.RefObject<HTMLDivElement>, location: ElementLocation) {
@@ -120,7 +174,7 @@ function useDropHandler(pageRef: React.RefObject<HTMLDivElement>, location: Elem
   };
 }
 
-function FreeCanvas({ wrapRef, pageRef }: Refs) {
+function FreeCanvas({ wrapRef, pageRef, onBgContextMenu }: Refs) {
   const report = useDesigner((s) => s.report)!;
   const zoom = useDesigner((s) => s.zoom);
   const select = useDesigner((s) => s.select);
@@ -161,7 +215,13 @@ function FreeCanvas({ wrapRef, pageRef }: Refs) {
   };
 
   return (
-    <div className="canvas-wrap" ref={wrapRef} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+    <div
+      className="canvas-wrap"
+      ref={wrapRef}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={onDrop}
+      onContextMenu={onBgContextMenu}
+    >
       <div
         className="page"
         ref={pageRef}
@@ -190,14 +250,14 @@ function FreeCanvas({ wrapRef, pageRef }: Refs) {
   );
 }
 
-function BandedCanvas({ wrapRef, pageRef }: Refs) {
+function BandedCanvas({ wrapRef, pageRef, onBgContextMenu }: Refs) {
   const report = useDesigner((s) => s.report)!;
   const zoom = useDesigner((s) => s.zoom);
   const { width } = pageDimensions(report.page);
   const usableWidth = width - report.page.margins.left - report.page.margins.right;
 
   return (
-    <div className="canvas-wrap" ref={wrapRef}>
+    <div className="canvas-wrap" ref={wrapRef} onContextMenu={onBgContextMenu}>
       <div
         className="band-stack"
         ref={pageRef}
@@ -206,7 +266,7 @@ function BandedCanvas({ wrapRef, pageRef }: Refs) {
         {report.bands.length === 0 && (
           <div className="empty-hint-block">
             <Rows3 />
-            <div>No bands yet — use “Band…” in the toolbar to add one.</div>
+            <div>No bands yet — right-click the canvas to add one.</div>
           </div>
         )}
         {report.bands.map((band, index) => (
