@@ -8,6 +8,7 @@ import {
   Copy,
   CopyPlus,
   Scissors,
+  SlidersHorizontal,
   Trash2,
 } from "lucide-react";
 import { useDesigner } from "../store";
@@ -129,6 +130,15 @@ export function ElementView({ element }: { element: ReportElement }) {
       { label: "Send to back", icon: ArrowDownToLine, onClick: () => st.reorderSelection("back") },
       { sep: true },
       { label: "Delete", icon: Trash2, danger: true, onClick: () => st.removeSelected() },
+      { sep: true },
+      {
+        label: "Properties",
+        icon: SlidersHorizontal,
+        onClick: () => {
+          st.select([element.id]);
+          st.revealInspector();
+        },
+      },
     ];
   };
 

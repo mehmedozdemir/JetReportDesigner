@@ -35,6 +35,7 @@ interface DesignerState {
   concurrencyToken: string | null;
   selectedIds: string[];
   selectedBand: number | null;
+  inspectorPulse: number;
   zoom: number;
   dirty: boolean;
   past: ReportDefinition[];
@@ -50,6 +51,7 @@ interface DesignerState {
 
   select(ids: string[], additive?: boolean): void;
   selectBand(index: number | null): void;
+  revealInspector(): void;
 
   elementsOf(location: ElementLocation): ReportElement[];
   locate(id: string): ElementLocation | null;
@@ -121,6 +123,7 @@ export const useDesigner = create<DesignerState>((set, get) => ({
   concurrencyToken: null,
   selectedIds: [],
   selectedBand: null,
+  inspectorPulse: 0,
   zoom: 1,
   dirty: false,
   past: [],
@@ -195,6 +198,8 @@ export const useDesigner = create<DesignerState>((set, get) => ({
     })),
 
   selectBand: (index) => set({ selectedBand: index, selectedIds: [] }),
+
+  revealInspector: () => set((s) => ({ inspectorPulse: s.inspectorPulse + 1 })),
 
   elementsOf: (location) => {
     const report = get().report;

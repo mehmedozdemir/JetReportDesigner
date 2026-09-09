@@ -115,6 +115,11 @@ body {
 
 .left  { grid-area: left;  overflow-y: auto; background: var(--bg-surface); border-right: 1px solid var(--border); }
 .right { grid-area: right; overflow-y: auto; background: var(--bg-surface); border-left: 1px solid var(--border); }
+.right.flash { animation: inspector-flash 0.6s ease-out; }
+@keyframes inspector-flash {
+  from { box-shadow: inset 3px 0 0 0 var(--accent), inset 0 0 40px -12px var(--accent-muted); }
+  to   { box-shadow: inset 0 0 0 0 transparent; }
+}
 .center { grid-area: center; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-base); }
 
 /* ============================================================

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { api } from "./api";
 import { useDesigner } from "./store";
@@ -30,6 +30,18 @@ export function App() {
   const reportId = useDesigner((s) => s.reportId);
   const load = useDesigner((s) => s.load);
   const markSaved = useDesigner((s) => s.markSaved);
+  const inspectorPulse = useDesigner((s) => s.inspectorPulse);
+  const rightRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!inspectorPulse) return;
+    const el = rightRef.current;
+    if (!el) return;
+    el.scrollTo({ top: 0 });
+    el.classList.remove("flash");
+    void el.offsetWidth; // restart the animation
+    el.classList.add("flash");
+  }, [inspectorPulse]);
 
   const refresh = useCallback(async () => {
     try {
@@ -231,7 +243,7 @@ export function App() {
         )}
       </div>
 
-      <div className="right">
+      <div className="right" ref={rightRef}>
         <PropertiesPanel />
       </div>
 
