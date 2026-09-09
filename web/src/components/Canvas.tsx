@@ -7,6 +7,7 @@ import { pageDimensions, type Band, type BandType, type ElementType } from "../t
 import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { ElementView } from "./ElementView";
 import { Ruler } from "./Ruler";
+import { backgroundImageCss } from "../image";
 
 const BAND_META: Record<Band["type"], { label: string; Icon: LucideIcon }> = {
   reportHeader: { label: "Report header", Icon: AlignStartHorizontal },
@@ -226,7 +227,13 @@ function FreeCanvas({ wrapRef, pageRef, onBgContextMenu }: Refs) {
         className="page"
         ref={pageRef}
         onPointerDown={onPagePointerDown}
-        style={{ width, height, transform: `scale(${zoom})`, transformOrigin: "top center" }}
+        style={{
+          width,
+          height,
+          transform: `scale(${zoom})`,
+          transformOrigin: "top center",
+          ...backgroundImageCss(report.page.backgroundImage),
+        }}
       >
         <Margins />
         {(report.body?.elements ?? []).map((el) => (
@@ -261,7 +268,12 @@ function BandedCanvas({ wrapRef, pageRef, onBgContextMenu }: Refs) {
       <div
         className="band-stack"
         ref={pageRef}
-        style={{ width: usableWidth, transform: `scale(${zoom})`, transformOrigin: "top center" }}
+        style={{
+          width: usableWidth,
+          transform: `scale(${zoom})`,
+          transformOrigin: "top center",
+          ...backgroundImageCss(report.page.backgroundImage),
+        }}
       >
         {report.bands.length === 0 && (
           <div className="empty-hint-block">
@@ -315,7 +327,7 @@ function BandStrip({ band, index, width }: { band: Band; index: number; width: n
       <div
         className="band-area"
         ref={areaRef}
-        style={{ width, height: band.height }}
+        style={{ width, height: band.height, ...backgroundImageCss(band.backgroundImage) }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}
         onPointerDown={(e) => {

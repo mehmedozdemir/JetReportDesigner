@@ -1,4 +1,5 @@
 import type {
+  AssetResponse,
   ConnectionResponse,
   DataField,
   DataSourceDefinition,
@@ -135,6 +136,15 @@ export const api = {
     fetch(`/api/sqlqueries/${id}`, { method: "DELETE" }).then((r) => {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
+
+  // --- assets ---
+  listAssets: (): Promise<AssetResponse[]> => fetch("/api/assets").then(json<AssetResponse[]>),
+
+  uploadAsset: (file: File): Promise<AssetResponse> => {
+    const form = new FormData();
+    form.append("file", file);
+    return fetch("/api/assets", { method: "POST", body: form }).then(json<AssetResponse>);
+  },
 
   // --- render ---
   renderHtml: (definition: ReportDefinition, parameters: ParamValues = {}): Promise<string> =>

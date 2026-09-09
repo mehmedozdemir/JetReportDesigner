@@ -39,6 +39,14 @@ export interface Spacing {
   left: number;
 }
 
+export interface AssetResponse {
+  id: string;
+  fileName: string;
+  contentType: string;
+  byteLength: number;
+  createdAtUtc: string;
+}
+
 export type BackgroundFit = "cover" | "contain" | "fill" | "tile";
 
 export interface BackgroundImageSpec {

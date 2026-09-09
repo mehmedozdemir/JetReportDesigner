@@ -20,6 +20,7 @@ import type { ReportElement, ReportStyle } from "../types";
 import { useCanvasDrag, type ResizeHandle } from "../hooks/useCanvasDrag";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { FormulaDialog } from "./FormulaDialog";
+import { backgroundImageCss, imageSrc } from "../image";
 
 const HANDLES: ResizeHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
 const EMPTY_STYLES: Record<string, ReportStyle> = {};
@@ -100,6 +101,7 @@ export function ElementView({ element }: { element: ReportElement }) {
     userSelect: "none",
     outline: selected ? "1px solid var(--accent)" : "1px dashed rgba(148,163,184,.6)",
     outlineOffset: selected ? "0" : "-1px",
+    ...(element.type === "line" ? null : backgroundImageCss(s.backgroundImage)),
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -208,7 +210,21 @@ export function ElementView({ element }: { element: ReportElement }) {
         ) : (
           <span>{labelText(element)}</span>
         ))}
-      {element.type === "image" && <span className="img-ph">image</span>}
+      {element.type === "image" &&
+        (element.image?.source ? (
+          <img
+            src={imageSrc(element.image.source)}
+            alt=""
+            draggable={false}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: (element.image.fit === "fill" ? "fill" : element.image.fit === "cover" ? "cover" : "contain"),
+            }}
+          />
+        ) : (
+          <span className="img-ph">image</span>
+        ))}
       {element.type === "table" && element.table && (
         <table className="tbl-preview">
           {element.table.showHeader && (

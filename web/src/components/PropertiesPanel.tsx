@@ -36,7 +36,9 @@ import { useDesigner } from "../store";
 import { FormatField } from "./FormatDialog";
 import { FormulaField } from "./FormulaDialog";
 import { ConditionalFormatDialog } from "./ConditionalFormatDialog";
+import { ImagePicker } from "./ImagePicker";
 import type {
+  BackgroundFit,
   Band,
   BorderSpec,
   ElementType,
@@ -322,6 +324,12 @@ function BandProperties({ index }: { index: number }) {
         </label>
       )}
 
+      <ImagePicker
+        label="Background image"
+        value={band.backgroundImage}
+        onChange={(v) => patchBand(index, (b) => (b.backgroundImage = v))}
+      />
+
       <ConditionalFormatButton
         rules={band.formatRules ?? EMPTY_RULES}
         fields={sources.flatMap((s) => s.fields.map((f) => f.name))}
@@ -402,7 +410,12 @@ function ElementProperties({
       )}
 
       {element.type === "image" && (
-        <Text label="Source (URL / data URI)" value={element.image?.source ?? ""} onChange={(v) => onPatch((e) => (e.image = { source: v, fit: e.image?.fit ?? "contain" }))} />
+        <ImagePicker
+          label="Image"
+          value={element.image?.source ? { source: element.image.source, fit: (element.image.fit as BackgroundFit) ?? "contain" } : null}
+          fitOptions={["contain", "cover", "fill"]}
+          onChange={(v) => onPatch((e) => (e.image = v ? { source: v.source, fit: v.fit } : null))}
+        />
       )}
 
       {element.type === "table" && element.table && (
@@ -502,6 +515,14 @@ function ElementProperties({
         <Color label="Background" value={s.background ?? "#ffffff"} onChange={(v) => onPatch((e) => setStyle(e, "background", v))} allowClear cleared={!s.background} onClear={() => onPatch((e) => setStyle(e, "background", null))} />
       </div>
 
+      {element.type !== "image" && element.type !== "line" && (
+        <ImagePicker
+          label="Background image"
+          value={s.backgroundImage}
+          onChange={(v) => onPatch((e) => setStyle(e, "backgroundImage", v))}
+        />
+      )}
+
       <BorderPicker border={s.border} onChange={(next) => onPatch((e) => setStyle(e, "border", next))} />
 
       <ConditionalFormatButton
@@ -544,6 +565,12 @@ function PageProperties() {
         <Num label="Margin B" value={p.margins.bottom} onChange={(v) => set((page) => (page.margins.bottom = v))} />
         <Num label="Margin L" value={p.margins.left} onChange={(v) => set((page) => (page.margins.left = v))} />
       </div>
+
+      <ImagePicker
+        label="Background image"
+        value={p.backgroundImage}
+        onChange={(v) => set((page) => (page.backgroundImage = v))}
+      />
 
       <label className="field">
         <span>Culture</span>
@@ -589,25 +616,6 @@ function Num({ label, value, onChange }: { label: string; value: number; onChang
     <label className="field">
       <span>{label}</span>
       <input type="number" value={Math.round(value)} onChange={(e) => onChange(Number(e.target.value) || 0)} />
-    </label>
-  );
-}
-
-function Text({
-  label,
-  value,
-  placeholder,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  placeholder?: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      <input value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
     </label>
   );
 }
