@@ -1,3 +1,4 @@
+using JetReportDesigner.Storage.Assets;
 using JetReportDesigner.Storage.Connections;
 using JetReportDesigner.Storage.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +34,7 @@ public static class DependencyInjection
         services.AddDbContext<JetReportDbContext>(builder => provider.Configure(builder, options.ConnectionString));
         services.AddScoped<IConnectionRepository, ConnectionRepository>();
         services.AddScoped<ISqlQueryRepository, SqlQueryRepository>();
+        services.AddScoped<IAssetRepository, AssetRepository>();
 
         if (options.ReportStore.Equals("filesystem", StringComparison.OrdinalIgnoreCase))
         {
