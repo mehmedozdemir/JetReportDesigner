@@ -10,8 +10,12 @@ public static class PageGeometry
     {
         ["A4"] = (794, 1123),
         ["A5"] = (559, 794),
+        ["A6"] = (397, 559),
         ["Letter"] = (816, 1056),
         ["Legal"] = (816, 1344),
+        // ISO/IEC 7810 card sizes, portrait (short edge × long edge).
+        ["IDCard"] = (204, 324),   // ID-1: transit / credit / bank / ID cards (85.6 × 53.98 mm)
+        ["Badge"] = (280, 397),    // ID-2: personnel / event badges (105 × 74 mm)
     };
 
     public static (double Width, double Height) Resolve(PageSetup page)

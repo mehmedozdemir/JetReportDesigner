@@ -10,7 +10,8 @@ namespace JetReportDesigner.Core.Validation;
 /// </summary>
 public sealed class ReportDefinitionValidator : AbstractValidator<ReportDefinition>
 {
-    private static readonly string[] ValidPageSizes = ["A4", "A5", "Letter", "Legal", "Custom"];
+    private static readonly string[] ValidPageSizes =
+        ["A4", "A5", "A6", "Letter", "Legal", "IDCard", "Badge", "Custom"];
 
     public ReportDefinitionValidator()
     {

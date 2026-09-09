@@ -51,6 +51,16 @@ import type {
 
 const EMPTY_RULES: FormatRule[] = [];
 
+const PAGE_SIZES: [PageSize, string][] = [
+  ["A4", "A4"],
+  ["A5", "A5"],
+  ["A6", "A6"],
+  ["Letter", "Letter"],
+  ["Legal", "Legal"],
+  ["IDCard", "ID / credit card (85.6×54 mm)"],
+  ["Badge", "Badge (105×74 mm)"],
+];
+
 /** "Conditional formatting" button + rule count, opening the editor dialog. */
 function ConditionalFormatButton({
   rules,
@@ -547,8 +557,8 @@ function PageProperties() {
       <label className="field">
         <span>Size</span>
         <select value={p.size} onChange={(e) => set((page) => (page.size = e.target.value as PageSize))}>
-          {["A4", "A5", "Letter", "Legal"].map((v) => (
-            <option key={v}>{v}</option>
+          {PAGE_SIZES.map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
           ))}
         </select>
       </label>

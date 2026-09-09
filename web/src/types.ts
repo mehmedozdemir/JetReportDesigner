@@ -3,7 +3,7 @@
 
 export type LayoutMode = "banded" | "free";
 export type ElementType = "label" | "field" | "table" | "image" | "line" | "rectangle" | "pageInfo";
-export type PageSize = "A4" | "A5" | "Letter" | "Legal" | "Custom";
+export type PageSize = "A4" | "A5" | "A6" | "Letter" | "Legal" | "IDCard" | "Badge" | "Custom";
 export type Orientation = "portrait" | "landscape";
 export type TextAlign = "left" | "center" | "right" | "justify";
 export type VerticalAlign = "top" | "middle" | "bottom";
@@ -284,8 +284,12 @@ export interface ReportResponse {
 const SIZES: Record<Exclude<PageSize, "Custom">, [number, number]> = {
   A4: [794, 1123],
   A5: [559, 794],
+  A6: [397, 559],
   Letter: [816, 1056],
   Legal: [816, 1344],
+  // ISO/IEC 7810 card sizes, portrait (short edge × long edge).
+  IDCard: [204, 324],
+  Badge: [280, 397],
 };
 
 export function pageDimensions(page: PageSetup): { width: number; height: number } {

@@ -31,7 +31,7 @@
       "additionalProperties": false,
       "required": ["size", "orientation", "margins"],
       "properties": {
-        "size": { "enum": ["A4", "A5", "Letter", "Legal", "Custom"] },
+        "size": { "enum": ["A4", "A5", "A6", "Letter", "Legal", "IDCard", "Badge", "Custom"] },
         "orientation": { "enum": ["portrait", "landscape"] },
         "customWidth": { "type": ["number", "null"], "exclusiveMinimum": 0 },
         "customHeight": { "type": ["number", "null"], "exclusiveMinimum": 0 },
