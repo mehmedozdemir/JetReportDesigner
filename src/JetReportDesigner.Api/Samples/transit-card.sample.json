@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "name": "Sample — Transit Card",
+  "layoutMode": "free",
+  "unit": "px",
+  "page": { "size": "IDCard", "orientation": "landscape", "margins": { "top": 0, "right": 0, "bottom": 0, "left": 0 }, "columns": 1 },
+  "parameters": [],
+  "connections": [],
+  "styles": {},
+  "bands": [],
+  "dataSources": [],
+  "body": {
+    "height": 204,
+    "elements": [
+      { "id": "bg", "type": "rectangle", "bounds": { "x": 0, "y": 0, "width": 324, "height": 204 }, "style": { "background": "#0f766e", "border": { "top": 0, "right": 0, "bottom": 0, "left": 0, "color": "#0f766e" } } },
+      { "id": "stripe", "type": "rectangle", "bounds": { "x": 0, "y": 148, "width": 324, "height": 56 }, "style": { "background": "#134e4a", "border": { "top": 0, "right": 0, "bottom": 0, "left": 0, "color": "#134e4a" } } },
+      { "id": "brand", "type": "label", "text": "CITY TRANSIT", "bounds": { "x": 18, "y": 18, "width": 220, "height": 24 }, "style": { "font": { "size": 15, "bold": true }, "color": "#ffffff" } },
+      { "id": "sub", "type": "label", "text": "METRO · BUS · TRAM", "bounds": { "x": 18, "y": 42, "width": 240, "height": 16 }, "style": { "font": { "size": 8 }, "color": "#99f6e4" } },
+      { "id": "chip", "type": "rectangle", "bounds": { "x": 22, "y": 76, "width": 42, "height": 32 }, "style": { "background": "#fcd34d", "border": { "top": 1, "right": 1, "bottom": 1, "left": 1, "color": "#b45309" } } },
+      { "id": "num", "type": "label", "text": "0000  1234  5678  9012", "bounds": { "x": 18, "y": 118, "width": 288, "height": 22 }, "style": { "font": { "family": "Consolas", "size": 12 }, "color": "#ffffff" } },
+      { "id": "holder", "type": "label", "text": "A. TRAVELLER", "bounds": { "x": 18, "y": 162, "width": 180, "height": 16 }, "style": { "font": { "size": 9 }, "color": "#ccfbf1" } },
+      { "id": "valid", "type": "label", "text": "VALID THRU  12 / 28", "bounds": { "x": 196, "y": 162, "width": 112, "height": 16 }, "style": { "font": { "size": 8 }, "color": "#ccfbf1", "align": "right" } }
+    ]
+  }
+}
