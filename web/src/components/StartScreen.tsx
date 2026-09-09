@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FileBarChart2, FileText, Search, SquareDashed, Trash2, X } from "lucide-react";
+import { FileBarChart2, FileText, Rows3, Search, SquareDashed, Trash2, X } from "lucide-react";
 import type { ReportDefinition, ReportSummary } from "../types";
 
 function timeAgo(iso: string): string {
@@ -72,8 +72,13 @@ export function StartScreen({
           <div className="start-cards">
             <button className="start-card" onClick={() => onBlank("free")} disabled={busy}>
               <span className="start-card-icon"><SquareDashed /></span>
-              <span className="start-card-title">Blank report</span>
-              <span className="start-card-sub">Free layout — switch to banded any time</span>
+              <span className="start-card-title">Blank — Free layout</span>
+              <span className="start-card-sub">Place elements anywhere on a fixed canvas</span>
+            </button>
+            <button className="start-card" onClick={() => onBlank("banded")} disabled={busy}>
+              <span className="start-card-icon"><Rows3 /></span>
+              <span className="start-card-title">Blank — Banded report</span>
+              <span className="start-card-sub">Header / detail / footer bands that repeat per row</span>
             </button>
             {samples.map((s) => (
               <button

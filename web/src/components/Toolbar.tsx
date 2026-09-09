@@ -43,7 +43,6 @@ export function Toolbar({
   const mutate = useDesigner((s) => s.mutate);
   const zoom = useDesigner((s) => s.zoom);
   const setZoom = useDesigner((s) => s.setZoom);
-  const setLayoutMode = useDesigner((s) => s.setLayoutMode);
   const undo = useDesigner((s) => s.undo);
   const redo = useDesigner((s) => s.redo);
   const canUndo = useDesigner((s) => s.past.length > 0);
@@ -113,24 +112,15 @@ export function Toolbar({
 
       <div className="divider" />
 
-      <div className="segmented" role="group" aria-label="Layout mode">
-        <button
-          className={report?.layoutMode === "free" ? "on" : ""}
-          onClick={() => setLayoutMode("free")}
-          disabled={!hasReport}
-          title="Free layout"
+      {report && (
+        <span
+          className="mode-badge"
+          title="Layout mode is chosen when the report is created and cannot be changed here"
         >
-          <SquareDashed /> Free
-        </button>
-        <button
-          className={report?.layoutMode === "banded" ? "on" : ""}
-          onClick={() => setLayoutMode("banded")}
-          disabled={!hasReport}
-          title="Banded layout"
-        >
-          <Rows3 /> Banded
-        </button>
-      </div>
+          {report.layoutMode === "banded" ? <Rows3 /> : <SquareDashed />}
+          {report.layoutMode === "banded" ? "Banded" : "Free"}
+        </span>
+      )}
 
       <div className="divider" />
 

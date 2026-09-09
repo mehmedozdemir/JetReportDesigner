@@ -230,6 +230,15 @@ body {
   font: inherit; font-size: 12px; cursor: pointer;
 }
 .segmented button svg { width: 14px; height: 14px; }
+
+.mode-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 26px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg-elevated); color: var(--text-secondary);
+  font-size: 12px; white-space: nowrap; cursor: default;
+}
+.mode-badge svg { width: 14px; height: 14px; }
 .segmented button:hover:not(:disabled):not(.on) { color: var(--text-primary); }
 .segmented button.on { background: var(--bg-surface); color: var(--accent); box-shadow: var(--shadow-sm); }
 .segmented button:disabled { color: var(--text-disabled); cursor: default; }
