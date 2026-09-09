@@ -1,8 +1,12 @@
+import { useState } from "react";
 import {
+  ChevronDown,
   Eye,
   FileBarChart2,
   FileDown,
   FilePlus2,
+  FileSpreadsheet,
+  FileText,
   LayoutGrid,
   PencilRuler,
   Redo2,
@@ -15,6 +19,7 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { useDesigner } from "../store";
+import { ContextMenu } from "./ContextMenu";
 
 interface ToolbarProps {
   tab: "design" | "preview";
@@ -24,7 +29,7 @@ interface ToolbarProps {
   onShowStart: () => void;
   onSettings: () => void;
   onSave: () => void;
-  onExport: () => void;
+  onExport: (format: "pdf" | "xlsx") => void;
 }
 
 export function Toolbar({
@@ -47,6 +52,7 @@ export function Toolbar({
   const redo = useDesigner((s) => s.redo);
   const canUndo = useDesigner((s) => s.past.length > 0);
   const canRedo = useDesigner((s) => s.future.length > 0);
+  const [exportMenu, setExportMenu] = useState<{ x: number; y: number } | null>(null);
 
   const hasReport = !!report;
 
@@ -168,10 +174,27 @@ export function Toolbar({
         <Settings />
       </button>
 
-      <button className="btn outline" onClick={onExport} disabled={busy || !report} title="Export as PDF">
+      <button
+        className="btn outline"
+        onClick={(e) => setExportMenu({ x: e.currentTarget.getBoundingClientRect().left, y: e.currentTarget.getBoundingClientRect().bottom + 4 })}
+        disabled={busy || !report}
+        title="Export"
+      >
         <FileDown />
-        <span>Export PDF</span>
+        <span>Export</span>
+        <ChevronDown size={13} />
       </button>
+      {exportMenu && (
+        <ContextMenu
+          x={exportMenu.x}
+          y={exportMenu.y}
+          items={[
+            { label: "Export as PDF", icon: FileText, onClick: () => onExport("pdf") },
+            { label: "Export as Excel", icon: FileSpreadsheet, onClick: () => onExport("xlsx") },
+          ]}
+          onClose={() => setExportMenu(null)}
+        />
+      )}
     </div>
   );
 }

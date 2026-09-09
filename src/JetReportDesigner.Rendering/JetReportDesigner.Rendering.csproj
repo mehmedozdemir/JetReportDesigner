@@ -3,6 +3,7 @@
   <ItemGroup>
     <PackageReference Include="PdfSharp" />
     <PackageReference Include="PDFsharp-MigraDoc" />
+    <PackageReference Include="ClosedXML" />
   </ItemGroup>
 
   <ItemGroup>

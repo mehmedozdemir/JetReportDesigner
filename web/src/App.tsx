@@ -147,16 +147,19 @@ export function App() {
     }
   };
 
-  const exportPdf = async () => {
+  const exportAs = async (format: "pdf" | "xlsx") => {
     if (!report) return;
     setBusy(true);
     setError(null);
     try {
-      const blob = await api.renderPdfBlob(report, paramValues);
+      const blob =
+        format === "xlsx"
+          ? await api.renderXlsxBlob(report, paramValues)
+          : await api.renderPdfBlob(report, paramValues);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${report.name || "report"}.pdf`;
+      a.download = `${report.name || "report"}.${format}`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
@@ -206,7 +209,7 @@ export function App() {
         onShowStart={() => setShowStart(true)}
         onSettings={() => setShowSettings(true)}
         onSave={() => void save()}
-        onExport={() => void exportPdf()}
+        onExport={(format) => void exportAs(format)}
       />
 
       <div className="left">

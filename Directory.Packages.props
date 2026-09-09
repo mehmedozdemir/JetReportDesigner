@@ -37,6 +37,7 @@
   <ItemGroup Label="PDF rendering">
     <PackageVersion Include="PdfSharp" Version="6.2.4" />
     <PackageVersion Include="PDFsharp-MigraDoc" Version="6.2.4" />
+    <PackageVersion Include="ClosedXML" Version="0.104.2" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">

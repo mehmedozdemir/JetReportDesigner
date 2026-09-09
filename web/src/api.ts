@@ -158,12 +158,23 @@ export const api = {
     }),
 
   renderPdfBlob: (definition: ReportDefinition, parameters: ParamValues = {}): Promise<Blob> =>
-    fetch("/api/render?format=pdf", {
-      method: "POST",
-      headers: jsonHeaders,
-      body: JSON.stringify({ definition, parameters }),
-    }).then(async (r) => {
-      if (!r.ok) throw new Error(problemMessage(await r.text()));
-      return r.blob();
-    }),
+    renderBlob("pdf", definition, parameters),
+
+  renderXlsxBlob: (definition: ReportDefinition, parameters: ParamValues = {}): Promise<Blob> =>
+    renderBlob("xlsx", definition, parameters),
 };
+
+function renderBlob(
+  format: "pdf" | "xlsx",
+  definition: ReportDefinition,
+  parameters: ParamValues,
+): Promise<Blob> {
+  return fetch(`/api/render?format=${format}`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({ definition, parameters }),
+  }).then(async (r) => {
+    if (!r.ok) throw new Error(problemMessage(await r.text()));
+    return r.blob();
+  });
+}

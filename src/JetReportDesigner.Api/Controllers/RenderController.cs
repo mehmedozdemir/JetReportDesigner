@@ -49,7 +49,7 @@ public sealed class RenderController(
         CancellationToken cancellationToken = default)
     {
         await validator.ValidateAndThrowAsync(body.Definition, cancellationToken);
-        var download = format.Equals("pdf", StringComparison.OrdinalIgnoreCase);
+        var download = !format.Equals("html", StringComparison.OrdinalIgnoreCase);
         return await Produce(body.Definition, body.Parameters, format, download, cancellationToken);
     }
 
@@ -60,9 +60,12 @@ public sealed class RenderController(
         bool download,
         CancellationToken cancellationToken)
     {
-        var renderFormat = format.Equals("html", StringComparison.OrdinalIgnoreCase)
-            ? RenderFormat.Html
-            : RenderFormat.Pdf;
+        var renderFormat = format.ToLowerInvariant() switch
+        {
+            "html" => RenderFormat.Html,
+            "xlsx" or "excel" => RenderFormat.Xlsx,
+            _ => RenderFormat.Pdf,
+        };
 
         var result = await renderer.RenderAsync(definition, parameters, renderFormat, cancellationToken);
 

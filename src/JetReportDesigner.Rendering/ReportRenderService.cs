@@ -11,6 +11,7 @@ public enum RenderFormat
 {
     Pdf,
     Html,
+    Xlsx,
 }
 
 public sealed record RenderResult(byte[] Content, string ContentType, string FileName);
@@ -37,6 +38,15 @@ public sealed class ReportRenderService(
     {
         var resolvedParameters = ParameterValues.Resolve(report, parameters);
         var data = await dataResolver.ResolveAsync(report, resolvedParameters, cancellationToken);
+
+        if (format == RenderFormat.Xlsx)
+        {
+            var name = string.IsNullOrWhiteSpace(report.Name) ? "report" : SanitizeFileName(report.Name);
+            return new RenderResult(
+                XlsxReportBuilder.Build(report, data, resolvedParameters),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"{name}.xlsx");
+        }
 
         var document = report.LayoutMode switch
         {
