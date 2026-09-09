@@ -1,13 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, type LucideIcon } from "lucide-react";
+import { Check, ChevronRight, type LucideIcon } from "lucide-react";
 
 export type MenuItem =
   | { sep: true }
   | {
       label: string;
-      onClick: () => void;
+      onClick?: () => void;
       icon?: LucideIcon;
+      children?: MenuItem[];
       checked?: boolean;
       disabled?: boolean;
       danger?: boolean;
@@ -56,8 +57,6 @@ export function ContextMenu({
     };
   }, [onClose]);
 
-  const hasChecks = items.some((it) => "checked" in it && it.checked !== undefined);
-
   return createPortal(
     <div
       ref={ref}
@@ -65,9 +64,56 @@ export function ContextMenu({
       style={{ left: pos.x, top: pos.y }}
       onContextMenu={(e) => e.preventDefault()}
     >
+      <MenuList items={items} onClose={onClose} />
+    </div>,
+    document.body,
+  );
+}
+
+function MenuList({ items, onClose }: { items: MenuItem[]; onClose: () => void }) {
+  const [openSub, setOpenSub] = useState<number | null>(null);
+  const subRef = useRef<HTMLDivElement>(null);
+  const [flip, setFlip] = useState(false);
+  const hasChecks = items.some((it) => "checked" in it && it.checked !== undefined);
+
+  useLayoutEffect(() => {
+    if (openSub === null) {
+      setFlip(false);
+      return;
+    }
+    const r = subRef.current?.getBoundingClientRect();
+    if (r) setFlip(r.right > window.innerWidth - 6);
+  }, [openSub]);
+
+  return (
+    <>
       {items.map((it, i) =>
         "sep" in it ? (
           <div key={i} className="ctx-sep" />
+        ) : it.children ? (
+          <div
+            key={i}
+            className="ctx-row"
+            onMouseEnter={() => setOpenSub(i)}
+            onMouseLeave={() => setOpenSub((cur) => (cur === i ? null : cur))}
+          >
+            <button
+              type="button"
+              className="ctx-item"
+              disabled={it.disabled}
+              onClick={() => setOpenSub((cur) => (cur === i ? null : i))}
+            >
+              {hasChecks && <span className="ctx-check" />}
+              {it.icon && <it.icon size={14} />}
+              <span>{it.label}</span>
+              <ChevronRight size={13} className="ctx-caret" />
+            </button>
+            {openSub === i && (
+              <div ref={subRef} className={`ctx-menu ctx-sub${flip ? " flip" : ""}`}>
+                <MenuList items={it.children} onClose={onClose} />
+              </div>
+            )}
+          </div>
         ) : (
           <button
             key={i}
@@ -75,7 +121,7 @@ export function ContextMenu({
             className={`ctx-item${it.danger ? " danger" : ""}`}
             disabled={it.disabled}
             onClick={() => {
-              it.onClick();
+              it.onClick?.();
               onClose();
             }}
           >
@@ -85,7 +131,6 @@ export function ContextMenu({
           </button>
         ),
       )}
-    </div>,
-    document.body,
+    </>
   );
 }

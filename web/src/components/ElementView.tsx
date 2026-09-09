@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowDown,
   ArrowDownToLine,
@@ -7,6 +8,9 @@ import {
   ClipboardPaste,
   Copy,
   CopyPlus,
+  Eraser,
+  FunctionSquare,
+  Paintbrush2,
   Scissors,
   SlidersHorizontal,
   Trash2,
@@ -15,6 +19,7 @@ import { useDesigner } from "../store";
 import type { ReportElement, ReportStyle } from "../types";
 import { useCanvasDrag, type ResizeHandle } from "../hooks/useCanvasDrag";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
+import { FormulaDialog } from "./FormulaDialog";
 
 const HANDLES: ResizeHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
 const EMPTY_STYLES: Record<string, ReportStyle> = {};
@@ -38,10 +43,15 @@ export function ElementView({ element }: { element: ReportElement }) {
   const select = useDesigner((s) => s.select);
   const mutateElement = useDesigner((s) => s.mutateElement);
   const styles = useDesigner((s) => s.report?.styles) ?? EMPTY_STYLES;
+  const dataSources = useDesigner((s) => s.report?.dataSources);
   const { beginMove, beginResize } = useCanvasDrag();
   const [editing, setEditing] = useState(false);
   const [lastDown, setLastDown] = useState(0);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [formulaOpen, setFormulaOpen] = useState(false);
+
+  const canFormula = EDITABLE.has(element.type);
+  const fieldNames = (dataSources ?? []).flatMap((src) => src.fields.map((f) => f.name));
 
   const isLabel = element.type === "label";
   const currentText = isLabel ? element.text ?? "" : element.value ?? "";
@@ -132,6 +142,34 @@ export function ElementView({ element }: { element: ReportElement }) {
       { label: "Delete", icon: Trash2, danger: true, onClick: () => st.removeSelected() },
       { sep: true },
       {
+        label: "Format",
+        icon: Paintbrush2,
+        children: [
+          {
+            label: "Clear",
+            icon: Eraser,
+            onClick: () =>
+              st.mutateSelected((el) => {
+                el.style = null;
+                el.styleRef = null;
+                el.format = null;
+              }),
+          },
+        ],
+      },
+      ...(canFormula
+        ? [
+            {
+              label: "Formula",
+              icon: FunctionSquare,
+              onClick: () => {
+                st.select([element.id]);
+                setFormulaOpen(true);
+              },
+            } as MenuItem,
+          ]
+        : []),
+      {
         label: "Properties",
         icon: SlidersHorizontal,
         onClick: () => {
@@ -206,6 +244,20 @@ export function ElementView({ element }: { element: ReportElement }) {
       {menu && (
         <ContextMenu x={menu.x} y={menu.y} items={menuItems()} onClose={() => setMenu(null)} />
       )}
+
+      {formulaOpen &&
+        createPortal(
+          <FormulaDialog
+            initial={currentText}
+            fields={fieldNames}
+            onApply={(v) => {
+              commitText(v);
+              setFormulaOpen(false);
+            }}
+            onClose={() => setFormulaOpen(false)}
+          />,
+          document.body,
+        )}
     </div>
   );
 }

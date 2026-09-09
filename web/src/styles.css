@@ -449,6 +449,10 @@ body {
 .ctx-item svg { width: 14px; height: 14px; flex: 0 0 auto; }
 .ctx-check { width: 15px; flex: 0 0 auto; display: inline-flex; align-items: center; }
 .ctx-sep { height: 1px; margin: 4px 2px; background: var(--border); }
+.ctx-row { position: relative; }
+.ctx-caret { margin-left: auto; opacity: 0.6; }
+.ctx-sub { position: absolute; top: -5px; left: 100%; margin-left: 2px; }
+.ctx-sub.flip { left: auto; right: 100%; margin-left: 0; margin-right: 2px; }
 
 /* ============================================================
    Canvas
