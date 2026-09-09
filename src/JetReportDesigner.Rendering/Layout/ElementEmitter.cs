@@ -119,7 +119,8 @@ public static class ElementEmitter
                 yield break;
 
             case ElementType.Table:
-                yield break; // tables are placed by the builders themselves (slice C)
+            case ElementType.Chart:
+                yield break; // tables and charts are placed by the builders themselves
 
             default:
                 yield break;

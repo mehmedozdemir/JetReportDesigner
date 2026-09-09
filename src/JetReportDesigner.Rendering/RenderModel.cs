@@ -102,6 +102,39 @@ public sealed class ImagePrimitive : RenderPrimitive
     public string ContentType { get; set; } = "image/png";
 }
 
+/// <summary>A filled and/or stroked polyline. Used for chart area fills and outlines.</summary>
+public sealed class PolygonPrimitive : RenderPrimitive
+{
+    public IReadOnlyList<PointPx> Points { get; init; } = [];
+
+    public string? FillColorHex { get; init; }
+
+    public string? StrokeColorHex { get; init; }
+
+    public double StrokeWidthPx { get; init; }
+}
+
+/// <summary>
+/// A pie slice. <see cref="RenderPrimitive.X"/> / <see cref="RenderPrimitive.Y"/> are
+/// the circle centre. Angles are degrees, 0 at 3 o'clock, positive clockwise.
+/// </summary>
+public sealed class WedgePrimitive : RenderPrimitive
+{
+    public double Radius { get; init; }
+
+    public double StartAngleDeg { get; init; }
+
+    public double SweepAngleDeg { get; init; }
+
+    public string FillColorHex { get; init; } = "#000000";
+
+    public string? StrokeColorHex { get; init; }
+
+    public double StrokeWidthPx { get; init; }
+}
+
+public readonly record struct PointPx(double X, double Y);
+
 public enum HorizontalAnchor
 {
     Left,

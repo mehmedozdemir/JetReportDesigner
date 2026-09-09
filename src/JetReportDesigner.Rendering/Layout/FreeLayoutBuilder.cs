@@ -49,6 +49,11 @@ public sealed class FreeLayoutBuilder
                 var rows = data.Get(element.Table?.DataSource ?? primarySource).Rows;
                 primitives.AddRange(TableEmitter.Emit(element, report.Styles, rows, context, 0, 0));
             }
+            else if (element.Type == ElementType.Chart)
+            {
+                var source = string.IsNullOrWhiteSpace(element.Chart?.DataSource) ? primarySource : element.Chart!.DataSource;
+                primitives.AddRange(ChartEmitter.Emit(element, report.Styles, data.Get(source).Rows, context, 0, 0));
+            }
             else
             {
                 primitives.AddRange(ElementEmitter.Emit(element, report.Styles, context, 0, 0));

@@ -46,8 +46,49 @@ public sealed class HtmlReportRenderer
         LinePrimitive l => RenderLine(l),
         RectanglePrimitive r => RenderRectangle(r),
         ImagePrimitive i => RenderImage(i),
+        PolygonPrimitive p => RenderPolygon(p),
+        WedgePrimitive w => RenderWedge(w),
         _ => string.Empty,
     };
+
+    private static string RenderPolygon(PolygonPrimitive p)
+    {
+        if (p.Points.Count < 2)
+        {
+            return string.Empty;
+        }
+
+        double minX = p.Points.Min(pt => pt.X);
+        double minY = p.Points.Min(pt => pt.Y);
+        double w = Math.Max(1, p.Points.Max(pt => pt.X) - minX);
+        double h = Math.Max(1, p.Points.Max(pt => pt.Y) - minY);
+        var points = string.Join(" ", p.Points.Select(pt =>
+            $"{Num(pt.X - minX)},{Num(pt.Y - minY)}"));
+        var fill = p.FillColorHex ?? "none";
+        var stroke = p.StrokeColorHex is { } s ? $" stroke=\"{s}\" stroke-width=\"{Num(p.StrokeWidthPx)}\"" : "";
+
+        return $"<svg class=\"el\" style=\"left:{Px(minX)};top:{Px(minY)};width:{Px(w)};height:{Px(h)}\" "
+             + $"viewBox=\"0 0 {Num(w)} {Num(h)}\"><polygon points=\"{points}\" fill=\"{fill}\"{stroke}/></svg>";
+    }
+
+    private static string RenderWedge(WedgePrimitive wg)
+    {
+        double r = wg.Radius;
+        double a0 = wg.StartAngleDeg * Math.PI / 180;
+        double a1 = (wg.StartAngleDeg + wg.SweepAngleDeg) * Math.PI / 180;
+        double x0 = r + r * Math.Cos(a0);
+        double y0 = r + r * Math.Sin(a0);
+        double x1 = r + r * Math.Cos(a1);
+        double y1 = r + r * Math.Sin(a1);
+        var large = wg.SweepAngleDeg > 180 ? 1 : 0;
+        var d = $"M {Num(r)} {Num(r)} L {Num(x0)} {Num(y0)} A {Num(r)} {Num(r)} 0 {large} 1 {Num(x1)} {Num(y1)} Z";
+        var stroke = wg.StrokeColorHex is { } s ? $" stroke=\"{s}\" stroke-width=\"{Num(wg.StrokeWidthPx)}\"" : "";
+
+        return $"<svg class=\"el\" style=\"left:{Px(wg.X - r)};top:{Px(wg.Y - r)};width:{Px(r * 2)};height:{Px(r * 2)}\" "
+             + $"viewBox=\"0 0 {Num(r * 2)} {Num(r * 2)}\"><path d=\"{d}\" fill=\"{wg.FillColorHex}\"{stroke}/></svg>";
+    }
+
+    private static string Num(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
     private static string RenderImage(ImagePrimitive i)
     {

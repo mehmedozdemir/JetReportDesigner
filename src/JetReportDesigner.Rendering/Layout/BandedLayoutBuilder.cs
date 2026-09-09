@@ -306,6 +306,14 @@ public sealed class BandedLayoutBuilder
                         primitives.AddRange(
                             TableEmitter.Emit(element, report.Styles, tableRows, context, margins.Left, instance.Y));
                     }
+                    else if (element.Type == ElementType.Chart)
+                    {
+                        var chartSource = string.IsNullOrWhiteSpace(element.Chart?.DataSource)
+                            ? detailSource
+                            : element.Chart!.DataSource;
+                        primitives.AddRange(
+                            ChartEmitter.Emit(element, report.Styles, data.Get(chartSource).Rows, context, margins.Left, instance.Y));
+                    }
                     else
                     {
                         primitives.AddRange(

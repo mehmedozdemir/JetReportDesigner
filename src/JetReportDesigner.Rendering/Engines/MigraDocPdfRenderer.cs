@@ -90,6 +90,56 @@ public sealed class MigraDocPdfRenderer : IPdfRenderer
             case ImagePrimitive image:
                 DrawImage(gfx, image, images);
                 break;
+
+            case PolygonPrimitive polygon:
+                DrawPolygon(gfx, polygon);
+                break;
+
+            case WedgePrimitive wedge:
+                DrawWedge(gfx, wedge);
+                break;
+        }
+    }
+
+    private static void DrawPolygon(XGraphics gfx, PolygonPrimitive polygon)
+    {
+        if (polygon.Points.Count < 2)
+        {
+            return;
+        }
+
+        var pts = polygon.Points
+            .Select(p => new XPoint(RenderUnits.ToPoints(p.X), RenderUnits.ToPoints(p.Y)))
+            .ToArray();
+
+        if (polygon.FillColorHex is { } fill)
+        {
+            gfx.DrawPolygon(new XSolidBrush(XColor.FromArgb(ParseColor(fill))), pts, XFillMode.Winding);
+        }
+
+        if (polygon.StrokeColorHex is { } stroke && polygon.StrokeWidthPx > 0)
+        {
+            gfx.DrawPolygon(new XPen(XColor.FromArgb(ParseColor(stroke)), RenderUnits.ToPoints(polygon.StrokeWidthPx)), pts);
+        }
+    }
+
+    private static void DrawWedge(XGraphics gfx, WedgePrimitive wedge)
+    {
+        var box = new XRect(
+            RenderUnits.ToPoints(wedge.X - wedge.Radius),
+            RenderUnits.ToPoints(wedge.Y - wedge.Radius),
+            RenderUnits.ToPoints(wedge.Radius * 2),
+            RenderUnits.ToPoints(wedge.Radius * 2));
+
+        gfx.DrawPie(
+            new XSolidBrush(XColor.FromArgb(ParseColor(wedge.FillColorHex))),
+            box, wedge.StartAngleDeg, wedge.SweepAngleDeg);
+
+        if (wedge.StrokeColorHex is { } stroke && wedge.StrokeWidthPx > 0)
+        {
+            gfx.DrawPie(
+                new XPen(XColor.FromArgb(ParseColor(stroke)), RenderUnits.ToPoints(wedge.StrokeWidthPx)),
+                box, wedge.StartAngleDeg, wedge.SweepAngleDeg);
         }
     }
 
