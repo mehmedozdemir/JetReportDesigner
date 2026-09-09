@@ -69,6 +69,14 @@ builder.Services.AddScoped<JetReportDesigner.DataSources.Sql.ConnectionStringRes
 builder.Services.AddScoped<IDataSourceReader, JetReportDesigner.DataSources.Sql.SqlDataSourceReader>();
 builder.Services.AddScoped<ReportDataResolver>();
 builder.Services.AddSingleton<IPdfRenderer, MigraDocPdfRenderer>();
+
+// Images referenced by a report (asset:{id}, data: URIs, http(s) URLs) are resolved
+// to bytes before rendering; external fetches reuse the SSRF-guarded HTTP client.
+var imageHttpClient = RestHttp.CreateClient(ssrfGuard, restOptions);
+builder.Services.AddScoped<JetReportDesigner.Rendering.IRenderImageResolver>(sp =>
+    new JetReportDesigner.Api.Infrastructure.RenderImageResolver(
+        sp.GetRequiredService<JetReportDesigner.Storage.Assets.IAssetRepository>(),
+        imageHttpClient));
 builder.Services.AddScoped<ReportRenderService>();
 
 builder.Services.AddHealthChecks()

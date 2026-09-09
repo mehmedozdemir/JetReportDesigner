@@ -35,6 +35,9 @@ public sealed class MigraDocPdfRenderer : IPdfRenderer
         var widthPt = RenderUnits.ToPoints(document.PageWidthPx);
         var heightPt = RenderUnits.ToPoints(document.PageHeightPx);
 
+        // XImage may read its stream lazily (at pdf.Save); keep them all alive until then.
+        var images = new List<IDisposable>();
+
         foreach (var page in document.Pages)
         {
             var pdfPage = pdf.AddPage();
@@ -44,16 +47,26 @@ public sealed class MigraDocPdfRenderer : IPdfRenderer
             using var gfx = XGraphics.FromPdfPage(pdfPage);
             foreach (var primitive in page.Primitives)
             {
-                Draw(gfx, primitive);
+                Draw(gfx, primitive, images);
             }
         }
 
-        using var stream = new MemoryStream();
-        pdf.Save(stream);
-        return stream.ToArray();
+        try
+        {
+            using var stream = new MemoryStream();
+            pdf.Save(stream);
+            return stream.ToArray();
+        }
+        finally
+        {
+            foreach (var image in images)
+            {
+                image.Dispose();
+            }
+        }
     }
 
-    private static void Draw(XGraphics gfx, RenderPrimitive primitive)
+    private static void Draw(XGraphics gfx, RenderPrimitive primitive, List<IDisposable> images)
     {
         switch (primitive)
         {
@@ -73,6 +86,93 @@ public sealed class MigraDocPdfRenderer : IPdfRenderer
             case RectanglePrimitive rect:
                 DrawRectangle(gfx, rect);
                 break;
+
+            case ImagePrimitive image:
+                DrawImage(gfx, image, images);
+                break;
+        }
+    }
+
+    private static void DrawImage(XGraphics gfx, ImagePrimitive image, List<IDisposable> images)
+    {
+        if (image.Bytes is null || image.Bytes.Length == 0)
+        {
+            return;
+        }
+
+        XImage xImage;
+        var stream = new MemoryStream(image.Bytes, writable: false);
+        try
+        {
+            xImage = XImage.FromStream(stream);
+        }
+        catch
+        {
+            stream.Dispose();
+            return; // PdfSharp cannot decode this format (e.g. WebP/BMP) — skip it.
+        }
+
+        images.Add(stream);
+        images.Add(xImage);
+
+        var box = new XRect(
+            RenderUnits.ToPoints(image.X),
+            RenderUnits.ToPoints(image.Y),
+            RenderUnits.ToPoints(image.Width),
+            RenderUnits.ToPoints(image.Height));
+
+        if (image.Fit == ImageFit.Fill || xImage.PixelWidth == 0 || xImage.PixelHeight == 0)
+        {
+            gfx.DrawImage(xImage, box);
+            return;
+        }
+
+        if (image.Fit == ImageFit.Tile)
+        {
+            var tileW = RenderUnits.ToPoints(xImage.PixelWidth);
+            var tileH = RenderUnits.ToPoints(xImage.PixelHeight);
+            if (tileW <= 0 || tileH <= 0)
+            {
+                gfx.DrawImage(xImage, box);
+                return;
+            }
+
+            var state = gfx.Save();
+            gfx.IntersectClip(box);
+            for (var ty = box.Top; ty < box.Bottom; ty += tileH)
+            {
+                for (var tx = box.Left; tx < box.Right; tx += tileW)
+                {
+                    gfx.DrawImage(xImage, new XRect(tx, ty, tileW, tileH));
+                }
+            }
+
+            gfx.Restore(state);
+            return;
+        }
+
+        // Cover / Contain: preserve aspect ratio, centre in the box, clip for Cover.
+        var scale = image.Fit == ImageFit.Cover
+            ? Math.Max(box.Width / xImage.PixelWidth, box.Height / xImage.PixelHeight)
+            : Math.Min(box.Width / xImage.PixelWidth, box.Height / xImage.PixelHeight);
+        var drawW = xImage.PixelWidth * scale;
+        var drawH = xImage.PixelHeight * scale;
+        var dst = new XRect(
+            box.X + (box.Width - drawW) / 2,
+            box.Y + (box.Height - drawH) / 2,
+            drawW,
+            drawH);
+
+        if (image.Fit == ImageFit.Cover)
+        {
+            var state = gfx.Save();
+            gfx.IntersectClip(box);
+            gfx.DrawImage(xImage, dst);
+            gfx.Restore(state);
+        }
+        else
+        {
+            gfx.DrawImage(xImage, dst);
         }
     }
 

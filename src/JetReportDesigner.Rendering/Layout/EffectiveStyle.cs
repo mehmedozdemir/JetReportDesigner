@@ -17,6 +17,7 @@ public sealed class EffectiveStyle
     public VerticalAlign VAlign { get; init; } = VerticalAlign.Top;
     public BorderSpec? Border { get; init; }
     public Spacing Padding { get; init; } = new();
+    public BackgroundImageSpec? BackgroundImage { get; init; }
 
     /// <summary>A matching conditional-formatting rule asked for the element to be hidden.</summary>
     public bool Hidden { get; init; }
@@ -50,6 +51,7 @@ public sealed class EffectiveStyle
         VerticalAlign? vAlign = null;
         BorderSpec? border = null;
         Spacing? padding = null;
+        BackgroundImageSpec? backgroundImage = null;
 
         foreach (var layer in layers)
         {
@@ -65,6 +67,7 @@ public sealed class EffectiveStyle
             vAlign = layer.VAlign ?? vAlign;
             border = layer.Border ?? border;
             padding = layer.Padding ?? padding;
+            backgroundImage = layer.BackgroundImage ?? backgroundImage;
         }
 
         return new EffectiveStyle
@@ -80,6 +83,7 @@ public sealed class EffectiveStyle
             VAlign = vAlign ?? VerticalAlign.Top,
             Border = border,
             Padding = padding ?? new Spacing(),
+            BackgroundImage = backgroundImage,
             Hidden = hidden,
         };
     }

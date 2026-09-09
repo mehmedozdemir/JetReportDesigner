@@ -73,6 +73,35 @@ public sealed class RectanglePrimitive : RenderPrimitive
     public string? FillColorHex { get; init; }
 }
 
+public enum ImageFit
+{
+    Cover,
+    Contain,
+    Fill,
+    Tile,
+}
+
+/// <summary>
+/// A bitmap drawn into a box. <see cref="Source"/> (an <c>asset:{id}</c> reference,
+/// an http(s) URL or a data URI) is resolved to <see cref="Bytes"/> by
+/// <c>ReportRenderService</c> before the engine runs; a primitive whose bytes could
+/// not be resolved is skipped.
+/// </summary>
+public sealed class ImagePrimitive : RenderPrimitive
+{
+    public double Width { get; init; }
+
+    public double Height { get; init; }
+
+    public string Source { get; init; } = string.Empty;
+
+    public ImageFit Fit { get; init; } = ImageFit.Cover;
+
+    public byte[]? Bytes { get; set; }
+
+    public string ContentType { get; set; } = "image/png";
+}
+
 public enum HorizontalAnchor
 {
     Left,

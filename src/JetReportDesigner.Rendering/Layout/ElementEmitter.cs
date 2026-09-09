@@ -37,6 +37,16 @@ public static class ElementEmitter
             yield break;
         }
 
+        if (element.Type != ElementType.Line
+            && style.BackgroundImage is { Source: { Length: > 0 } bgSource } bgSpec)
+        {
+            yield return new ImagePrimitive
+            {
+                X = x, Y = y, Width = b.Width, Height = b.Height,
+                Source = bgSource, Fit = ParseFit(bgSpec.Fit),
+            };
+        }
+
         switch (element.Type)
         {
             case ElementType.Line:
@@ -77,6 +87,16 @@ public static class ElementEmitter
             }
 
             case ElementType.Image:
+            {
+                if (element.Image is { Source: { Length: > 0 } imgSource })
+                {
+                    yield return new ImagePrimitive
+                    {
+                        X = x, Y = y, Width = b.Width, Height = b.Height,
+                        Source = imgSource, Fit = ParseFit(element.Image.Fit),
+                    };
+                }
+
                 if (style.Border is { } ib)
                 {
                     foreach (var p in BorderPrimitives(x, y, b.Width, b.Height, ib))
@@ -86,6 +106,7 @@ public static class ElementEmitter
                 }
 
                 yield break;
+            }
 
             case ElementType.Label:
             case ElementType.Field:
@@ -172,6 +193,14 @@ public static class ElementEmitter
     }
 
     internal static double MaxEdge(BorderSpec b) => Math.Max(Math.Max(b.Top, b.Right), Math.Max(b.Bottom, b.Left));
+
+    internal static ImageFit ParseFit(string? fit) => fit?.ToLowerInvariant() switch
+    {
+        "contain" => ImageFit.Contain,
+        "fill" or "stretch" => ImageFit.Fill,
+        "tile" => ImageFit.Tile,
+        _ => ImageFit.Cover,
+    };
 
     /// <summary>
     /// Border render primitives for a box. A uniform border (all four edges equal and

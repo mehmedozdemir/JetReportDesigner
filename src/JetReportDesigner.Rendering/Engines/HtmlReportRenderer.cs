@@ -45,8 +45,28 @@ public sealed class HtmlReportRenderer
         TextPrimitive t => RenderText(t),
         LinePrimitive l => RenderLine(l),
         RectanglePrimitive r => RenderRectangle(r),
+        ImagePrimitive i => RenderImage(i),
         _ => string.Empty,
     };
+
+    private static string RenderImage(ImagePrimitive i)
+    {
+        if (i.Bytes is null || i.Bytes.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        var url = $"data:{i.ContentType};base64,{Convert.ToBase64String(i.Bytes)}";
+        var box = $"left:{Px(i.X)};top:{Px(i.Y)};width:{Px(i.Width)};height:{Px(i.Height)};";
+        var bg = i.Fit switch
+        {
+            ImageFit.Tile => $"background:url('{url}') repeat top left;",
+            ImageFit.Fill => $"background:url('{url}') no-repeat center / 100% 100%;",
+            ImageFit.Contain => $"background:url('{url}') no-repeat center / contain;",
+            _ => $"background:url('{url}') no-repeat center / cover;",
+        };
+        return $"<div class=\"el\" style=\"{box}{bg}\"></div>";
+    }
 
     private static string RenderText(TextPrimitive t)
     {

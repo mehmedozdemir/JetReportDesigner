@@ -33,6 +33,15 @@ public sealed class FreeLayoutBuilder
         };
 
         var primitives = new List<RenderPrimitive>();
+        if (report.Page.BackgroundImage is { Source: { Length: > 0 } pageBg } pageBgSpec)
+        {
+            primitives.Add(new ImagePrimitive
+            {
+                X = 0, Y = 0, Width = pageWidth, Height = pageHeight,
+                Source = pageBg, Fit = ElementEmitter.ParseFit(pageBgSpec.Fit),
+            });
+        }
+
         foreach (var element in report.Body.Elements)
         {
             if (element.Type == ElementType.Table)

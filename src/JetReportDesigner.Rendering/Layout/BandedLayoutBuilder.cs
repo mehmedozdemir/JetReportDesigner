@@ -213,6 +213,15 @@ public sealed class BandedLayoutBuilder
         for (var p = 0; p < totalPages; p++)
         {
             var primitives = new List<RenderPrimitive>();
+            if (report.Page.BackgroundImage is { Source: { Length: > 0 } pageBg } pageBgSpec)
+            {
+                primitives.Add(new ImagePrimitive
+                {
+                    X = 0, Y = 0, Width = pageWidth, Height = pageHeight,
+                    Source = pageBg, Fit = ElementEmitter.ParseFit(pageBgSpec.Fit),
+                });
+            }
+
             var pageDetailRows = pages[p]
                 .Where(x => x.Band.Type == BandType.Detail && x.Row is not null)
                 .Select(x => x.Row!)
@@ -255,6 +264,19 @@ public sealed class BandedLayoutBuilder
                     };
                     var value = AggregateComputer.Compute(element.Aggregate, element.Value, scopeRows);
                     return BindingResolver.FormatValue(value, element.Format, culture);
+                }
+
+                if (instance.Band.BackgroundImage is { Source: { Length: > 0 } bandBg } bandBgSpec)
+                {
+                    primitives.Add(new ImagePrimitive
+                    {
+                        X = margins.Left,
+                        Y = instance.Y,
+                        Width = pageWidth - margins.Left - margins.Right,
+                        Height = instance.Band.Height,
+                        Source = bandBg,
+                        Fit = ElementEmitter.ParseFit(bandBgSpec.Fit),
+                    });
                 }
 
                 // conditional formatting on the band row: paint its background, then

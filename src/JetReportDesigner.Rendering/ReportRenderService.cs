@@ -19,11 +19,15 @@ public sealed record RenderResult(byte[] Content, string ContentType, string Fil
 /// Report + parameters + data → rendered output. Phase 1 handles free-layout
 /// reports to PDF and HTML; banded rendering arrives in Phase 2.
 /// </summary>
-public sealed class ReportRenderService(ReportDataResolver dataResolver, IPdfRenderer pdfRenderer)
+public sealed class ReportRenderService(
+    ReportDataResolver dataResolver,
+    IPdfRenderer pdfRenderer,
+    IRenderImageResolver? imageResolver = null)
 {
     private readonly FreeLayoutBuilder _freeLayout = new();
     private readonly BandedLayoutBuilder _bandedLayout = new();
     private readonly HtmlReportRenderer _htmlRenderer = new();
+    private readonly IRenderImageResolver _imageResolver = imageResolver ?? NullImageResolver.Instance;
 
     public async Task<RenderResult> RenderAsync(
         ReportDefinition report,
@@ -41,6 +45,8 @@ public sealed class ReportRenderService(ReportDataResolver dataResolver, IPdfRen
             _ => throw new NotSupportedException($"Unknown layout mode '{report.LayoutMode}'."),
         };
 
+        await ResolveImagesAsync(document, cancellationToken);
+
         var safeName = string.IsNullOrWhiteSpace(report.Name) ? "report" : SanitizeFileName(report.Name);
 
         return format switch
@@ -52,6 +58,40 @@ public sealed class ReportRenderService(ReportDataResolver dataResolver, IPdfRen
                 $"{safeName}.html"),
             _ => throw new ArgumentOutOfRangeException(nameof(format)),
         };
+    }
+
+    /// <summary>
+    /// Resolves every <see cref="ImagePrimitive.Source"/> to bytes (once per distinct
+    /// source). A reference that cannot be resolved is left without bytes and the
+    /// engines skip it, so a broken image never fails the export.
+    /// </summary>
+    private async Task ResolveImagesAsync(RenderDocument document, CancellationToken cancellationToken)
+    {
+        var images = document.Pages
+            .SelectMany(p => p.Primitives)
+            .OfType<ImagePrimitive>()
+            .ToList();
+
+        if (images.Count == 0)
+        {
+            return;
+        }
+
+        var cache = new Dictionary<string, ResolvedImage?>(StringComparer.Ordinal);
+        foreach (var image in images)
+        {
+            if (!cache.TryGetValue(image.Source, out var resolved))
+            {
+                resolved = await _imageResolver.ResolveAsync(image.Source, cancellationToken);
+                cache[image.Source] = resolved;
+            }
+
+            if (resolved is not null)
+            {
+                image.Bytes = resolved.Bytes;
+                image.ContentType = resolved.ContentType;
+            }
+        }
     }
 
     private static string SanitizeFileName(string name)
