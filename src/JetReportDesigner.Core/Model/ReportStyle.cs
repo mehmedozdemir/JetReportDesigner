@@ -22,6 +22,21 @@ public sealed class ReportStyle
     public BorderSpec? Border { get; set; }
 
     public Spacing? Padding { get; set; }
+
+    /// <summary>A background image layered behind the fill and content, or null for none.</summary>
+    public BackgroundImageSpec? BackgroundImage { get; set; }
+}
+
+/// <summary>
+/// A background image for an element, band or page. <see cref="Source"/> is an
+/// <c>asset:{id}</c> reference, an <c>http(s)</c> URL or a data URI.
+/// </summary>
+public sealed class BackgroundImageSpec
+{
+    public string Source { get; set; } = string.Empty;
+
+    /// <summary><c>cover</c> | <c>contain</c> | <c>fill</c> | <c>tile</c>. Default <c>cover</c>.</summary>
+    public string Fit { get; set; } = "cover";
 }
 
 public sealed class FontSpec

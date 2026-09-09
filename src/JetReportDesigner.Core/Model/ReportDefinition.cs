@@ -66,6 +66,9 @@ public sealed class PageSetup
 
     /// <summary>Number of layout columns. V1 supports 1 only.</summary>
     public int Columns { get; set; } = 1;
+
+    /// <summary>A background image drawn on every page (watermark, letterhead), or null for none.</summary>
+    public BackgroundImageSpec? BackgroundImage { get; set; }
 }
 
 public sealed class Margins

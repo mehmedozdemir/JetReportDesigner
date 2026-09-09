@@ -25,6 +25,9 @@ public sealed class Band
     /// <summary>Conditional-formatting rules for the band row: paint its background and cascade style to its elements.</summary>
     public List<FormatRule> FormatRules { get; set; } = [];
 
+    /// <summary>A background image drawn across the whole band area, or null for none.</summary>
+    public BackgroundImageSpec? BackgroundImage { get; set; }
+
     public List<ReportElement> Elements { get; set; } = [];
 }
 

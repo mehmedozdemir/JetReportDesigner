@@ -39,6 +39,14 @@ export interface Spacing {
   left: number;
 }
 
+export type BackgroundFit = "cover" | "contain" | "fill" | "tile";
+
+export interface BackgroundImageSpec {
+  /** "asset:{id}", an http(s) URL, or a data URI. */
+  source: string;
+  fit: BackgroundFit;
+}
+
 export interface ReportStyle {
   font?: FontSpec | null;
   color?: string | null;
@@ -47,6 +55,7 @@ export interface ReportStyle {
   vAlign?: VerticalAlign | null;
   border?: BorderSpec | null;
   padding?: Spacing | null;
+  backgroundImage?: BackgroundImageSpec | null;
 }
 
 export type AggregateFunction =
@@ -136,6 +145,7 @@ export interface Band {
   group?: GroupSpec;
   repeatOnEveryPage: boolean;
   formatRules?: FormatRule[];
+  backgroundImage?: BackgroundImageSpec | null;
   elements: ReportElement[];
 }
 
@@ -220,6 +230,7 @@ export interface PageSetup {
   customHeight?: number | null;
   margins: { top: number; right: number; bottom: number; left: number };
   columns: 1;
+  backgroundImage?: BackgroundImageSpec | null;
 }
 
 export interface ReportDefinition {
