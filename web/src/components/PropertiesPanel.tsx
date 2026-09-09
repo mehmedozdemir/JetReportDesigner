@@ -42,6 +42,7 @@ import type {
   BackgroundFit,
   Band,
   BorderSpec,
+  ChartType,
   ElementType,
   FormatRule,
   PageSize,
@@ -428,6 +429,119 @@ function ElementProperties({
           fitOptions={["contain", "cover", "fill"]}
           onChange={(v) => onPatch((e) => (e.image = v ? { source: v.source, fit: v.fit } : null))}
         />
+      )}
+
+      {element.type === "chart" && element.chart && (
+        <div className="table-props">
+          <label className="field">
+            <span>Chart type</span>
+            <select
+              value={element.chart.type}
+              onChange={(v) => onPatch((e) => (e.chart!.type = v.target.value as ChartType))}
+            >
+              <option value="column">Column</option>
+              <option value="bar">Bar</option>
+              <option value="line">Line</option>
+              <option value="area">Area</option>
+              <option value="pie">Pie</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Data source</span>
+            <select
+              value={element.chart.dataSource}
+              onChange={(v) => onPatch((e) => (e.chart!.dataSource = v.target.value))}
+            >
+              <option value="">— (first source)</option>
+              {sources.map((src) => (
+                <option key={src.name}>{src.name}</option>
+              ))}
+            </select>
+          </label>
+          <FormulaField
+            label="Category"
+            value={element.chart.category}
+            fields={fieldNames}
+            onChange={(val) => onPatch((e) => (e.chart!.category = val))}
+          />
+          <label className="field">
+            <span>Title</span>
+            <input
+              value={element.chart.title ?? ""}
+              placeholder="(none)"
+              onChange={(v) => onPatch((e) => (e.chart!.title = v.target.value || null))}
+            />
+          </label>
+          <label className="row" style={{ marginBottom: 4 }}>
+            <input
+              type="checkbox"
+              checked={element.chart.showLegend}
+              onChange={(v) => onPatch((e) => (e.chart!.showLegend = v.target.checked))}
+            />
+            <span>Legend</span>
+          </label>
+          {element.chart.type !== "pie" && (
+            <label className="row" style={{ marginBottom: 6 }}>
+              <input
+                type="checkbox"
+                checked={element.chart.showGrid}
+                onChange={(v) => onPatch((e) => (e.chart!.showGrid = v.target.checked))}
+              />
+              <span>Gridlines</span>
+            </label>
+          )}
+
+          <h3>Series{element.chart.type === "pie" ? " (pie uses the first)" : ""}</h3>
+          {element.chart.series.map((s, i) => (
+            <div key={i} className="col-row">
+              <input
+                value={s.name}
+                placeholder="Name"
+                onChange={(v) => onPatch((e) => (e.chart!.series[i].name = v.target.value))}
+              />
+              <input
+                value={s.value}
+                placeholder="{src.field}"
+                onChange={(v) => onPatch((e) => (e.chart!.series[i].value = v.target.value))}
+              />
+              <div className="row">
+                <input
+                  type="color"
+                  style={{ width: 34, padding: 0 }}
+                  value={s.color ?? "#2563eb"}
+                  onChange={(v) => onPatch((e) => (e.chart!.series[i].color = v.target.value))}
+                />
+                <button
+                  className="mini"
+                  title="Use palette colour"
+                  onClick={() => onPatch((e) => (e.chart!.series[i].color = null))}
+                >
+                  <Ban />
+                </button>
+                <button
+                  className="mini danger"
+                  disabled={element.chart!.series.length <= 1}
+                  onClick={() => onPatch((e) => e.chart!.series.splice(i, 1))}
+                  aria-label="Remove series"
+                >
+                  <Trash2 />
+                </button>
+              </div>
+            </div>
+          ))}
+          {element.chart.type !== "pie" && (
+            <button
+              className="mini"
+              onClick={() =>
+                onPatch((e) =>
+                  e.chart!.series.push({ name: `Series ${e.chart!.series.length + 1}`, value: "{src.field}", color: null }),
+                )
+              }
+            >
+              <Plus /> Series
+            </button>
+          )}
+        </div>
       )}
 
       {element.type === "table" && element.table && (

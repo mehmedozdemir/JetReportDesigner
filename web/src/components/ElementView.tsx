@@ -20,6 +20,7 @@ import type { ReportElement, ReportStyle } from "../types";
 import { useCanvasDrag, type ResizeHandle } from "../hooks/useCanvasDrag";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { FormulaDialog } from "./FormulaDialog";
+import { ChartPreview } from "./ChartPreview";
 import { backgroundImageCss, imageSrc } from "../image";
 
 const HANDLES: ResizeHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
@@ -225,6 +226,10 @@ export function ElementView({ element }: { element: ReportElement }) {
         ) : (
           <span className="img-ph">image</span>
         ))}
+      {element.type === "chart" && element.chart && (
+        <ChartPreview spec={element.chart} width={b.width} height={b.height} />
+      )}
+
       {element.type === "table" && element.table && (
         <table className="tbl-preview">
           {element.table.showHeader && (
