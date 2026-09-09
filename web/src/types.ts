@@ -2,7 +2,34 @@
 // this from the OpenAPI document.
 
 export type LayoutMode = "banded" | "free";
-export type ElementType = "label" | "field" | "table" | "image" | "line" | "rectangle" | "pageInfo";
+export type ElementType =
+  | "label"
+  | "field"
+  | "table"
+  | "image"
+  | "line"
+  | "rectangle"
+  | "pageInfo"
+  | "chart";
+
+export type ChartType = "column" | "bar" | "line" | "area" | "pie";
+
+export interface ChartSeries {
+  name: string;
+  value: string;
+  color?: string | null;
+  format?: string | null;
+}
+
+export interface ChartSpec {
+  type: ChartType;
+  dataSource: string;
+  category: string;
+  series: ChartSeries[];
+  title?: string | null;
+  showLegend: boolean;
+  showGrid: boolean;
+}
 export type PageSize = "A4" | "A5" | "A6" | "Letter" | "Legal" | "IDCard" | "Badge" | "Custom";
 export type Orientation = "portrait" | "landscape";
 export type TextAlign = "left" | "center" | "right" | "justify";
@@ -128,6 +155,7 @@ export interface ReportElement {
   image?: { source: string; fit: string } | null;
   line?: { orientation: "horizontal" | "vertical" } | null;
   table?: TableSpec | null;
+  chart?: ChartSpec | null;
 }
 
 export type BandType =
@@ -375,6 +403,20 @@ export function defaultElement(type: ElementType, x: number, y: number): ReportE
       return { ...base, bounds: { x, y, width: 160, height: 100 }, style: { border: edge(1) } };
     case "image":
       return { ...base, bounds: { x, y, width: 120, height: 120 }, image: { source: "", fit: "contain" } };
+    case "chart":
+      return {
+        ...base,
+        bounds: { x, y, width: 320, height: 200 },
+        chart: {
+          type: "column",
+          dataSource: "",
+          category: "{source.category}",
+          series: [{ name: "Series 1", value: "{source.value}", color: null }],
+          title: null,
+          showLegend: true,
+          showGrid: true,
+        },
+      };
     case "pageInfo":
       return { ...base, value: "{param:title}" };
     default:

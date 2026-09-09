@@ -12,6 +12,7 @@ import {
   ArrowUp,
   ArrowUpToLine,
   Ban,
+  BarChart3,
   BoxSelect,
   FileText,
   Hash,
@@ -101,6 +102,7 @@ const ELEMENT_ICON: Record<ElementType, LucideIcon> = {
   line: Minus,
   image: ImageIcon,
   pageInfo: Hash,
+  chart: BarChart3,
 };
 
 export function PropertiesPanel() {

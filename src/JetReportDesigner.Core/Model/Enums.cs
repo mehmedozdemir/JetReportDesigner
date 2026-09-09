@@ -67,6 +67,7 @@ public enum ElementType
     Line,
     Rectangle,
     PageInfo,
+    Chart,
 }
 
 public enum TextAlign

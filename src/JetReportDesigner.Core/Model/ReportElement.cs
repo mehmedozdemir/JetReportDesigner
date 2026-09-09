@@ -46,6 +46,8 @@ public sealed class ReportElement
     public LineSpec? Line { get; set; }
 
     public TableSpec? Table { get; set; }
+
+    public ChartSpec? Chart { get; set; }
 }
 
 public sealed class Bounds
@@ -92,4 +94,37 @@ public sealed class TableColumn
     public string? Format { get; set; }
 
     public TextAlign Align { get; set; } = TextAlign.Left;
+}
+
+public sealed class ChartSpec
+{
+    /// <summary><c>column</c> | <c>bar</c> | <c>line</c> | <c>area</c> | <c>pie</c>.</summary>
+    public string Type { get; set; } = "column";
+
+    public string DataSource { get; set; } = string.Empty;
+
+    /// <summary>Binding or expression for the category (X) axis label, evaluated per row.</summary>
+    public string Category { get; set; } = string.Empty;
+
+    public List<ChartSeries> Series { get; set; } = [];
+
+    public string? Title { get; set; }
+
+    public bool ShowLegend { get; set; } = true;
+
+    /// <summary>Draw value-axis gridlines and tick labels.</summary>
+    public bool ShowGrid { get; set; } = true;
+}
+
+public sealed class ChartSeries
+{
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Binding or expression evaluated per row; must resolve to a number.</summary>
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary><c>#rrggbb</c>, or null to take a colour from the palette by index.</summary>
+    public string? Color { get; set; }
+
+    public string? Format { get; set; }
 }

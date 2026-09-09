@@ -160,6 +160,13 @@ public sealed class ReportDefinitionValidator : AbstractValidator<ReportDefiniti
             RuleFor(e => e.Bounds.Height).GreaterThanOrEqualTo(0);
             When(e => e.Type == ElementType.Table, () =>
                 RuleFor(e => e.Table).NotNull());
+            When(e => e.Type == ElementType.Chart, () =>
+            {
+                RuleFor(e => e.Chart).NotNull();
+                RuleFor(e => e.Chart!.Series).NotEmpty().When(e => e.Chart is not null);
+                RuleForEach(e => e.Chart!.Series).ChildRules(s =>
+                    s.RuleFor(x => x.Value).NotEmpty()).When(e => e.Chart is not null);
+            });
         }
     }
 }

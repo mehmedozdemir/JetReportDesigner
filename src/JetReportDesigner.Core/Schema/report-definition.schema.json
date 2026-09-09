@@ -228,7 +228,7 @@
       "required": ["id", "type", "bounds"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "type": { "enum": ["label", "field", "table", "image", "line", "rectangle", "pageInfo"] },
+        "type": { "enum": ["label", "field", "table", "image", "line", "rectangle", "pageInfo", "chart"] },
         "bounds": {
           "type": "object",
           "additionalProperties": false,
@@ -281,6 +281,31 @@
                   "width": { "type": "number", "minimum": 0 },
                   "format": { "type": ["string", "null"] },
                   "align": { "enum": ["left", "center", "right", "justify"] }
+                }
+              }
+            }
+          }
+        },
+        "chart": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "enum": ["column", "bar", "line", "area", "pie"] },
+            "dataSource": { "type": "string" },
+            "category": { "type": "string" },
+            "title": { "type": ["string", "null"] },
+            "showLegend": { "type": "boolean" },
+            "showGrid": { "type": "boolean" },
+            "series": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string" },
+                  "value": { "type": "string" },
+                  "color": { "type": ["string", "null"] },
+                  "format": { "type": ["string", "null"] }
                 }
               }
             }
