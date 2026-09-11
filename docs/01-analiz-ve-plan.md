@@ -513,6 +513,47 @@ auto-height/can-grow/push-up bantlar, çok kolonlu düzen, gelişmiş expression
 
 ---
 
+### V1.2 — AI Destekli Raporlama ve Modern Görselleştirme (stratejik öncelik)
+Pazar araştırması (2026): pixel-perfect/paginated raporlama (DevExpress, Telerik, Stimulsoft,
+FastReport) hâlâ kurumsal zorunluluk — fatura, mali tablo, denetim belgesi gibi çıktılar dashboard
+ile değiştirilemiyor. Ama beklenti kayıyor: embedded analytics artık varsayılan, self-servis talep
+artıyor, ve 2026'da enterprise analitik ekiplerinin çoğunluğu artık conversational AI kullanıyor.
+Karar: **hem kurumsal pixel-perfect temeli koru, hem de AI/self-servis katmanını üstüne ekle** —
+ikisi birbirini dışlamıyor, JSON şema + FluentValidation temelimiz AI entegrasyonu için aslında
+ideal bir zemin (LLM yapılandırılmış JSON üretir, validator "gerçeklik kontrolü" yapar).
+
+**AI Rapor Asistanı — akış:**
+1. Kullanıcı tasarım ekranını hiç açmadan bir chat/istek kutusuna doğal dille ne istediğini yazar
+   ("son 3 ayın müşteri bazlı satış raporu, ülkelere göre gruplu, toplamlarla").
+2. Asistan mevcut veri kaynaklarını (alan adları/tipleri zaten şemada var) bağlam olarak kullanır.
+3. Kullanıcı bir rapor tasarımını ayrıntılı tarif edemez (en fazla %60-70) — asistan **proaktif**
+   davranır: eksik/belirsiz noktalar için kısa, hızlı yanıtlanabilir netleştirme soruları sorar
+   (veri kaynağı seçimi, tarih aralığı sabit mi parametre mi, öncelikli çıktı formatı, gruplama
+   kırılımı vb.) — serbest metin yerine mümkün olduğunca çoktan seçmeli/hızlı form.
+4. Asistan mevcut `ReportDefinition` şemasına uygun bir taslak üretir; **FluentValidation'dan
+   geçmeyen taslağı kendi kendine düzeltmeyi dener** (retry-fix loop), geçemezse kullanıcıya
+   net biçimde neyi tam yapamadığını söyler.
+5. Taslak doğrudan **mevcut Designer ekranında** açılır — AI, designer'ın yerine geçmiyor, "sıfırdan
+   başlamak yerine akıllı bir başlangıç noktası" oluyor. Kullanıcı isterse hiç dokunmadan
+   Preview/Export yapar, isterse ince ayar için tasarım ekranını kullanır.
+6. Aynı asistan var olan bir raporu da doğal dille değiştirebilir ("bir grup toplamı daha ekle",
+   "başlığı büyüt") — formül editöründeki doğal-dil-ile-ifade-önerisi de (örn. "toplamı TL
+   formatında göster" → `=format(sum(...), 'C')`) bu akışın bir parçası.
+
+**Modern görselleştirme (yöneticiler/son kullanıcılar için görsel çekicilik):**
+- 3D pasta/bar/column grafikler, gauge/KPI göstergesi, heatmap, sparkline (tablo hücresi içi mini
+  trend), basit coğrafi/harita görselleştirme.
+- **Teknik not:** render motoru PdfSharp/MigraDoc (2D, server-side .NET çizim) olduğu için "gerçek"
+  3D (WebGL tarzı) PDF'e taşınamaz — gölge/perspektif ile **pseudo-3D** (Excel'in 3D grafikleri
+  gibi) PDF'te uygulanabilir; tam interaktif/gerçek 3D ise HTML önizlemede (WebGL/Canvas ile)
+  mümkün olur ama PDF export'ta bu sadeleşir. Beklenti bu ayrım net kurularak yönetilmeli.
+
+**Doğrulama (gelecekte):** Kullanıcı hiç tasarım ekranını açmadan tek bir doğal dil isteğiyle
+kullanılabilir bir rapor taslağı üretebilmeli; taslak validator'dan geçmeli; kullanıcı istekle
+üretilen raporu ince ayar yapmadan da export edebilmeli.
+
+---
+
 ## 10. Multi-Agent Geliştirme Yöntemi
 
 ### İş bölümü (fazlar içinde paralel)
