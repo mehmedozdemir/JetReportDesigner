@@ -28,6 +28,12 @@ public sealed class BandedLayoutBuilder
         /// height, unless a "can grow" element (currently: a detail row) needed more.
         /// </summary>
         public double EffectiveHeight { get; init; } = Band.Height;
+
+        /// <summary>Left edge for a multi-column detail instance; null (fall back to the page margin) for everything else.</summary>
+        public double? ColumnOffsetX { get; init; }
+
+        /// <summary>Width for a multi-column detail instance; null (fall back to the full usable width) for everything else.</summary>
+        public double? ColumnWidth { get; init; }
     }
 
     /// <summary>One nesting level: its header/footer bands (either may be absent) and the shared grouping key.</summary>
@@ -59,6 +65,14 @@ public sealed class BandedLayoutBuilder
 
         var detailSource = detail?.DataSource ?? report.DataSources.FirstOrDefault()?.Name ?? string.Empty;
         var allRows = data.Get(detailSource).Rows.ToList();
+
+        // The detail band flows left-to-right across this many side-by-side columns,
+        // then wraps down; every other band stays full width. columns == 1 (the
+        // default) degenerates to the ordinary single-column layout below, unchanged.
+        var columns = Math.Clamp(report.Page.Columns, 1, 8);
+        var columnSpacing = Math.Max(0, report.Page.ColumnSpacing);
+        var usableWidth = pageWidth - margins.Left - margins.Right;
+        var columnWidth = columns > 1 ? (usableWidth - (columns - 1) * columnSpacing) / columns : usableWidth;
 
         var culture = CultureResolver.Resolve(report.Culture);
         var baseContext = new BindingContext(null, parameters) { Now = now, Culture = culture };
@@ -118,6 +132,22 @@ public sealed class BandedLayoutBuilder
         }
 
         var hasOpenGroup = false;
+
+        // Row-major multi-column cursor: which column a detail row lands in next, and
+        // the Y / tallest-height-so-far of the row-of-columns currently being filled.
+        var currentColumn = 0;
+        var currentRowBandY = 0.0;
+        var currentRowBandHeight = 0.0;
+
+        void FlushColumnRow()
+        {
+            if (currentColumn > 0)
+            {
+                y += currentRowBandHeight;
+                currentColumn = 0;
+                currentRowBandHeight = 0;
+            }
+        }
 
         void ClosePage()
         {
@@ -224,6 +254,10 @@ public sealed class BandedLayoutBuilder
 
                 if (changedAt >= 0)
                 {
+                    // A group boundary always ends the current row of columns, even if
+                    // not every column was filled.
+                    FlushColumnRow();
+
                     // Close the innermost open groups first, down to the level that changed.
                     for (var lvl = levels.Count - 1; lvl >= changedAt; lvl--)
                     {
@@ -262,12 +296,32 @@ public sealed class BandedLayoutBuilder
                 }
             }
 
-            var detailHeight = DetailRowHeight(detail, row);
-            Ensure(detailHeight);
             if (detail is not null)
             {
-                page.Add(new BandInstance(detail, y, row, null) { RowIndex = i, EffectiveHeight = detailHeight });
-                y += detailHeight;
+                var detailHeight = DetailRowHeight(detail, row);
+
+                if (currentColumn == 0)
+                {
+                    Ensure(detailHeight);
+                    currentRowBandY = y;
+                    currentRowBandHeight = 0;
+                }
+
+                currentRowBandHeight = Math.Max(currentRowBandHeight, detailHeight);
+
+                page.Add(new BandInstance(detail, currentRowBandY, row, null)
+                {
+                    RowIndex = i,
+                    EffectiveHeight = detailHeight,
+                    ColumnOffsetX = columns > 1 ? margins.Left + currentColumn * (columnWidth + columnSpacing) : null,
+                    ColumnWidth = columns > 1 ? columnWidth : null,
+                });
+
+                currentColumn++;
+                if (currentColumn >= columns)
+                {
+                    FlushColumnRow();
+                }
             }
 
             for (var lvl = 0; lvl < levels.Count; lvl++)
@@ -277,6 +331,8 @@ public sealed class BandedLayoutBuilder
 
             pageRows.Add(row);
         }
+
+        FlushColumnRow();
 
         if (grouping && allRows.Count > 0)
         {
@@ -415,13 +471,16 @@ public sealed class BandedLayoutBuilder
                     return BindingResolver.FormatValue(value, element.Format, culture);
                 }
 
+                var offsetX = instance.ColumnOffsetX ?? margins.Left;
+                var areaWidth = instance.ColumnWidth ?? usableWidth;
+
                 if (instance.Band.BackgroundImage is { Source: { Length: > 0 } bandBg } bandBgSpec)
                 {
                     primitives.Add(new ImagePrimitive
                     {
-                        X = margins.Left,
+                        X = offsetX,
                         Y = instance.Y,
-                        Width = pageWidth - margins.Left - margins.Right,
+                        Width = areaWidth,
                         Height = instance.EffectiveHeight,
                         Source = bandBg,
                         Fit = ElementEmitter.ParseFit(bandBgSpec.Fit),
@@ -437,9 +496,9 @@ public sealed class BandedLayoutBuilder
                     {
                         primitives.Add(new RectanglePrimitive
                         {
-                            X = margins.Left,
+                            X = offsetX,
                             Y = instance.Y,
-                            Width = pageWidth - margins.Left - margins.Right,
+                            Width = areaWidth,
                             Height = instance.EffectiveHeight,
                             FillColorHex = bg,
                             BorderThicknessPx = 0,
@@ -453,7 +512,7 @@ public sealed class BandedLayoutBuilder
                     {
                         var tableRows = data.Get(element.Table?.DataSource ?? detailSource).Rows;
                         primitives.AddRange(
-                            TableEmitter.Emit(element, report.Styles, tableRows, context, margins.Left, instance.Y));
+                            TableEmitter.Emit(element, report.Styles, tableRows, context, offsetX, instance.Y));
                     }
                     else if (element.Type == ElementType.Chart)
                     {
@@ -461,11 +520,11 @@ public sealed class BandedLayoutBuilder
                             ? detailSource
                             : element.Chart!.DataSource;
                         primitives.AddRange(
-                            ChartEmitter.Emit(element, report.Styles, data.Get(chartSource).Rows, context, margins.Left, instance.Y));
+                            ChartEmitter.Emit(element, report.Styles, data.Get(chartSource).Rows, context, offsetX, instance.Y));
                     }
                     else if (element.Type == ElementType.Subreport)
                     {
-                        if (SubreportEmitter.Emit(element, context, margins.Left, instance.Y) is { } placeholder)
+                        if (SubreportEmitter.Emit(element, context, offsetX, instance.Y) is { } placeholder)
                         {
                             primitives.Add(placeholder);
                         }
@@ -476,13 +535,13 @@ public sealed class BandedLayoutBuilder
                             ? detailSource
                             : element.Matrix!.DataSource;
                         primitives.AddRange(
-                            MatrixEmitter.Emit(element, report.Styles, data.Get(matrixSource).Rows, context, margins.Left, instance.Y));
+                            MatrixEmitter.Emit(element, report.Styles, data.Get(matrixSource).Rows, context, offsetX, instance.Y));
                     }
                     else
                     {
                         primitives.AddRange(
                             ElementEmitter.Emit(
-                                element, report.Styles, context, margins.Left, instance.Y, Aggregate, bandRuleStyles));
+                                element, report.Styles, context, offsetX, instance.Y, Aggregate, bandRuleStyles));
                     }
                 }
             }
