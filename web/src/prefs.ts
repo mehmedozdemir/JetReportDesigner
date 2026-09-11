@@ -13,6 +13,10 @@ export interface Prefs {
   snapToGuides: boolean;
   theme: ThemePref;
   autoSaveSeconds: number; // 0 = off
+  leftPanelWidth: number;
+  rightPanelWidth: number;
+  leftPanelCollapsed: boolean;
+  rightPanelCollapsed: boolean;
 }
 
 export const DEFAULT_PREFS: Prefs = {
@@ -24,6 +28,10 @@ export const DEFAULT_PREFS: Prefs = {
   snapToGuides: true,
   theme: "light",
   autoSaveSeconds: 0,
+  leftPanelWidth: 272,
+  rightPanelWidth: 300,
+  leftPanelCollapsed: false,
+  rightPanelCollapsed: false,
 };
 
 interface PrefsState extends Prefs {

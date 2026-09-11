@@ -8,6 +8,7 @@ import { emptyBandedReport, emptyFreeReport, type ReportDefinition, type ReportS
 import { Canvas } from "./components/Canvas";
 import { LeftSidebar } from "./components/LeftSidebar";
 import { LoginScreen } from "./components/LoginScreen";
+import { COLLAPSED_WIDTH, ResizablePanel } from "./components/ResizablePanel";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { StartScreen } from "./components/StartScreen";
 import { Toolbar } from "./components/Toolbar";
@@ -26,6 +27,11 @@ export function App() {
   const [showStart, setShowStart] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const autoSaveSeconds = usePrefs((s) => s.autoSaveSeconds);
+  const leftPanelWidth = usePrefs((s) => s.leftPanelWidth);
+  const rightPanelWidth = usePrefs((s) => s.rightPanelWidth);
+  const leftPanelCollapsed = usePrefs((s) => s.leftPanelCollapsed);
+  const rightPanelCollapsed = usePrefs((s) => s.rightPanelCollapsed);
+  const setPref = usePrefs((s) => s.set);
 
   const report = useDesigner((s) => s.report);
   const reportId = useDesigner((s) => s.reportId);
@@ -213,8 +219,14 @@ export function App() {
     return <LoginScreen />;
   }
 
+  const leftCol = leftPanelCollapsed ? COLLAPSED_WIDTH : leftPanelWidth;
+  const rightCol = rightPanelCollapsed ? COLLAPSED_WIDTH : rightPanelWidth;
+
   return (
-    <div className={canEdit ? "app designer-toolbar" : "app viewer-mode"}>
+    <div
+      className={canEdit ? "app designer-toolbar" : "app viewer-mode"}
+      style={canEdit ? { gridTemplateColumns: `${leftCol}px 1fr ${rightCol}px` } : undefined}
+    >
       <Toolbar
         busy={busy}
         onNew={() => void createReport()}
@@ -224,7 +236,17 @@ export function App() {
         onExport={(format) => void exportAs(format)}
       />
 
-      {canEdit && <LeftSidebar reportId={reportId} />}
+      {canEdit && (
+        <ResizablePanel
+          side="left"
+          width={leftPanelWidth}
+          collapsed={leftPanelCollapsed}
+          onWidthChange={(w) => setPref("leftPanelWidth", w)}
+          onToggleCollapsed={(c) => setPref("leftPanelCollapsed", c)}
+        >
+          <LeftSidebar reportId={reportId} />
+        </ResizablePanel>
+      )}
 
       <div className="center">
         {report && (report.parameters?.length ?? 0) > 0 && (
@@ -284,9 +306,17 @@ export function App() {
       </div>
 
       {canEdit && (
-        <div className="right" ref={rightRef}>
-          <PropertiesPanel />
-        </div>
+        <ResizablePanel
+          side="right"
+          width={rightPanelWidth}
+          collapsed={rightPanelCollapsed}
+          onWidthChange={(w) => setPref("rightPanelWidth", w)}
+          onToggleCollapsed={(c) => setPref("rightPanelCollapsed", c)}
+        >
+          <div className="right" ref={rightRef}>
+            <PropertiesPanel />
+          </div>
+        </ResizablePanel>
       )}
 
       {(!report || showStart) && (
