@@ -97,7 +97,8 @@ public sealed class ReportDefinitionValidator : AbstractValidator<ReportDefiniti
         {
             RuleFor(p => p.Size).Must(s => ValidPageSizes.Contains(s));
             RuleFor(p => p.Orientation).Must(o => o is "portrait" or "landscape");
-            RuleFor(p => p.Columns).Equal(1);
+            RuleFor(p => p.Columns).InclusiveBetween(1, 8);
+            RuleFor(p => p.ColumnSpacing).GreaterThanOrEqualTo(0);
             When(p => p.Size == "Custom", () =>
             {
                 RuleFor(p => p.CustomWidth).NotNull().GreaterThan(0);

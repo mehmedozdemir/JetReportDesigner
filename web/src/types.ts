@@ -304,7 +304,10 @@ export interface PageSetup {
   customWidth?: number | null;
   customHeight?: number | null;
   margins: { top: number; right: number; bottom: number; left: number };
-  columns: 1;
+  /** Side-by-side detail-band columns (mailing labels, a catalog grid); 1 = an ordinary single-column report. */
+  columns: number;
+  /** Gap between columns in px, when columns > 1. */
+  columnSpacing?: number;
   backgroundImage?: BackgroundImageSpec | null;
 }
 

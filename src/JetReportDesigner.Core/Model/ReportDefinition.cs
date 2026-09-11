@@ -64,8 +64,18 @@ public sealed class PageSetup
 
     public Margins Margins { get; set; } = new();
 
-    /// <summary>Number of layout columns. V1 supports 1 only.</summary>
+    /// <summary>
+    /// Number of side-by-side layout columns the detail band flows into (mailing
+    /// labels, a catalog grid, a directory) — left to right, then down to the next
+    /// row of columns. Group headers/footers, page header/footer and report
+    /// header/footer always span the full page width; a mid-row-of-columns group
+    /// change or page break flushes the current row before continuing. 1 = the
+    /// ordinary single-column report.
+    /// </summary>
     public int Columns { get; set; } = 1;
+
+    /// <summary>Gap between columns in 1/96 inch units, when <see cref="Columns"/> is more than 1.</summary>
+    public double ColumnSpacing { get; set; } = 16;
 
     /// <summary>A background image drawn on every page (watermark, letterhead), or null for none.</summary>
     public BackgroundImageSpec? BackgroundImage { get; set; }

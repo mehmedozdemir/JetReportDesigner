@@ -36,7 +36,9 @@
         "customWidth": { "type": ["number", "null"], "exclusiveMinimum": 0 },
         "customHeight": { "type": ["number", "null"], "exclusiveMinimum": 0 },
         "margins": { "$ref": "#/$defs/margins" },
-        "columns": { "type": "integer", "const": 1 }
+        "columns": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "columnSpacing": { "type": "number", "minimum": 0 },
+        "backgroundImage": { "oneOf": [{ "$ref": "#/$defs/backgroundImage" }, { "type": "null" }] }
       }
     },
     "margins": {
@@ -171,7 +173,16 @@
             "bottom": { "type": "number", "minimum": 0 },
             "left": { "type": "number", "minimum": 0 }
           }
-        }
+        },
+        "backgroundImage": { "oneOf": [{ "$ref": "#/$defs/backgroundImage" }, { "type": "null" }] }
+      }
+    },
+    "backgroundImage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": { "type": "string" },
+        "fit": { "enum": ["cover", "contain", "fill", "tile"] }
       }
     },
     "band": {
@@ -197,6 +208,7 @@
         "groupLevel": { "type": "integer", "minimum": 0 },
         "repeatOnEveryPage": { "type": "boolean" },
         "formatRules": { "type": "array", "items": { "$ref": "#/$defs/formatRule" } },
+        "backgroundImage": { "oneOf": [{ "$ref": "#/$defs/backgroundImage" }, { "type": "null" }] },
         "elements": { "type": "array", "items": { "$ref": "#/$defs/element" } }
       }
     },
