@@ -77,7 +77,10 @@ export function ElementView({ element }: { element: ReportElement }) {
     left: b.x,
     top: b.y,
     width: b.width,
-    height: element.type === "line" ? Math.max(b.height, s.border ? maxEdge(s.border) : 1) : b.height,
+    height: element.type === "line"
+      ? Math.max(b.height, s.border ? maxEdge(s.border) : 1)
+      : element.canGrow ? "auto" : b.height,
+    minHeight: element.canGrow && element.type !== "line" ? b.height : undefined,
     boxSizing: "border-box",
     fontFamily: s.font?.family ? `${s.font.family}, sans-serif` : "inherit",
     fontSize: s.font?.size ? `${s.font.size}pt` : undefined,
@@ -99,7 +102,7 @@ export function ElementView({ element }: { element: ReportElement }) {
     flexDirection: "column",
     justifyContent: s.vAlign === "middle" ? "center" : s.vAlign === "bottom" ? "flex-end" : "flex-start",
     padding: s.padding ? `${s.padding.top}px ${s.padding.right}px ${s.padding.bottom}px ${s.padding.left}px` : undefined,
-    overflow: "hidden",
+    overflow: element.canGrow ? "visible" : "hidden",
     whiteSpace: "pre-wrap",
     cursor: "move",
     userSelect: "none",

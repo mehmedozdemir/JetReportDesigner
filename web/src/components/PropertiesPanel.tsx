@@ -784,6 +784,14 @@ function ElementProperties({
             <AlignPicker value={(s.align as TextAlign) ?? "left"} onChange={(v) => onPatch((e) => setStyle(e, "align", v))} />
             <VAlignPicker value={(s.vAlign as VerticalAlign) ?? "top"} onChange={(v) => onPatch((e) => setStyle(e, "vAlign", v))} />
           </div>
+          <label className="row" style={{ marginBottom: 6 }}>
+            <input
+              type="checkbox"
+              checked={!!element.canGrow}
+              onChange={(v) => onPatch((e) => (e.canGrow = v.target.checked))}
+            />
+            <span>Grow to fit text (don't clip)</span>
+          </label>
         </>
       )}
 
