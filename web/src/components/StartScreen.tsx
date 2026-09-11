@@ -1,21 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileBarChart2, FileText, Rows3, Search, SquareDashed, Trash2, X } from "lucide-react";
 import { isDesigner, useAuth } from "../auth";
+import { timeAgo } from "../time";
 import type { ReportDefinition, ReportSummary } from "../types";
-
-function timeAgo(iso: string): string {
-  const t = new Date(iso).getTime();
-  if (Number.isNaN(t)) return "";
-  const s = Math.max(0, (Date.now() - t) / 1000);
-  if (s < 60) return "just now";
-  const m = s / 60;
-  if (m < 60) return `${Math.floor(m)}m ago`;
-  const h = m / 60;
-  if (h < 24) return `${Math.floor(h)}h ago`;
-  const d = h / 24;
-  if (d < 7) return `${Math.floor(d)}d ago`;
-  return new Date(iso).toLocaleDateString();
-}
 
 export function StartScreen({
   reports,

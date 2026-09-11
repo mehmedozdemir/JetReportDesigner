@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Eye, PencilRuler, ZoomIn, ZoomOut } from "lucide-react";
 import { api } from "./api";
 import { isDesigner, useAuth } from "./auth";
 import { useDesigner } from "./store";
@@ -35,6 +35,8 @@ export function App() {
   const load = useDesigner((s) => s.load);
   const markSaved = useDesigner((s) => s.markSaved);
   const inspectorPulse = useDesigner((s) => s.inspectorPulse);
+  const zoom = useDesigner((s) => s.zoom);
+  const setZoom = useDesigner((s) => s.setZoom);
   const rightRef = useRef<HTMLDivElement>(null);
 
   // A Viewer never gets the design surface — always land on (and stay on) Preview.
@@ -113,6 +115,7 @@ export function App() {
           past: [],
           future: [],
           dirty: false,
+          savedAtUtc: null,
         });
       }
       await refresh();
@@ -214,11 +217,9 @@ export function App() {
   }
 
   return (
-    <div className={canEdit ? "app" : "app viewer-mode"}>
+    <div className={canEdit ? "app designer-toolbar" : "app viewer-mode"}>
       <Toolbar
-        tab={tab}
         busy={busy}
-        onSetTab={setTab}
         onNew={() => void createReport()}
         onShowStart={() => setShowStart(true)}
         onSettings={() => setShowSettings(true)}
@@ -261,6 +262,34 @@ export function App() {
               <PreviewPane parameters={paramValues} active={tab === "preview"} />
             </div>
           </>
+        )}
+
+        {canEdit && report && (
+          <div className="canvas-hud canvas-hud-left">
+            <div className="segmented" role="group" aria-label="View">
+              <button className={tab === "design" ? "on" : ""} onClick={() => setTab("design")} title="Design view">
+                <PencilRuler /> Design
+              </button>
+              <button className={tab === "preview" ? "on" : ""} onClick={() => setTab("preview")} title="Preview">
+                <Eye /> Preview
+              </button>
+            </div>
+          </div>
+        )}
+        {canEdit && report && tab === "design" && (
+          <div className="canvas-hud canvas-hud-right">
+            <div className="group">
+              <button className="btn icon" onClick={() => setZoom(zoom - 0.1)} title="Zoom out" aria-label="Zoom out">
+                <ZoomOut />
+              </button>
+              <span className="zoom-label" onClick={() => setZoom(1)} title="Reset zoom to 100%" role="button">
+                {Math.round(zoom * 100)}%
+              </span>
+              <button className="btn icon" onClick={() => setZoom(zoom + 0.1)} title="Zoom in" aria-label="Zoom in">
+                <ZoomIn />
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

@@ -38,6 +38,8 @@ interface DesignerState {
   inspectorPulse: number;
   zoom: number;
   dirty: boolean;
+  /** Server timestamp of the last successful load/save — drives the "Saved Xm ago" toolbar text. */
+  savedAtUtc: string | null;
   past: ReportDefinition[];
   future: ReportDefinition[];
 
@@ -136,6 +138,7 @@ export const useDesigner = create<DesignerState>((set, get) => ({
   inspectorPulse: 0,
   zoom: 1,
   dirty: false,
+  savedAtUtc: null,
   past: [],
   future: [],
   guides: { x: null, y: null },
@@ -148,6 +151,7 @@ export const useDesigner = create<DesignerState>((set, get) => ({
       selectedIds: [],
       selectedBand: null,
       dirty: false,
+      savedAtUtc: response.updatedAtUtc,
       past: [],
       future: [],
     }),
@@ -158,6 +162,7 @@ export const useDesigner = create<DesignerState>((set, get) => ({
       reportId: response.id,
       concurrencyToken: response.concurrencyToken,
       dirty: false,
+      savedAtUtc: response.updatedAtUtc,
     }),
 
   mutate: (recipe, history = true) => {

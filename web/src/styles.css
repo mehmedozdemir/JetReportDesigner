@@ -112,6 +112,10 @@ body {
   grid-template-areas: "top top top" "left center right";
   height: 100%;
 }
+/* Designer role: the toolbar is two stacked rows (document identity + actions). */
+.app.designer-toolbar {
+  grid-template-rows: 85px 1fr;
+}
 /* Viewer role: no design surface, so no left/right panels — preview takes the full width. */
 .app.viewer-mode {
   grid-template-columns: 1fr;
@@ -125,7 +129,7 @@ body {
   from { box-shadow: inset 3px 0 0 0 var(--accent), inset 0 0 40px -12px var(--accent-muted); }
   to   { box-shadow: inset 0 0 0 0 transparent; }
 }
-.center { grid-area: center; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-base); }
+.center { grid-area: center; position: relative; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-base); }
 
 /* ============================================================
    Toolbar
@@ -984,14 +988,51 @@ body {
   color: var(--error, #c4374a); font-size: 12px; margin: 0;
 }
 
-/* --- user badge (toolbar) --- */
-.user-badge {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 12px; color: var(--text-secondary);
-  padding: 4px 8px;
-}
-.user-badge .role {
-  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
-  padding: 1px 6px; border-radius: 999px;
+/* --- user menu chip (toolbar) --- */
+.user-chip { gap: 6px; padding: 0 8px 0 4px; color: var(--text-primary); }
+.user-avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
   background: var(--accent-muted); color: var(--accent);
+  font-size: 11px; font-weight: 700; flex: 0 0 auto;
 }
+.user-email { max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+
+/* --- two-row designer toolbar --- */
+.toolbar.toolbar-2row {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  height: 100%;
+}
+.toolbar-row {
+  display: flex; align-items: center; gap: 4px;
+  padding: 0 10px; height: 42px; flex: 0 0 auto;
+}
+.toolbar-row + .toolbar-row { border-top: 1px solid var(--border); }
+
+.save-status {
+  font-size: 11px; color: var(--text-secondary);
+  white-space: nowrap; padding: 0 4px;
+}
+
+.format-group { gap: 4px; }
+.mini-select, .mini-num {
+  font: inherit; font-size: 12px;
+  height: 28px; padding: 0 6px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  background: var(--bg-surface); color: var(--text-primary);
+}
+.mini-select { width: 96px; }
+.mini-num { width: 46px; }
+.mini-color { width: 24px; height: 24px; padding: 2px; border-radius: var(--radius-sm); cursor: pointer; }
+
+/* --- floating canvas HUD (view-mode toggle, zoom) --- */
+.canvas-hud {
+  position: absolute; bottom: 14px; z-index: 5;
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md, 0 4px 14px rgba(0, 0, 0, 0.14));
+  padding: 3px;
+}
+.canvas-hud-left { left: 14px; }
+.canvas-hud-right { right: 14px; padding: 0 8px; height: 34px; display: flex; align-items: center; }

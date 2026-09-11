@@ -143,7 +143,7 @@ export function PropertiesPanel() {
   return <PageProperties />;
 }
 
-const FONT_FAMILIES = [
+export const FONT_FAMILIES = [
   "Helvetica",
   "Arial",
   "Verdana",
@@ -175,7 +175,7 @@ function FontFamilySelect({
 }
 
 /** The value shared by every element (via getter), or undefined when they differ. */
-function common<T>(elements: ReportElement[], getter: (el: ReportElement) => T): T | undefined {
+export function common<T>(elements: ReportElement[], getter: (el: ReportElement) => T): T | undefined {
   if (elements.length === 0) return undefined;
   const first = getter(elements[0]);
   return elements.every((el) => Object.is(getter(el), first)) ? first : undefined;
@@ -958,7 +958,7 @@ function Color({
   );
 }
 
-function Toggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+export function Toggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button type="button" className={`mini ${active ? "on" : ""}`} onClick={onClick}>
       {label}
@@ -966,7 +966,7 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
   );
 }
 
-function AlignPicker({ value, onChange }: { value: TextAlign; onChange: (v: TextAlign) => void }) {
+export function AlignPicker({ value, onChange }: { value: TextAlign; onChange: (v: TextAlign) => void }) {
   const items: [TextAlign, LucideIcon][] = [
     ["left", AlignLeft],
     ["center", AlignCenter],
@@ -990,7 +990,7 @@ function AlignPicker({ value, onChange }: { value: TextAlign; onChange: (v: Text
   );
 }
 
-function VAlignPicker({ value, onChange }: { value: VerticalAlign; onChange: (v: VerticalAlign) => void }) {
+export function VAlignPicker({ value, onChange }: { value: VerticalAlign; onChange: (v: VerticalAlign) => void }) {
   const items: [VerticalAlign, LucideIcon, string][] = [
     ["top", AlignStartHorizontal, "Align top"],
     ["middle", AlignCenterHorizontal, "Align middle"],
@@ -1112,7 +1112,7 @@ function titleCase(s: string): string {
 
 // ---- style mutation helpers ----
 
-function setStyle<K extends keyof NonNullable<ReportElement["style"]>>(
+export function setStyle<K extends keyof NonNullable<ReportElement["style"]>>(
   el: ReportElement,
   key: K,
   value: NonNullable<ReportElement["style"]>[K],
@@ -1120,7 +1120,7 @@ function setStyle<K extends keyof NonNullable<ReportElement["style"]>>(
   el.style = { ...(el.style ?? {}), [key]: value };
 }
 
-function setFont(el: ReportElement, key: keyof NonNullable<NonNullable<ReportElement["style"]>["font"]>, value: unknown) {
+export function setFont(el: ReportElement, key: keyof NonNullable<NonNullable<ReportElement["style"]>["font"]>, value: unknown) {
   const style = el.style ?? {};
   el.style = { ...style, font: { ...(style.font ?? {}), [key]: value } };
 }
