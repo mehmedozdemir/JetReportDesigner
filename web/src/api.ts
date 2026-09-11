@@ -9,25 +9,19 @@ import type {
   ReportSummary,
   SqlQueryResponse,
 } from "./types";
+import { useAuth } from "./auth";
+import { problemMessage } from "./httpError";
 
-/** Pull a readable message out of an RFC 7807 ProblemDetails body, falling back to the raw text. */
-function problemMessage(body: string): string {
-  try {
-    const p = JSON.parse(body) as {
-      title?: string;
-      detail?: string;
-      errors?: Record<string, string[] | string>;
-    };
-    const fieldErrors = p.errors
-      ? Object.values(p.errors)
-          .flatMap((v) => (Array.isArray(v) ? v : [v]))
-          .filter(Boolean)
-      : [];
-    const parts = [p.title ?? p.detail, ...fieldErrors].filter(Boolean) as string[];
-    return parts.length ? parts.join(" — ") : body;
-  } catch {
-    return body;
-  }
+/** Every API call goes through this so the JWT is always attached; a 401 means the
+ * token is missing/expired/revoked, so it signs the user out back to the login screen. */
+function fetchWithAuth(input: string, init: RequestInit = {}): Promise<Response> {
+  const token = useAuth.getState().token;
+  const headers = new Headers(init.headers);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(input, { ...init, headers }).then((res) => {
+    if (res.status === 401) useAuth.getState().logout();
+    return res;
+  });
 }
 
 async function json<T>(response: Response): Promise<T> {
@@ -43,44 +37,44 @@ const jsonHeaders = { "Content-Type": "application/json" };
 export type ParamValues = Record<string, unknown>;
 
 export const api = {
-  listReports: (): Promise<ReportSummary[]> => fetch("/api/reports").then(json<ReportSummary[]>),
+  listReports: (): Promise<ReportSummary[]> => fetchWithAuth("/api/reports").then(json<ReportSummary[]>),
 
   listSamples: (): Promise<{ name: string; definition: ReportDefinition }[]> =>
-    fetch("/api/meta/samples").then(json<{ name: string; definition: ReportDefinition }[]>),
+    fetchWithAuth("/api/meta/samples").then(json<{ name: string; definition: ReportDefinition }[]>),
 
   getReport: (id: string): Promise<ReportResponse> =>
-    fetch(`/api/reports/${id}`).then(json<ReportResponse>),
+    fetchWithAuth(`/api/reports/${id}`).then(json<ReportResponse>),
 
   createReport: (definition: ReportDefinition): Promise<ReportResponse> =>
-    fetch("/api/reports", { method: "POST", headers: jsonHeaders, body: JSON.stringify(definition) })
+    fetchWithAuth("/api/reports", { method: "POST", headers: jsonHeaders, body: JSON.stringify(definition) })
       .then(json<ReportResponse>),
 
   updateReport: (id: string, definition: ReportDefinition, token?: string): Promise<ReportResponse> =>
-    fetch(`/api/reports/${id}`, {
+    fetchWithAuth(`/api/reports/${id}`, {
       method: "PUT",
       headers: { ...jsonHeaders, ...(token ? { "If-Match": `"${token}"` } : {}) },
       body: JSON.stringify(definition),
     }).then(json<ReportResponse>),
 
   deleteReport: (id: string): Promise<void> =>
-    fetch(`/api/reports/${id}`, { method: "DELETE" }).then((r) => {
+    fetchWithAuth(`/api/reports/${id}`, { method: "DELETE" }).then((r) => {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
 
   // --- data sources ---
   validate: (definition: ReportDefinition): Promise<ReportIssue[]> =>
-    fetch("/api/reports/validate", { method: "POST", headers: jsonHeaders, body: JSON.stringify(definition) })
+    fetchWithAuth("/api/reports/validate", { method: "POST", headers: jsonHeaders, body: JSON.stringify(definition) })
       .then(json<ReportIssue[]>),
 
   schema: (source: DataSourceDefinition): Promise<{ fields: DataField[] }> =>
-    fetch("/api/datasources/schema", { method: "POST", headers: jsonHeaders, body: JSON.stringify(source) })
+    fetchWithAuth("/api/datasources/schema", { method: "POST", headers: jsonHeaders, body: JSON.stringify(source) })
       .then(json<{ fields: DataField[] }>),
 
   previewSource: (
     source: DataSourceDefinition,
     take = 20,
   ): Promise<{ fields: DataField[]; rows: Record<string, unknown>[] }> =>
-    fetch(`/api/datasources/preview?take=${take}`, {
+    fetchWithAuth(`/api/datasources/preview?take=${take}`, {
       method: "POST",
       headers: jsonHeaders,
       body: JSON.stringify(source),
@@ -88,10 +82,10 @@ export const api = {
 
   // --- connections ---
   listConnections: (): Promise<ConnectionResponse[]> =>
-    fetch("/api/connections").then(json<ConnectionResponse[]>),
+    fetchWithAuth("/api/connections").then(json<ConnectionResponse[]>),
 
   createConnection: (name: string, provider: string, connectionString: string): Promise<ConnectionResponse> =>
-    fetch("/api/connections", {
+    fetchWithAuth("/api/connections", {
       method: "POST",
       headers: jsonHeaders,
       body: JSON.stringify({ name, provider, connectionString }),
@@ -103,52 +97,52 @@ export const api = {
     provider: string,
     connectionString: string | null,
   ): Promise<ConnectionResponse> =>
-    fetch(`/api/connections/${id}`, {
+    fetchWithAuth(`/api/connections/${id}`, {
       method: "PUT",
       headers: jsonHeaders,
       body: JSON.stringify({ name, provider, connectionString }),
     }).then(json<ConnectionResponse>),
 
   deleteConnection: (id: string): Promise<void> =>
-    fetch(`/api/connections/${id}`, { method: "DELETE" }).then((r) => {
+    fetchWithAuth(`/api/connections/${id}`, { method: "DELETE" }).then((r) => {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
 
   // --- saved SQL queries ---
   listSqlQueries: (connectionId: string): Promise<SqlQueryResponse[]> =>
-    fetch(`/api/sqlqueries?connectionId=${connectionId}`).then(json<SqlQueryResponse[]>),
+    fetchWithAuth(`/api/sqlqueries?connectionId=${connectionId}`).then(json<SqlQueryResponse[]>),
 
   createSqlQuery: (connectionId: string, name: string, commandText: string): Promise<SqlQueryResponse> =>
-    fetch("/api/sqlqueries", {
+    fetchWithAuth("/api/sqlqueries", {
       method: "POST",
       headers: jsonHeaders,
       body: JSON.stringify({ connectionId, name, commandText }),
     }).then(json<SqlQueryResponse>),
 
   updateSqlQuery: (id: string, name: string, commandText: string): Promise<SqlQueryResponse> =>
-    fetch(`/api/sqlqueries/${id}`, {
+    fetchWithAuth(`/api/sqlqueries/${id}`, {
       method: "PUT",
       headers: jsonHeaders,
       body: JSON.stringify({ name, commandText }),
     }).then(json<SqlQueryResponse>),
 
   deleteSqlQuery: (id: string): Promise<void> =>
-    fetch(`/api/sqlqueries/${id}`, { method: "DELETE" }).then((r) => {
+    fetchWithAuth(`/api/sqlqueries/${id}`, { method: "DELETE" }).then((r) => {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
 
   // --- assets ---
-  listAssets: (): Promise<AssetResponse[]> => fetch("/api/assets").then(json<AssetResponse[]>),
+  listAssets: (): Promise<AssetResponse[]> => fetchWithAuth("/api/assets").then(json<AssetResponse[]>),
 
   uploadAsset: (file: File): Promise<AssetResponse> => {
     const form = new FormData();
     form.append("file", file);
-    return fetch("/api/assets", { method: "POST", body: form }).then(json<AssetResponse>);
+    return fetchWithAuth("/api/assets", { method: "POST", body: form }).then(json<AssetResponse>);
   },
 
   // --- render ---
   renderHtml: (definition: ReportDefinition, parameters: ParamValues = {}): Promise<string> =>
-    fetch("/api/render?format=html", {
+    fetchWithAuth("/api/render?format=html", {
       method: "POST",
       headers: jsonHeaders,
       body: JSON.stringify({ definition, parameters }),
@@ -169,7 +163,7 @@ function renderBlob(
   definition: ReportDefinition,
   parameters: ParamValues,
 ): Promise<Blob> {
-  return fetch(`/api/render?format=${format}`, {
+  return fetchWithAuth(`/api/render?format=${format}`, {
     method: "POST",
     headers: jsonHeaders,
     body: JSON.stringify({ definition, parameters }),

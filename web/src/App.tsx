@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { api } from "./api";
+import { useAuth } from "./auth";
 import { useDesigner } from "./store";
 import { usePrefs } from "./prefs";
 import { emptyBandedReport, emptyFreeReport, type ReportDefinition, type ReportSummary } from "./types";
 import { Canvas } from "./components/Canvas";
+import { LoginScreen } from "./components/LoginScreen";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { StartScreen } from "./components/StartScreen";
 import { Toolbar } from "./components/Toolbar";
@@ -16,6 +18,7 @@ import { PropertiesPanel } from "./components/PropertiesPanel";
 import { PreviewPane } from "./components/PreviewPane";
 
 export function App() {
+  const token = useAuth((s) => s.token);
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [samples, setSamples] = useState<{ name: string; definition: ReportDefinition }[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -52,9 +55,10 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    if (!token) return;
     void refresh();
     void api.listSamples().then(setSamples).catch(() => undefined);
-  }, [refresh]);
+  }, [refresh, token]);
 
   const createFromSample = async (name: string) => {
     const sample = samples.find((s) => s.name === name);
@@ -198,6 +202,10 @@ export function App() {
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSaveSeconds]);
+
+  if (!token) {
+    return <LoginScreen />;
+  }
 
   return (
     <div className="app">

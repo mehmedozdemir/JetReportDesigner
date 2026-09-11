@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   FileText,
   LayoutGrid,
+  LogOut,
   PencilRuler,
   Redo2,
   Rows3,
@@ -18,6 +19,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+import { isDesigner, useAuth } from "../auth";
 import { useDesigner } from "../store";
 import { ContextMenu } from "./ContextMenu";
 
@@ -53,6 +55,9 @@ export function Toolbar({
   const canUndo = useDesigner((s) => s.past.length > 0);
   const canRedo = useDesigner((s) => s.future.length > 0);
   const [exportMenu, setExportMenu] = useState<{ x: number; y: number } | null>(null);
+  const user = useAuth((s) => s.user);
+  const logout = useAuth((s) => s.logout);
+  const canEdit = isDesigner(user);
 
   const hasReport = !!report;
 
@@ -70,7 +75,13 @@ export function Toolbar({
           <LayoutGrid />
           <span>Start</span>
         </button>
-        <button className="btn icon" onClick={onNew} disabled={busy} title="New blank report" aria-label="New blank report">
+        <button
+          className="btn icon"
+          onClick={onNew}
+          disabled={busy || !canEdit}
+          title={canEdit ? "New blank report" : "Viewer role cannot create reports"}
+          aria-label="New blank report"
+        >
           <FilePlus2 />
         </button>
       </div>
@@ -97,8 +108,8 @@ export function Toolbar({
       <button
         className="btn primary"
         onClick={onSave}
-        disabled={busy || !report || !reportId}
-        title="Save (Ctrl+S)"
+        disabled={busy || !report || !reportId || !canEdit}
+        title={canEdit ? "Save (Ctrl+S)" : "Viewer role cannot save changes"}
       >
         <Save />
         <span>Save</span>
@@ -169,6 +180,18 @@ export function Toolbar({
       </div>
 
       <div className="spacer" />
+
+      {user && (
+        <span className="user-badge" title={user.email}>
+          {user.email}
+          <span className="role">{canEdit ? "Designer" : "Viewer"}</span>
+        </span>
+      )}
+      <button className="btn icon" onClick={logout} title="Sign out" aria-label="Sign out">
+        <LogOut />
+      </button>
+
+      <div className="divider" />
 
       <button className="btn icon" onClick={onSettings} title="Settings" aria-label="Settings">
         <Settings />

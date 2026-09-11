@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileBarChart2, FileText, Rows3, Search, SquareDashed, Trash2, X } from "lucide-react";
+import { isDesigner, useAuth } from "../auth";
 import type { ReportDefinition, ReportSummary } from "../types";
 
 function timeAgo(iso: string): string {
@@ -37,6 +38,7 @@ export function StartScreen({
 }) {
   const [query, setQuery] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const canEdit = isDesigner(useAuth((s) => s.user));
 
   useEffect(() => {
     if (!onClose) return;
@@ -69,13 +71,14 @@ export function StartScreen({
       <div className="start-scroll">
         <section className="start-section">
           <h3>New</h3>
+          {!canEdit && <p className="hint">Viewer role — sign in as a Designer to create reports.</p>}
           <div className="start-cards">
-            <button className="start-card" onClick={() => onBlank("free")} disabled={busy}>
+            <button className="start-card" onClick={() => onBlank("free")} disabled={busy || !canEdit}>
               <span className="start-card-icon"><SquareDashed /></span>
               <span className="start-card-title">Blank — Free layout</span>
               <span className="start-card-sub">Place elements anywhere on a fixed canvas</span>
             </button>
-            <button className="start-card" onClick={() => onBlank("banded")} disabled={busy}>
+            <button className="start-card" onClick={() => onBlank("banded")} disabled={busy || !canEdit}>
               <span className="start-card-icon"><Rows3 /></span>
               <span className="start-card-title">Blank — Banded report</span>
               <span className="start-card-sub">Header / detail / footer bands that repeat per row</span>
@@ -85,7 +88,7 @@ export function StartScreen({
                 key={s.name}
                 className="start-card tpl"
                 onClick={() => onSample(s.name)}
-                disabled={busy}
+                disabled={busy || !canEdit}
               >
                 <span className="start-card-icon"><FileBarChart2 /></span>
                 <span className="start-card-title">{s.name}</span>
@@ -145,14 +148,16 @@ export function StartScreen({
                           <span>{timeAgo(r.updatedAtUtc)}</span>
                         </span>
                       </button>
-                      <button
-                        className="mini danger"
-                        title="Delete report"
-                        aria-label={`Delete ${r.name}`}
-                        onClick={() => setConfirmId(r.id)}
-                      >
-                        <Trash2 />
-                      </button>
+                      {canEdit && (
+                        <button
+                          className="mini danger"
+                          title="Delete report"
+                          aria-label={`Delete ${r.name}`}
+                          onClick={() => setConfirmId(r.id)}
+                        >
+                          <Trash2 />
+                        </button>
+                      )}
                     </>
                   )}
                 </li>

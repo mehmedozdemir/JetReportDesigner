@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Plus, Trash2, X } from "lucide-react";
 import { api } from "../api";
+import { isDesigner, useAuth } from "../auth";
 import type { ConnectionResponse } from "../types";
 
 const PROVIDERS: { value: string; label: string }[] = [
@@ -28,6 +29,7 @@ export function ConnectionsDialog({
   const [draft, setDraft] = useState<Draft>(BLANK);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const canEdit = isDesigner(useAuth((s) => s.user));
 
   const selected = useMemo(() => connections.find((c) => c.id === selId) ?? null, [connections, selId]);
 
@@ -124,26 +126,39 @@ export function ConnectionsDialog({
               ))}
               {connections.length === 0 && <li className="md-empty">No connections yet</li>}
             </ul>
-            <button
-              className={`md-new${creating ? " on" : ""}`}
-              onClick={() => {
-                setCreating(true);
-                setErr(null);
-                setSelId(null);
-              }}
-            >
-              <Plus /> New connection
-            </button>
+            {canEdit && (
+              <button
+                className={`md-new${creating ? " on" : ""}`}
+                onClick={() => {
+                  setCreating(true);
+                  setErr(null);
+                  setSelId(null);
+                }}
+              >
+                <Plus /> New connection
+              </button>
+            )}
           </div>
 
           <div className="md-detail">
+            {!canEdit && (
+              <p className="hint">Viewer role — sign in as a Designer to manage connections.</p>
+            )}
             <label className="field">
               <span>Name</span>
-              <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+              <input
+                value={draft.name}
+                disabled={!canEdit}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              />
             </label>
             <label className="field">
               <span>Provider</span>
-              <select value={draft.provider} onChange={(e) => setDraft({ ...draft, provider: e.target.value })}>
+              <select
+                value={draft.provider}
+                disabled={!canEdit}
+                onChange={(e) => setDraft({ ...draft, provider: e.target.value })}
+              >
                 {PROVIDERS.map((p) => (
                   <option key={p.value} value={p.value}>
                     {p.label}
@@ -157,6 +172,7 @@ export function ConnectionsDialog({
                 rows={3}
                 spellCheck={false}
                 value={draft.connStr}
+                disabled={!canEdit}
                 placeholder={
                   creating
                     ? "Server=…;Database=…;User Id=…;Password=…;TrustServerCertificate=True"
@@ -175,16 +191,18 @@ export function ConnectionsDialog({
               </div>
             )}
 
-            <div className="row" style={{ marginTop: 8 }}>
-              <button className="btn primary" onClick={save} disabled={!canSave || busy}>
-                {creating ? "Create" : "Save"}
-              </button>
-              {!creating && selected && (
-                <button className="mini danger" onClick={remove}>
-                  <Trash2 /> Delete
+            {canEdit && (
+              <div className="row" style={{ marginTop: 8 }}>
+                <button className="btn primary" onClick={save} disabled={!canSave || busy}>
+                  {creating ? "Create" : "Save"}
                 </button>
-              )}
-            </div>
+                {!creating && selected && (
+                  <button className="mini danger" onClick={remove}>
+                    <Trash2 /> Delete
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
