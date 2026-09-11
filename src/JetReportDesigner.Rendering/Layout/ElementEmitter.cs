@@ -108,6 +108,24 @@ public static class ElementEmitter
                 yield break;
             }
 
+            case ElementType.Barcode:
+            {
+                foreach (var p in BarcodeEmitter.Emit(element, context, offsetX, offsetY))
+                {
+                    yield return p;
+                }
+
+                if (style.Border is { } bb)
+                {
+                    foreach (var p in BorderPrimitives(x, y, b.Width, b.Height, bb))
+                    {
+                        yield return p;
+                    }
+                }
+
+                yield break;
+            }
+
             case ElementType.Label:
             case ElementType.Field:
             case ElementType.PageInfo:

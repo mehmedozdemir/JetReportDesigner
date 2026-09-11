@@ -4,6 +4,7 @@
     <PackageReference Include="PdfSharp" />
     <PackageReference Include="PDFsharp-MigraDoc" />
     <PackageReference Include="ClosedXML" />
+    <PackageReference Include="ZXing.Net" />
   </ItemGroup>
 
   <ItemGroup>
