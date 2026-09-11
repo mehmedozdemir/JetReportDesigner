@@ -167,6 +167,11 @@ public sealed class ReportDefinitionValidator : AbstractValidator<ReportDefiniti
                 RuleForEach(e => e.Chart!.Series).ChildRules(s =>
                     s.RuleFor(x => x.Value).NotEmpty()).When(e => e.Chart is not null);
             });
+            When(e => e.Type == ElementType.Subreport, () =>
+            {
+                RuleFor(e => e.Subreport).NotNull();
+                RuleFor(e => e.Subreport!.ReportId).NotEmpty().When(e => e.Subreport is not null);
+            });
         }
     }
 }

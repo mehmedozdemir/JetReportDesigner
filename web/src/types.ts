@@ -10,7 +10,8 @@ export type ElementType =
   | "line"
   | "rectangle"
   | "pageInfo"
-  | "chart";
+  | "chart"
+  | "subreport";
 
 export type ChartType = "column" | "bar" | "line" | "area" | "pie";
 
@@ -29,6 +30,12 @@ export interface ChartSpec {
   title?: string | null;
   showLegend: boolean;
   showGrid: boolean;
+}
+
+export interface SubreportSpec {
+  reportId: string;
+  /** Referenced report's parameter name -> a binding/expression against the parent's row. */
+  parameters: Record<string, string>;
 }
 export type PageSize = "A4" | "A5" | "A6" | "Letter" | "Legal" | "IDCard" | "Badge" | "Custom";
 export type Orientation = "portrait" | "landscape";
@@ -156,6 +163,7 @@ export interface ReportElement {
   line?: { orientation: "horizontal" | "vertical" } | null;
   table?: TableSpec | null;
   chart?: ChartSpec | null;
+  subreport?: SubreportSpec | null;
 }
 
 export type BandType =
@@ -416,6 +424,13 @@ export function defaultElement(type: ElementType, x: number, y: number): ReportE
           showLegend: true,
           showGrid: true,
         },
+      };
+    case "subreport":
+      return {
+        ...base,
+        bounds: { x, y, width: 300, height: 160 },
+        subreport: { reportId: "", parameters: {} },
+        style: { border: edge(1, "#cbd5e1") },
       };
     case "pageInfo":
       return { ...base, value: "{param:title}" };

@@ -68,6 +68,7 @@ public enum ElementType
     Rectangle,
     PageInfo,
     Chart,
+    Subreport,
 }
 
 public enum TextAlign

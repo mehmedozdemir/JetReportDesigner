@@ -14,6 +14,7 @@ import {
   Ban,
   BarChart3,
   BoxSelect,
+  FileStack,
   FileText,
   Hash,
   Image as ImageIcon,
@@ -104,6 +105,7 @@ const ELEMENT_ICON: Record<ElementType, LucideIcon> = {
   image: ImageIcon,
   pageInfo: Hash,
   chart: BarChart3,
+  subreport: FileStack,
 };
 
 export function PropertiesPanel() {

@@ -228,7 +228,7 @@
       "required": ["id", "type", "bounds"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "type": { "enum": ["label", "field", "table", "image", "line", "rectangle", "pageInfo", "chart"] },
+        "type": { "enum": ["label", "field", "table", "image", "line", "rectangle", "pageInfo", "chart", "subreport"] },
         "bounds": {
           "type": "object",
           "additionalProperties": false,
@@ -309,6 +309,14 @@
                 }
               }
             }
+          }
+        },
+        "subreport": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "reportId": { "type": "string" },
+            "parameters": { "type": "object", "additionalProperties": { "type": "string" } }
           }
         }
       }

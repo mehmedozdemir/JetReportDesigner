@@ -48,6 +48,8 @@ public sealed class ReportElement
     public TableSpec? Table { get; set; }
 
     public ChartSpec? Chart { get; set; }
+
+    public SubreportSpec? Subreport { get; set; }
 }
 
 public sealed class Bounds
@@ -127,4 +129,21 @@ public sealed class ChartSeries
     public string? Color { get; set; }
 
     public string? Format { get; set; }
+}
+
+/// <summary>
+/// Embeds another saved report at this element's position. Its content is scaled to
+/// this element's width and clipped to its height (V1: first page only — banded auto-
+/// height/pagination-in-pagination is out of scope).
+/// </summary>
+public sealed class SubreportSpec
+{
+    /// <summary>Id of the referenced <c>StoredReport</c>.</summary>
+    public string ReportId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Maps the referenced report's parameter names to a binding/expression evaluated
+    /// against the parent's current row/context, e.g. <c>{"customerId": "{orders.customerId}"}</c>.
+    /// </summary>
+    public Dictionary<string, string> Parameters { get; set; } = [];
 }
