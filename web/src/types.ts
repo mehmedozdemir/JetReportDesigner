@@ -334,6 +334,14 @@ export interface ReportSummary {
   layoutMode: LayoutMode;
   createdAtUtc: string;
   updatedAtUtc: string;
+  folderId?: string | null;
+}
+
+export interface FolderSummary {
+  id: string;
+  name: string;
+  parentFolderId?: string | null;
+  createdAtUtc: string;
 }
 
 export interface ReportIssue {

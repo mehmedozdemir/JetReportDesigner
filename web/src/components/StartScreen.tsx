@@ -1,11 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
-import { FileBarChart2, FileText, LayoutGrid, Rows3, Search, SquareDashed, Trash2, Users, X } from "lucide-react";
+import {
+  ChevronRight,
+  FileBarChart2,
+  FileText,
+  Folder,
+  FolderPlus,
+  LayoutGrid,
+  Pencil,
+  Rows3,
+  Search,
+  SquareDashed,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
+import { api } from "../api";
 import { isDesigner, useAuth } from "../auth";
 import { timeAgo } from "../time";
-import type { ReportDefinition, ReportSummary } from "../types";
+import type { FolderSummary, ReportDefinition, ReportSummary } from "../types";
 import { TeamPage } from "./TeamPage";
 
 type View = "reports" | "team";
+const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export function StartScreen({
   reports,
@@ -15,6 +31,7 @@ export function StartScreen({
   onSample,
   onOpen,
   onDelete,
+  onMoveToFolder,
   onClose,
 }: {
   reports: ReportSummary[];
@@ -24,12 +41,27 @@ export function StartScreen({
   onSample: (name: string) => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
+  onMoveToFolder: (id: string, folderId: string | null) => void;
   onClose?: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [view, setView] = useState<View>("reports");
   const canEdit = isDesigner(useAuth((s) => s.user));
+
+  const [folders, setFolders] = useState<FolderSummary[]>([]);
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [confirmFolderId, setConfirmFolderId] = useState<string | null>(null);
+  const [folderError, setFolderError] = useState<string | null>(null);
+
+  const refreshFolders = () => {
+    api.listFolders().then(setFolders).catch((e) => setFolderError(msg(e)));
+  };
+  useEffect(refreshFolders, []);
 
   useEffect(() => {
     if (!onClose) return;
@@ -44,6 +76,87 @@ export function StartScreen({
       .filter((r) => !q || r.name.toLowerCase().includes(q))
       .sort((a, b) => b.updatedAtUtc.localeCompare(a.updatedAtUtc));
   }, [reports, query]);
+
+  const folderById = useMemo(() => new Map(folders.map((f) => [f.id, f])), [folders]);
+
+  const breadcrumb = useMemo(() => {
+    const chain: FolderSummary[] = [];
+    let cur = currentFolderId ? folderById.get(currentFolderId) : undefined;
+    while (cur) {
+      chain.unshift(cur);
+      cur = cur.parentFolderId ? folderById.get(cur.parentFolderId) : undefined;
+    }
+    return chain;
+  }, [currentFolderId, folderById]);
+
+  const subfolders = useMemo(
+    () =>
+      [...folders]
+        .filter((f) => (f.parentFolderId ?? null) === currentFolderId)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [folders, currentFolderId],
+  );
+
+  const folderDepth = (f: FolderSummary): number => {
+    let depth = 0;
+    let cur: FolderSummary | undefined = f;
+    while (cur?.parentFolderId) {
+      cur = folderById.get(cur.parentFolderId);
+      depth++;
+    }
+    return depth;
+  };
+
+  const folderOptions = useMemo(
+    () =>
+      [...folders]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((f) => ({ id: f.id, label: `${"— ".repeat(folderDepth(f))}${f.name}` })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [folders],
+  );
+
+  const isSearching = query.trim().length > 0;
+  const reportsShown = isSearching ? filtered : filtered.filter((r) => (r.folderId ?? null) === currentFolderId);
+
+  const submitNewFolder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newFolderName.trim();
+    if (!name) return;
+    setFolderError(null);
+    try {
+      await api.createFolder(name, currentFolderId);
+      setNewFolderName("");
+      setCreatingFolder(false);
+      refreshFolders();
+    } catch (err) {
+      setFolderError(msg(err));
+    }
+  };
+
+  const commitRename = async (id: string) => {
+    const name = renameValue.trim();
+    if (!name) return;
+    setFolderError(null);
+    try {
+      await api.renameFolder(id, name);
+      setRenamingFolderId(null);
+      refreshFolders();
+    } catch (err) {
+      setFolderError(msg(err));
+    }
+  };
+
+  const doDeleteFolder = async (id: string) => {
+    setFolderError(null);
+    try {
+      await api.deleteFolder(id);
+      setConfirmFolderId(null);
+      refreshFolders();
+    } catch (err) {
+      setFolderError(msg(err));
+    }
+  };
 
   return (
     <div className="start-screen">
@@ -108,7 +221,7 @@ export function StartScreen({
 
             <section className="start-section">
               <div className="start-list-head">
-                <h3>Recent reports</h3>
+                <h3>Reports</h3>
                 <label className="start-search">
                   <Search size={14} />
                   <input
@@ -119,15 +232,119 @@ export function StartScreen({
                 </label>
               </div>
 
-              {filtered.length === 0 ? (
+              {!isSearching && (
+                <div className="folder-bar">
+                  <nav className="breadcrumb">
+                    <button className={currentFolderId === null ? "on" : ""} onClick={() => setCurrentFolderId(null)}>
+                      All reports
+                    </button>
+                    {breadcrumb.map((f) => (
+                      <span key={f.id} className="breadcrumb-crumb">
+                        <ChevronRight size={13} />
+                        <button className={currentFolderId === f.id ? "on" : ""} onClick={() => setCurrentFolderId(f.id)}>
+                          {f.name}
+                        </button>
+                      </span>
+                    ))}
+                  </nav>
+
+                  {canEdit &&
+                    (creatingFolder ? (
+                      <form className="row" onSubmit={submitNewFolder}>
+                        <input
+                          autoFocus
+                          value={newFolderName}
+                          placeholder="Folder name"
+                          onChange={(e) => setNewFolderName(e.target.value)}
+                          onKeyDown={(e) => e.key === "Escape" && setCreatingFolder(false)}
+                        />
+                        <button className="mini" type="submit">Add</button>
+                        <button className="mini" type="button" onClick={() => setCreatingFolder(false)}>Cancel</button>
+                      </form>
+                    ) : (
+                      <button className="mini" onClick={() => setCreatingFolder(true)}>
+                        <FolderPlus size={13} /> New folder
+                      </button>
+                    ))}
+                </div>
+              )}
+
+              {folderError && (
+                <p className="hint" style={{ color: "var(--error)" }}>{folderError}</p>
+              )}
+
+              {!isSearching && subfolders.length > 0 && (
+                <ul className="start-list">
+                  {subfolders.map((f) => (
+                    <li key={f.id} className="start-row">
+                      {renamingFolderId === f.id ? (
+                        <div className="start-row-confirm">
+                          <input
+                            autoFocus
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && void commitRename(f.id)}
+                          />
+                          <button className="mini" onClick={() => void commitRename(f.id)}>Save</button>
+                          <button className="mini" onClick={() => setRenamingFolderId(null)}>Cancel</button>
+                        </div>
+                      ) : confirmFolderId === f.id ? (
+                        <div className="start-row-confirm">
+                          <span>Delete “{f.name}”?</span>
+                          <button className="mini danger" onClick={() => void doDeleteFolder(f.id)}>Delete</button>
+                          <button className="mini" onClick={() => setConfirmFolderId(null)}>Cancel</button>
+                        </div>
+                      ) : (
+                        <>
+                          <button className="start-row-main" onClick={() => setCurrentFolderId(f.id)}>
+                            <Folder />
+                            <span className="start-row-name">{f.name}</span>
+                          </button>
+                          {canEdit && (
+                            <>
+                              <button
+                                className="mini"
+                                title="Rename folder"
+                                aria-label={`Rename ${f.name}`}
+                                onClick={() => {
+                                  setRenamingFolderId(f.id);
+                                  setRenameValue(f.name);
+                                }}
+                              >
+                                <Pencil />
+                              </button>
+                              <button
+                                className="mini danger"
+                                title="Delete folder"
+                                aria-label={`Delete ${f.name}`}
+                                onClick={() => setConfirmFolderId(f.id)}
+                              >
+                                <Trash2 />
+                              </button>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {reportsShown.length === 0 ? (
                 <div className="start-empty">
                   <FileText />
-                  <div>{reports.length === 0 ? "No reports yet." : "No reports match your search."}</div>
+                  <div>
+                    {reports.length === 0
+                      ? "No reports yet."
+                      : isSearching
+                        ? "No reports match your search."
+                        : "No reports in this folder."}
+                  </div>
                   {reports.length === 0 && <p>Start from a blank report or a sample above.</p>}
                 </div>
               ) : (
                 <ul className="start-list">
-                  {filtered.map((r) => (
+                  {reportsShown.map((r) => (
                     <li key={r.id} className="start-row">
                       {confirmId === r.id ? (
                         <div className="start-row-confirm">
@@ -156,14 +373,28 @@ export function StartScreen({
                             </span>
                           </button>
                           {canEdit && (
-                            <button
-                              className="mini danger"
-                              title="Delete report"
-                              aria-label={`Delete ${r.name}`}
-                              onClick={() => setConfirmId(r.id)}
-                            >
-                              <Trash2 />
-                            </button>
+                            <>
+                              <select
+                                className="folder-move-select"
+                                title="Move to folder"
+                                aria-label={`Move ${r.name} to folder`}
+                                value={r.folderId ?? ""}
+                                onChange={(e) => onMoveToFolder(r.id, e.target.value || null)}
+                              >
+                                <option value="">— Root —</option>
+                                {folderOptions.map((f) => (
+                                  <option key={f.id} value={f.id}>{f.label}</option>
+                                ))}
+                              </select>
+                              <button
+                                className="mini danger"
+                                title="Delete report"
+                                aria-label={`Delete ${r.name}`}
+                                onClick={() => setConfirmId(r.id)}
+                              >
+                                <Trash2 />
+                              </button>
+                            </>
                           )}
                         </>
                       )}

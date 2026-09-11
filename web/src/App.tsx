@@ -104,6 +104,16 @@ export function App() {
     }
   };
 
+  const moveReportToFolder = async (id: string, folderId: string | null) => {
+    setError(null);
+    try {
+      await api.setReportFolder(id, folderId);
+      await refresh();
+    } catch (e) {
+      setError(String(e));
+    }
+  };
+
   const removeReport = async (id: string) => {
     setError(null);
     try {
@@ -329,6 +339,7 @@ export function App() {
             onSample={(name) => void createFromSample(name)}
             onOpen={(id) => void open(id)}
             onDelete={(id) => void removeReport(id)}
+            onMoveToFolder={(id, folderId) => void moveReportToFolder(id, folderId)}
             onClose={report ? () => setShowStart(false) : undefined}
           />
         </div>

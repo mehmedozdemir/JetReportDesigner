@@ -3,6 +3,7 @@ import type {
   ConnectionResponse,
   DataField,
   DataSourceDefinition,
+  FolderSummary,
   ReportDefinition,
   ReportIssue,
   ReportResponse,
@@ -59,6 +60,35 @@ export const api = {
   deleteReport: (id: string): Promise<void> =>
     fetchWithAuth(`/api/reports/${id}`, { method: "DELETE" }).then((r) => {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
+    }),
+
+  setReportFolder: (id: string, folderId: string | null): Promise<void> =>
+    fetchWithAuth(`/api/reports/${id}/folder`, {
+      method: "PUT",
+      headers: jsonHeaders,
+      body: JSON.stringify({ folderId }),
+    }).then((r) => {
+      if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+    }),
+
+  // --- folders ---
+  listFolders: (): Promise<FolderSummary[]> => fetchWithAuth("/api/folders").then(json<FolderSummary[]>),
+
+  createFolder: (name: string, parentFolderId: string | null): Promise<FolderSummary> =>
+    fetchWithAuth("/api/folders", {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({ name, parentFolderId }),
+    }).then(json<FolderSummary>),
+
+  renameFolder: (id: string, name: string): Promise<FolderSummary> =>
+    fetchWithAuth(`/api/folders/${id}`, { method: "PUT", headers: jsonHeaders, body: JSON.stringify({ name }) }).then(
+      json<FolderSummary>,
+    ),
+
+  deleteFolder: (id: string): Promise<void> =>
+    fetchWithAuth(`/api/folders/${id}`, { method: "DELETE" }).then(async (r) => {
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
     }),
 
   // --- data sources ---

@@ -830,6 +830,26 @@ body {
 .start-empty svg { width: 26px; height: 26px; opacity: 0.6; }
 .start-empty p { margin: 0; font-size: 12px; }
 
+/* folder browser (Start screen) */
+.folder-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.breadcrumb { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+.breadcrumb button {
+  font: inherit; font-size: 12px; font-weight: 550;
+  border: none; background: transparent; color: var(--text-secondary);
+  padding: 3px 6px; border-radius: var(--radius-sm); cursor: pointer;
+}
+.breadcrumb button:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.breadcrumb button.on { color: var(--accent); }
+.breadcrumb-crumb { display: flex; align-items: center; gap: 2px; color: var(--text-disabled); }
+.breadcrumb-crumb svg { flex: 0 0 auto; }
+
+.folder-move-select {
+  font: inherit; font-size: 11px; padding: 4px 6px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  background: var(--bg-surface); color: var(--text-primary);
+  max-width: 140px;
+}
+
 /* formula editor */
 .formula-dialog { width: 620px; }
 .formula-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
