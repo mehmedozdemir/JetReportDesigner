@@ -506,14 +506,17 @@ Her faz **çalışan, gösterilebilir** bir dikey dilim üretir. Faz sonunda "Do
 ---
 
 ### V1.1+ Backlog
-Excel/XLSX (ClosedXML), alt raporlar, chart, barkod/QR, matris/pivot, çok seviyeli gruplama,
-auto-height/can-grow/push-up bantlar, çok kolonlu düzen, gelişmiş expression fonksiyon kütüphanesi,
-**auth (JWT + Identity, rol: Designer/Viewer)**, multi-tenant, i18n (TR/EN UI), rapor zamanlama/dağıtım,
-şablon galerisi, canlı işbirliği.
+Sıra ile: Excel/XLSX (ClosedXML) ✅, alt raporlar ✅, chart ✅, barkod/QR ✅, matris/pivot ✅,
+çok seviyeli gruplama ✅, auto-height/can-grow/push-up bantlar ✅, çok kolonlu düzen ✅, gelişmiş
+expression fonksiyon kütüphanesi ✅, **auth (JWT + Identity, rol: Designer/Viewer)** ✅ — kalanlar:
+multi-tenant, i18n (TR/EN UI), rapor zamanlama/dağıtım, şablon galerisi, canlı işbirliği, **ardından**
+(bkz. aşağıdaki detay) AI destekli rapor asistanı ve modern görselleştirme (3D/gauge/heatmap/
+sparkline/harita). Önce bu listedeki mevcut kalan maddeler bitirilecek, AI/görselleştirme işi ondan
+sonra ele alınacak — iki liste tek backlog'ta birleştirildi.
 
 ---
 
-### V1.2 — AI Destekli Raporlama ve Modern Görselleştirme (stratejik öncelik)
+### AI Destekli Raporlama ve Modern Görselleştirme (backlog'un devamı — mevcut sıradaki işler bitince)
 Pazar araştırması (2026): pixel-perfect/paginated raporlama (DevExpress, Telerik, Stimulsoft,
 FastReport) hâlâ kurumsal zorunluluk — fatura, mali tablo, denetim belgesi gibi çıktılar dashboard
 ile değiştirilemiyor. Ama beklenti kayıyor: embedded analytics artık varsayılan, self-servis talep
