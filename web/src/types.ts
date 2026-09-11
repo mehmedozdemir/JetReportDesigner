@@ -214,6 +214,8 @@ export interface Band {
   visible: boolean;
   dataSource?: string;
   group?: GroupSpec;
+  /** Nesting depth for a groupHeader/groupFooter band — 0 is outermost. Ignored for every other band type. */
+  groupLevel?: number;
   repeatOnEveryPage: boolean;
   formatRules?: FormatRule[];
   backgroundImage?: BackgroundImageSpec | null;

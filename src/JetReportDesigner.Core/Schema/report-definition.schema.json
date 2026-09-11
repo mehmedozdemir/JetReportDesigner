@@ -194,6 +194,7 @@
             "sort": { "enum": ["asc", "desc"] }
           }
         },
+        "groupLevel": { "type": "integer", "minimum": 0 },
         "repeatOnEveryPage": { "type": "boolean" },
         "formatRules": { "type": "array", "items": { "$ref": "#/$defs/formatRule" } },
         "elements": { "type": "array", "items": { "$ref": "#/$defs/element" } }

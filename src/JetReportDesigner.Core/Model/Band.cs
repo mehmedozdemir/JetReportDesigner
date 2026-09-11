@@ -19,6 +19,14 @@ public sealed class Band
     /// <summary>Grouping spec for <see cref="BandType.GroupHeader"/> / <see cref="BandType.GroupFooter"/> bands.</summary>
     public GroupSpec? Group { get; set; }
 
+    /// <summary>
+    /// Nesting depth for a <see cref="BandType.GroupHeader"/> / <see cref="BandType.GroupFooter"/>
+    /// band — 0 is the outermost group. A report can have more than one group header and
+    /// more than one group footer, one pair per level, giving nested (multi-level) grouping.
+    /// Ignored for every other band type.
+    /// </summary>
+    public int GroupLevel { get; set; }
+
     /// <summary>Repeat this header band at the top of every page it spans (group/report headers).</summary>
     public bool RepeatOnEveryPage { get; set; }
 
