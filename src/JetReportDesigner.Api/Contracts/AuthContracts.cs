@@ -1,6 +1,9 @@
 namespace JetReportDesigner.Api.Contracts;
 
-public sealed record RegisterRequest(string Email, string Password);
+/// <summary>Exactly one of <see cref="OrganizationName"/> (create a new tenant, becoming its
+/// Designer) or <see cref="InviteCode"/> (join an existing tenant with the invite's role) must
+/// be supplied.</summary>
+public sealed record RegisterRequest(string Email, string Password, string? OrganizationName, string? InviteCode);
 
 public sealed record LoginRequest(string Email, string Password);
 

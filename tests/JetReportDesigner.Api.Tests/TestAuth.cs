@@ -1,11 +1,8 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using JetReportDesigner.Api.Contracts;
-using JetReportDesigner.Storage.Entities;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace JetReportDesigner.Api.Tests;
 
@@ -22,10 +19,9 @@ internal static class TestAuth
         builder.UseSetting("Jwt:Secret", JwtSecret);
 
     /// <summary>
-    /// Registers a fresh user, promotes it to Designer directly through <see cref="UserManager{TUser}"/>
-    /// (registration only auto-grants Designer to the very first user ever created against a
-    /// database, and these tests share one database across several <c>[Fact]</c>s), then logs in
-    /// again so the returned token actually carries the Designer role claim.
+    /// Registers a fresh user as the founder of a brand-new organization (which always makes
+    /// the registering user its Designer, regardless of how many other users/tenants already
+    /// exist in the shared test database).
     /// </summary>
     public static async Task<HttpClient> CreateDesignerClientAsync(this WebApplicationFactory<Program> factory)
     {
@@ -33,22 +29,12 @@ internal static class TestAuth
         var email = $"designer-{Guid.NewGuid():N}@example.com";
         const string password = "Test-Passw0rd!";
 
-        var register = await client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, password));
+        var register = await client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequest(email, password, OrganizationName: $"Org {Guid.NewGuid():N}", InviteCode: null));
         register.EnsureSuccessStatusCode();
-
-        await using (var scope = factory.Services.CreateAsyncScope())
-        {
-            var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-            var user = await users.FindByEmailAsync(email) ?? throw new InvalidOperationException("Registered user not found.");
-            var currentRoles = await users.GetRolesAsync(user);
-            await users.RemoveFromRolesAsync(user, currentRoles);
-            await users.AddToRoleAsync(user, AppRole.Designer);
-        }
-
-        var login = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(email, password));
-        login.EnsureSuccessStatusCode();
-        var auth = await login.Content.ReadFromJsonAsync<AuthResponse>()
-            ?? throw new InvalidOperationException("Login did not return a token.");
+        var auth = await register.Content.ReadFromJsonAsync<AuthResponse>()
+            ?? throw new InvalidOperationException("Register did not return a token.");
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.Token);
         return client;

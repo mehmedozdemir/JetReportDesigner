@@ -2,6 +2,7 @@ using System.Security.Claims;
 using JetReportDesigner.Api.Contracts;
 using JetReportDesigner.Api.Infrastructure;
 using JetReportDesigner.Storage.Entities;
+using JetReportDesigner.Storage.Tenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,16 +14,49 @@ namespace JetReportDesigner.Api.Controllers;
 [Produces("application/json")]
 public sealed class AuthController(
     UserManager<AppUser> users,
-    JwtTokenService tokens) : ControllerBase
+    JwtTokenService tokens,
+    ITenantRepository tenants,
+    ITenantInviteRepository invites,
+    ICurrentTenant currentTenant) : ControllerBase
 {
-    /// <summary>Creates an account. The very first user to register becomes a
-    /// <see cref="AppRole.Designer"/> (bootstrap admin); everyone after that starts as a
-    /// <see cref="AppRole.Viewer"/> and is promoted later by an existing Designer.</summary>
+    /// <summary>Creates an account. Exactly one of <c>organizationName</c> (creates a brand-new
+    /// tenant; the registering user becomes its <see cref="AppRole.Designer"/>) or
+    /// <c>inviteCode</c> (joins an existing tenant with the invite's role) must be given.</summary>
     [HttpPost("register")]
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
     {
-        var user = new AppUser { UserName = request.Email, Email = request.Email };
+        var hasOrgName = !string.IsNullOrWhiteSpace(request.OrganizationName);
+        var hasInvite = !string.IsNullOrWhiteSpace(request.InviteCode);
+        if (hasOrgName == hasInvite)
+        {
+            return ValidationProblem("Provide exactly one of organizationName (to create a new organization) or inviteCode (to join an existing one).");
+        }
+
+        Guid tenantId;
+        string role;
+        var newUserId = Guid.NewGuid();
+
+        if (hasInvite)
+        {
+            // Consumed up front (not after the user is created) so a code can't be redeemed
+            // twice by two concurrent registrations racing each other.
+            var consumed = await invites.ConsumeAsync(request.InviteCode!, newUserId, cancellationToken);
+            if (consumed is null)
+            {
+                return ValidationProblem("This invite code is invalid, expired, or already used.");
+            }
+
+            tenantId = consumed.TenantId;
+            role = consumed.Role;
+        }
+        else
+        {
+            tenantId = await tenants.CreateAsync(request.OrganizationName!.Trim(), cancellationToken);
+            role = AppRole.Designer;
+        }
+
+        var user = new AppUser { Id = newUserId, UserName = request.Email, Email = request.Email, TenantId = tenantId };
         var result = await users.CreateAsync(user, request.Password);
         if (!result.Succeeded)
         {
@@ -34,8 +68,6 @@ public sealed class AuthController(
             return ValidationProblem(ModelState);
         }
 
-        var isFirstUser = users.Users.Count() == 1;
-        var role = isFirstUser ? AppRole.Designer : AppRole.Viewer;
         await users.AddToRoleAsync(user, role);
 
         return Ok(await BuildAuthResponse(user));
@@ -66,13 +98,14 @@ public sealed class AuthController(
         return Ok(await ToUserResponse(user));
     }
 
-    /// <summary>Lists every user and their role. Designer-only — this is the user administration screen.</summary>
+    /// <summary>Lists every user in the caller's tenant and their role. Designer-only — this is
+    /// the team administration screen.</summary>
     [HttpGet("users")]
     [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<ActionResult<IReadOnlyList<UserResponse>>> ListUsers(CancellationToken cancellationToken)
     {
         var list = new List<UserResponse>();
-        foreach (var user in users.Users.OrderBy(u => u.Email).ToList())
+        foreach (var user in users.Users.Where(u => u.TenantId == currentTenant.TenantId).OrderBy(u => u.Email).ToList())
         {
             list.Add(await ToUserResponse(user));
         }
@@ -80,7 +113,8 @@ public sealed class AuthController(
         return Ok(list);
     }
 
-    /// <summary>Promotes or demotes a user between Designer and Viewer. Designer-only.</summary>
+    /// <summary>Promotes or demotes a user (in the caller's own tenant) between Designer and
+    /// Viewer. Designer-only.</summary>
     [HttpPut("users/{id:guid}/role")]
     [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<ActionResult<UserResponse>> SetRole(Guid id, [FromBody] SetRoleRequest request)
@@ -91,7 +125,7 @@ public sealed class AuthController(
         }
 
         var user = await users.FindByIdAsync(id.ToString());
-        if (user is null)
+        if (user is null || user.TenantId != currentTenant.TenantId)
         {
             return NotFound();
         }

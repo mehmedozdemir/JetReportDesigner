@@ -34,6 +34,8 @@ builder.Services.AddJetReportStorage(
     new PostgreSqlStorageProvider(),
     new OracleStorageProvider());
 builder.Services.AddJetReportIdentity();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<JetReportDesigner.Storage.Tenancy.ICurrentTenant, CurrentTenant>();
 
 // --- Auth: password login exchanged for a JWT (no cookies) ---
 builder.Services.AddOptions<JwtOptions>()
@@ -138,6 +140,7 @@ if (storageOptions.MigrateOnStartup)
 }
 
 await app.Services.SeedJetReportRolesAsync();
+await app.Services.SeedDefaultTenantAsync();
 
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
