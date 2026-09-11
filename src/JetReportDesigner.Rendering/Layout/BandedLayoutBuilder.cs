@@ -321,6 +321,14 @@ public sealed class BandedLayoutBuilder
                             primitives.Add(placeholder);
                         }
                     }
+                    else if (element.Type == ElementType.Matrix)
+                    {
+                        var matrixSource = string.IsNullOrWhiteSpace(element.Matrix?.DataSource)
+                            ? detailSource
+                            : element.Matrix!.DataSource;
+                        primitives.AddRange(
+                            MatrixEmitter.Emit(element, report.Styles, data.Get(matrixSource).Rows, context, margins.Left, instance.Y));
+                    }
                     else
                     {
                         primitives.AddRange(

@@ -61,6 +61,11 @@ public sealed class FreeLayoutBuilder
                     primitives.Add(placeholder);
                 }
             }
+            else if (element.Type == ElementType.Matrix)
+            {
+                var source = string.IsNullOrWhiteSpace(element.Matrix?.DataSource) ? primarySource : element.Matrix!.DataSource;
+                primitives.AddRange(MatrixEmitter.Emit(element, report.Styles, data.Get(source).Rows, context, 0, 0));
+            }
             else
             {
                 primitives.AddRange(ElementEmitter.Emit(element, report.Styles, context, 0, 0));
