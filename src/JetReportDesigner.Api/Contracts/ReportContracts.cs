@@ -8,14 +8,16 @@ public sealed record ReportSummaryResponse(
     string Name,
     string LayoutMode,
     DateTime CreatedAtUtc,
-    DateTime UpdatedAtUtc)
+    DateTime UpdatedAtUtc,
+    Guid? FolderId)
 {
-    public static ReportSummaryResponse From(ReportSummary s) => new(
+    public static ReportSummaryResponse From(ReportSummary s, Guid? folderId = null) => new(
         s.Id,
         s.Name,
         s.LayoutMode == Core.Model.LayoutMode.Banded ? "banded" : "free",
         s.CreatedAtUtc,
-        s.UpdatedAtUtc);
+        s.UpdatedAtUtc,
+        folderId);
 }
 
 public sealed record ReportResponse(

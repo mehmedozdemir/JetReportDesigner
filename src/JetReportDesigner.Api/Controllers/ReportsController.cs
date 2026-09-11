@@ -3,6 +3,7 @@ using JetReportDesigner.Api.Contracts;
 using JetReportDesigner.Api.Infrastructure;
 using JetReportDesigner.Core.Model;
 using JetReportDesigner.Core.Validation;
+using JetReportDesigner.Storage.Folders;
 using JetReportDesigner.Storage.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,14 +13,34 @@ namespace JetReportDesigner.Api.Controllers;
 [ApiController]
 [Route("api/reports")]
 [Produces("application/json")]
-public sealed class ReportsController(IReportRepository repository, IValidator<ReportDefinition> validator)
-    : ControllerBase
+public sealed class ReportsController(
+    IReportRepository repository,
+    IValidator<ReportDefinition> validator,
+    IFolderRepository folders) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<ReportSummaryResponse>>> List(CancellationToken cancellationToken)
     {
         var reports = await repository.ListAsync(cancellationToken);
-        return Ok(reports.Select(ReportSummaryResponse.From).ToList());
+        var folderMap = await folders.GetReportFolderMapAsync(cancellationToken);
+        return Ok(reports
+            .Select(r => ReportSummaryResponse.From(r, folderMap.TryGetValue(r.Id, out var f) ? f : null))
+            .ToList());
+    }
+
+    /// <summary>Files the report under a folder, or back at the root when folderId is null. Designer-only.</summary>
+    [HttpPut("{id:guid}/folder")]
+    [Authorize(Policy = AuthPolicies.Designer)]
+    public async Task<IActionResult> SetFolder(Guid id, [FromBody] SetReportFolderRequest request, CancellationToken cancellationToken)
+    {
+        if (await repository.GetAsync(id, cancellationToken) is null)
+        {
+            return NotFound();
+        }
+
+        return await folders.SetReportFolderAsync(id, request.FolderId, cancellationToken)
+            ? NoContent()
+            : ValidationProblem("folderId does not exist.");
     }
 
     [HttpGet("{id:guid}")]
@@ -70,8 +91,17 @@ public sealed class ReportsController(IReportRepository repository, IValidator<R
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = AuthPolicies.Designer)]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
-        await repository.DeleteAsync(id, cancellationToken) ? NoContent() : NotFound();
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        if (!await repository.DeleteAsync(id, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        // Best-effort: drop the now-orphaned folder membership row, if any.
+        await folders.SetReportFolderAsync(id, null, cancellationToken);
+        return NoContent();
+    }
 
     /// <summary>Design-time inspection: non-fatal problems (unknown bindings, empty tables, out-of-bounds elements).</summary>
     [HttpPost("validate")]
