@@ -75,15 +75,17 @@ export function Toolbar({
           <LayoutGrid />
           <span>Start</span>
         </button>
-        <button
-          className="btn icon"
-          onClick={onNew}
-          disabled={busy || !canEdit}
-          title={canEdit ? "New blank report" : "Viewer role cannot create reports"}
-          aria-label="New blank report"
-        >
-          <FilePlus2 />
-        </button>
+        {canEdit && (
+          <button
+            className="btn icon"
+            onClick={onNew}
+            disabled={busy}
+            title="New blank report"
+            aria-label="New blank report"
+          >
+            <FilePlus2 />
+          </button>
+        )}
       </div>
 
       {report && (
@@ -109,10 +111,10 @@ export function Toolbar({
         </>
       )}
 
-      <div className="divider" />
-
       {canEdit && (
         <>
+          <div className="divider" />
+
           <button
             className="btn primary"
             onClick={onSave}
@@ -136,23 +138,19 @@ export function Toolbar({
           </div>
 
           <div className="divider" />
-        </>
-      )}
 
-      {report && (
-        <span
-          className="mode-badge"
-          title="Layout mode is chosen when the report is created and cannot be changed here"
-        >
-          {report.layoutMode === "banded" ? <Rows3 /> : <SquareDashed />}
-          {report.layoutMode === "banded" ? "Banded" : "Free"}
-        </span>
-      )}
+          {report && (
+            <span
+              className="mode-badge"
+              title="Layout mode is chosen when the report is created and cannot be changed here"
+            >
+              {report.layoutMode === "banded" ? <Rows3 /> : <SquareDashed />}
+              {report.layoutMode === "banded" ? "Banded" : "Free"}
+            </span>
+          )}
 
-      <div className="divider" />
+          <div className="divider" />
 
-      {canEdit ? (
-        <>
           <div className="group">
             <button className="btn icon" onClick={() => setZoom(zoom - 0.1)} disabled={!hasReport} title="Zoom out" aria-label="Zoom out">
               <ZoomOut />
@@ -191,12 +189,6 @@ export function Toolbar({
             </button>
           </div>
         </>
-      ) : (
-        report && (
-          <span className="mode-badge" title="Viewers only get the read-only preview">
-            <Eye size={14} /> Preview
-          </span>
-        )
       )}
 
       <div className="spacer" />
@@ -211,11 +203,17 @@ export function Toolbar({
         <LogOut />
       </button>
 
-      <div className="divider" />
+      {canEdit && (
+        <>
+          <div className="divider" />
 
-      <button className="btn icon" onClick={onSettings} title="Settings" aria-label="Settings">
-        <Settings />
-      </button>
+          <button className="btn icon" onClick={onSettings} title="Settings" aria-label="Settings">
+            <Settings />
+          </button>
+        </>
+      )}
+
+      <div className="divider" />
 
       <button
         className="btn outline"
