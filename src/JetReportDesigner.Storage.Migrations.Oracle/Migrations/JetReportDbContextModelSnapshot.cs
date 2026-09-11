@@ -121,6 +121,55 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.Folder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("NVARCHAR2(200)");
+
+                    b.Property<Guid?>("ParentFolderId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("RAW(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ParentFolderId");
+
+                    b.ToTable("Folders", (string)null);
+                });
+
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.ReportFolderEntry", b =>
+                {
+                    b.Property<Guid>("ReportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<Guid>("FolderId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("RAW(16)");
+
+                    b.HasKey("ReportId");
+
+                    b.HasIndex("FolderId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("ReportFolderEntries", (string)null);
+                });
+
             modelBuilder.Entity("JetReportDesigner.Storage.Entities.StoredAsset", b =>
                 {
                     b.Property<Guid>("Id")

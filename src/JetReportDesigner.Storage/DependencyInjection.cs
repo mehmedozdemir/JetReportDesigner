@@ -1,6 +1,7 @@
 using JetReportDesigner.Storage.Assets;
 using JetReportDesigner.Storage.Connections;
 using JetReportDesigner.Storage.Entities;
+using JetReportDesigner.Storage.Folders;
 using JetReportDesigner.Storage.Repositories;
 using JetReportDesigner.Storage.Tenancy;
 using Microsoft.AspNetCore.Identity;
@@ -40,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IAssetRepository, AssetRepository>();
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<ITenantInviteRepository, TenantInviteRepository>();
+        services.AddScoped<IFolderRepository, FolderRepository>();
 
         if (options.ReportStore.Equals("filesystem", StringComparison.OrdinalIgnoreCase))
         {

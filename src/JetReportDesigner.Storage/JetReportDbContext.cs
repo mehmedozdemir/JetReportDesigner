@@ -21,6 +21,10 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
 
     public DbSet<TenantInvite> TenantInvites => Set<TenantInvite>();
 
+    public DbSet<Folder> Folders => Set<Folder>();
+
+    public DbSet<ReportFolderEntry> ReportFolderEntries => Set<ReportFolderEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

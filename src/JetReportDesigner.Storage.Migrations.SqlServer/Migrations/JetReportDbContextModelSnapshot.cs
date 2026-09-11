@@ -121,6 +121,55 @@ namespace JetReportDesigner.Storage.Migrations.SqlServer.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.Folder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("ParentFolderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ParentFolderId");
+
+                    b.ToTable("Folders", (string)null);
+                });
+
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.ReportFolderEntry", b =>
+                {
+                    b.Property<Guid>("ReportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FolderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ReportId");
+
+                    b.HasIndex("FolderId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("ReportFolderEntries", (string)null);
+                });
+
             modelBuilder.Entity("JetReportDesigner.Storage.Entities.StoredAsset", b =>
                 {
                     b.Property<Guid>("Id")
