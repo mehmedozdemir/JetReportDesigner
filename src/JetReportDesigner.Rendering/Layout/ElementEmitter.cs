@@ -156,31 +156,28 @@ public static class ElementEmitter
         Func<ReportElement, string?>? aggregateText)
     {
         var b = element.Bounds;
+        var text = ResolveElementText(element, context, aggregateText);
+        var height = GrownHeight(element, style, text);
 
         if (style.Background is { } bg)
         {
-            yield return new RectanglePrimitive { X = x, Y = y, Width = b.Width, Height = b.Height, FillColorHex = bg, BorderThicknessPx = 0 };
+            yield return new RectanglePrimitive { X = x, Y = y, Width = b.Width, Height = height, FillColorHex = bg, BorderThicknessPx = 0 };
         }
 
         if (style.Border is { } border && MaxEdge(border) > 0)
         {
-            foreach (var p in BorderPrimitives(x, y, b.Width, b.Height, border))
+            foreach (var p in BorderPrimitives(x, y, b.Width, height, border))
             {
                 yield return p;
             }
         }
-
-        var text =
-            element.Type == ElementType.Label ? BindingResolver.ResolveValue(element.Text, element.Format, context)
-            : element.Aggregate != AggregateFunction.None && aggregateText?.Invoke(element) is { } agg ? agg
-            : BindingResolver.ResolveValue(element.Value, element.Format, context);
 
         yield return new TextPrimitive
         {
             X = x + style.Padding.Left,
             Y = y + style.Padding.Top,
             Width = Math.Max(0, b.Width - style.Padding.Left - style.Padding.Right),
-            Height = Math.Max(0, b.Height - style.Padding.Top - style.Padding.Bottom),
+            Height = Math.Max(0, height - style.Padding.Top - style.Padding.Bottom),
             Text = text,
             FontFamily = style.FontFamily,
             FontSizePt = style.FontSizePt,
@@ -200,6 +197,52 @@ public static class ElementEmitter
                 _ => VerticalAnchor.Top,
             },
         };
+    }
+
+    /// <summary>Padding added on top of a "can grow" element's measured text height, to absorb the small difference between PdfSharp's font metrics and a browser's text wrap.</summary>
+    private const double CanGrowSlackPx = 2;
+
+    private static string ResolveElementText(ReportElement element, BindingContext context, Func<ReportElement, string?>? aggregateText) =>
+        element.Type == ElementType.Label ? BindingResolver.ResolveValue(element.Text, element.Format, context)
+        : element.Aggregate != AggregateFunction.None && aggregateText?.Invoke(element) is { } agg ? agg
+        : BindingResolver.ResolveValue(element.Value, element.Format, context);
+
+    /// <summary>The element's own <see cref="Bounds"/> height, or more when <see cref="ReportElement.CanGrow"/> needs it to fit its wrapped text.</summary>
+    private static double GrownHeight(ReportElement element, EffectiveStyle style, string text)
+    {
+        if (!element.CanGrow)
+        {
+            return element.Bounds.Height;
+        }
+
+        var availableWidth = Math.Max(0, element.Bounds.Width - style.Padding.Left - style.Padding.Right);
+        var contentHeight = TextMeasurer.MeasureWrappedHeightPx(text, style.FontFamily, style.FontSizePt, style.Bold, style.Italic, availableWidth);
+        return Math.Max(element.Bounds.Height, contentHeight + style.Padding.Top + style.Padding.Bottom + CanGrowSlackPx);
+    }
+
+    /// <summary>
+    /// The height a label/field/pageInfo element actually needs — used by the banded
+    /// builder to grow a detail band instance to fit a "can grow" element within it.
+    /// Every other element type just reports its designed <see cref="Bounds"/> height.
+    /// </summary>
+    public static double MeasuredHeight(
+        ReportElement element,
+        IReadOnlyDictionary<string, ReportStyle> styles,
+        BindingContext context,
+        Func<ReportElement, string?>? aggregateText = null)
+    {
+        if (!element.CanGrow || element.Type is not (ElementType.Label or ElementType.Field or ElementType.PageInfo))
+        {
+            return element.Bounds.Height;
+        }
+
+        var style = EffectiveStyle.Resolve(element, styles, context);
+        if (style.Hidden || !IsVisible(element, context))
+        {
+            return element.Bounds.Height;
+        }
+
+        return GrownHeight(element, style, ResolveElementText(element, context, aggregateText));
     }
 
     private static bool IsVisible(ReportElement element, BindingContext context)

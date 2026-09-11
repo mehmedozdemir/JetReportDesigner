@@ -22,6 +22,12 @@ public sealed class BandedLayoutBuilder
 
         /// <summary>Nesting level for a group header/footer instance; -1 for every other band.</summary>
         public int GroupLevel { get; init; } = -1;
+
+        /// <summary>
+        /// The height actually used for this instance — the band's own configured
+        /// height, unless a "can grow" element (currently: a detail row) needed more.
+        /// </summary>
+        public double EffectiveHeight { get; init; } = Band.Height;
     }
 
     /// <summary>One nesting level: its header/footer bands (either may be absent) and the shared grouping key.</summary>
@@ -166,6 +172,25 @@ public sealed class BandedLayoutBuilder
             }
         }
 
+        // The tallest "can grow" element in the detail band, for this row's own data —
+        // a fixed-height report never measures anything (MeasuredHeight is a no-op then).
+        double DetailRowHeight(Band? band, Row row)
+        {
+            if (band is null || band.Elements.Count == 0)
+            {
+                return H(band);
+            }
+
+            var rowContext = baseContext.WithRow(row);
+            var height = band.Height;
+            foreach (var element in band.Elements)
+            {
+                height = Math.Max(height, ElementEmitter.MeasuredHeight(element, report.Styles, rowContext));
+            }
+
+            return height;
+        }
+
         BeginPage(first: true);
 
         for (var i = 0; i < allRows.Count; i++)
@@ -237,11 +262,12 @@ public sealed class BandedLayoutBuilder
                 }
             }
 
-            Ensure(H(detail));
+            var detailHeight = DetailRowHeight(detail, row);
+            Ensure(detailHeight);
             if (detail is not null)
             {
-                page.Add(new BandInstance(detail, y, row, null) { RowIndex = i });
-                y += H(detail);
+                page.Add(new BandInstance(detail, y, row, null) { RowIndex = i, EffectiveHeight = detailHeight });
+                y += detailHeight;
             }
 
             for (var lvl = 0; lvl < levels.Count; lvl++)
@@ -396,7 +422,7 @@ public sealed class BandedLayoutBuilder
                         X = margins.Left,
                         Y = instance.Y,
                         Width = pageWidth - margins.Left - margins.Right,
-                        Height = instance.Band.Height,
+                        Height = instance.EffectiveHeight,
                         Source = bandBg,
                         Fit = ElementEmitter.ParseFit(bandBgSpec.Fit),
                     });
@@ -414,7 +440,7 @@ public sealed class BandedLayoutBuilder
                             X = margins.Left,
                             Y = instance.Y,
                             Width = pageWidth - margins.Left - margins.Right,
-                            Height = instance.Band.Height,
+                            Height = instance.EffectiveHeight,
                             FillColorHex = bg,
                             BorderThicknessPx = 0,
                         });
