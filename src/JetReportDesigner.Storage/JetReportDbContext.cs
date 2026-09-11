@@ -1,9 +1,11 @@
 using JetReportDesigner.Storage.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace JetReportDesigner.Storage;
 
-public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> options) : DbContext(options)
+public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> options)
+    : IdentityDbContext<AppUser, AppRole, Guid>(options)
 {
     public DbSet<StoredReport> Reports => Set<StoredReport>();
 
@@ -17,7 +19,19 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(JetReportDbContext).Assembly);
+
+        // Rename the default "AspNetX" Identity tables to match this app's PascalCase,
+        // unprefixed naming (Reports, Connections, …).
+        modelBuilder.Entity<AppUser>().ToTable("Users");
+        modelBuilder.Entity<AppRole>().ToTable("Roles");
+        modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>().ToTable("UserRoles");
+        modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserClaim<Guid>>().ToTable("UserClaims");
+        modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserLogin<Guid>>().ToTable("UserLogins");
+        modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserToken<Guid>>().ToTable("UserTokens");
+        modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityRoleClaim<Guid>>().ToTable("RoleClaims");
 
         // Oracle maps an unbounded string to NVARCHAR2(2000); the report JSON and
         // connection secrets need a LOB. SQL Server (nvarchar(max)) and PostgreSQL
@@ -30,7 +44,5 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
             modelBuilder.Entity<Entities.StoredSqlQuery>().Property(q => q.CommandText).HasColumnType("NCLOB");
             modelBuilder.Entity<Entities.StoredAsset>().Property(a => a.Content).HasColumnType("BLOB");
         }
-
-        base.OnModelCreating(modelBuilder);
     }
 }

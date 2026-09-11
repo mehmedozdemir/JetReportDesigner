@@ -22,6 +22,100 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
 
             OracleModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.AppRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("\"NormalizedName\" IS NOT NULL");
+
+                    b.ToTable("Roles", (string)null);
+                });
+
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.AppUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("NUMBER(10)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("BOOLEAN");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("BOOLEAN");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("TIMESTAMP(7) WITH TIME ZONE");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("BOOLEAN");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("BOOLEAN");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("\"NormalizedUserName\" IS NOT NULL");
+
+                    b.ToTable("Users", (string)null);
+                });
+
             modelBuilder.Entity("JetReportDesigner.Storage.Entities.StoredAsset", b =>
                 {
                     b.Property<Guid>("Id")
@@ -189,6 +283,160 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                         .IsUnique();
 
                     b.ToTable("SqlQueries", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("NUMBER(10)");
+
+                    OraclePropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("RAW(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("RoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("NUMBER(10)");
+
+                    OraclePropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("RAW(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("NVARCHAR2(450)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("NVARCHAR2(450)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("RAW(16)");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("RAW(16)");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("NVARCHAR2(450)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("NVARCHAR2(450)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("UserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
+                {
+                    b.HasOne("JetReportDesigner.Storage.Entities.AppRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
+                {
+                    b.HasOne("JetReportDesigner.Storage.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
+                {
+                    b.HasOne("JetReportDesigner.Storage.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.HasOne("JetReportDesigner.Storage.Entities.AppRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("JetReportDesigner.Storage.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
+                {
+                    b.HasOne("JetReportDesigner.Storage.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
