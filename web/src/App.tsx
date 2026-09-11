@@ -6,14 +6,11 @@ import { useDesigner } from "./store";
 import { usePrefs } from "./prefs";
 import { emptyBandedReport, emptyFreeReport, type ReportDefinition, type ReportSummary } from "./types";
 import { Canvas } from "./components/Canvas";
+import { LeftSidebar } from "./components/LeftSidebar";
 import { LoginScreen } from "./components/LoginScreen";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { StartScreen } from "./components/StartScreen";
 import { Toolbar } from "./components/Toolbar";
-import { Toolbox } from "./components/Toolbox";
-import { DataPanel } from "./components/DataPanel";
-import { ParametersPanel } from "./components/ParametersPanel";
-import { ProblemsPanel } from "./components/ProblemsPanel";
 import { PropertiesPanel } from "./components/PropertiesPanel";
 import { PreviewPane } from "./components/PreviewPane";
 
@@ -227,14 +224,7 @@ export function App() {
         onExport={(format) => void exportAs(format)}
       />
 
-      {canEdit && (
-        <div className="left">
-          <Toolbox />
-          <DataPanel key={reportId ?? "none"} />
-          <ParametersPanel />
-          <ProblemsPanel />
-        </div>
-      )}
+      {canEdit && <LeftSidebar reportId={reportId} />}
 
       <div className="center">
         {report && (report.parameters?.length ?? 0) > 0 && (

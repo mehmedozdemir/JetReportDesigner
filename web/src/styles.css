@@ -123,6 +123,31 @@ body {
 }
 
 .left  { grid-area: left;  overflow-y: auto; background: var(--bg-surface); border-right: 1px solid var(--border); }
+.left.left-tabs { display: flex; flex-direction: column; overflow: hidden; }
+
+.sidebar-tabbar { display: flex; flex: 0 0 auto; border-bottom: 1px solid var(--border); }
+.sidebar-tabbar button {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 10px 4px;
+  border: none; border-bottom: 2px solid transparent;
+  background: transparent;
+  font: inherit; font-size: 11px; font-weight: 650;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.sidebar-tabbar button:hover { color: var(--text-primary); background: var(--bg-elevated); }
+.sidebar-tabbar button.on { color: var(--accent); border-bottom-color: var(--accent); }
+.sidebar-tabbar button .count-badge { margin-left: 0; }
+.tab-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: 0 0 auto; }
+
+.sidebar-tab-content { flex: 1; overflow-y: auto; min-height: 0; }
+.sidebar-tab-content > .panel { border-bottom: none; }
+/* The tab button already carries the icon + title; the panel's own heading would repeat it. */
+.sidebar-tab-content > .panel > h2 { display: none; }
+
+.sidebar-problems { flex: 0 0 auto; max-height: 180px; overflow-y: auto; }
+.sidebar-problems > .panel { border-bottom: none; border-top: 1px solid var(--border); }
 .right { grid-area: right; overflow-y: auto; background: var(--bg-surface); border-left: 1px solid var(--border); }
 .right.flash { animation: inspector-flash 0.6s ease-out; }
 @keyframes inspector-flash {
@@ -305,24 +330,24 @@ body {
 /* ============================================================
    Toolbox — icon tiles
    ============================================================ */
-.tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .tool {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  min-height: 40px;
-  padding: 4px 2px;
+  gap: 5px;
+  min-height: 54px;
+  padding: 8px 4px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-surface);
   color: var(--text-secondary);
-  font: inherit; font-size: 9px; line-height: 1.1; cursor: grab;
+  font: inherit; font-size: 11px; line-height: 1.1; cursor: grab;
   overflow: hidden; text-overflow: ellipsis;
   transition: border-color 90ms ease, background 90ms ease, color 90ms ease, box-shadow 90ms ease;
 }
-.tool svg { width: 15px; height: 15px; color: var(--text-primary); }
+.tool svg { width: 18px; height: 18px; color: var(--text-primary); }
 .tool:hover:not(:disabled) { border-color: var(--accent); color: var(--text-primary); box-shadow: var(--shadow-sm); }
 .tool:active:not(:disabled) { background: var(--accent-muted); }
 .tool:disabled { opacity: 0.45; cursor: default; }
