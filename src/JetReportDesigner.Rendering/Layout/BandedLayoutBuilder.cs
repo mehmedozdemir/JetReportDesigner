@@ -314,6 +314,13 @@ public sealed class BandedLayoutBuilder
                         primitives.AddRange(
                             ChartEmitter.Emit(element, report.Styles, data.Get(chartSource).Rows, context, margins.Left, instance.Y));
                     }
+                    else if (element.Type == ElementType.Subreport)
+                    {
+                        if (SubreportEmitter.Emit(element, context, margins.Left, instance.Y) is { } placeholder)
+                        {
+                            primitives.Add(placeholder);
+                        }
+                    }
                     else
                     {
                         primitives.AddRange(

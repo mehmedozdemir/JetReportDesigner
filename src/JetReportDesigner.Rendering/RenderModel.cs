@@ -16,7 +16,12 @@ public sealed class RenderDocument
 
 public sealed class RenderPage
 {
-    public IReadOnlyList<RenderPrimitive> Primitives { get; init; } = [];
+    /// <summary>
+    /// A mutable list (not just <see cref="IReadOnlyList{T}"/>) so a post-layout pass —
+    /// currently only subreport resolution — can splice a placeholder's primitives in
+    /// place without rebuilding the page.
+    /// </summary>
+    public List<RenderPrimitive> Primitives { get; init; } = [];
 }
 
 public abstract class RenderPrimitive
@@ -134,6 +139,23 @@ public sealed class WedgePrimitive : RenderPrimitive
 }
 
 public readonly record struct PointPx(double X, double Y);
+
+/// <summary>
+/// A placeholder emitted by the layout builders for a <c>subreport</c> element.
+/// <see cref="ReportRenderService"/> resolves the referenced report, renders it, and
+/// splices its (scaled, clipped) primitives into the page in this primitive's place.
+/// </summary>
+public sealed class SubreportPrimitive : RenderPrimitive
+{
+    public double Width { get; init; }
+
+    public double Height { get; init; }
+
+    public required string ReportId { get; init; }
+
+    /// <summary>The referenced report's parameter values, already resolved against the parent's context.</summary>
+    public IReadOnlyDictionary<string, object?> Parameters { get; init; } = new Dictionary<string, object?>();
+}
 
 public enum HorizontalAnchor
 {

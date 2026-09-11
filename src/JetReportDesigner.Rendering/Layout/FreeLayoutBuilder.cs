@@ -54,6 +54,13 @@ public sealed class FreeLayoutBuilder
                 var source = string.IsNullOrWhiteSpace(element.Chart?.DataSource) ? primarySource : element.Chart!.DataSource;
                 primitives.AddRange(ChartEmitter.Emit(element, report.Styles, data.Get(source).Rows, context, 0, 0));
             }
+            else if (element.Type == ElementType.Subreport)
+            {
+                if (SubreportEmitter.Emit(element, context, 0, 0) is { } placeholder)
+                {
+                    primitives.Add(placeholder);
+                }
+            }
             else
             {
                 primitives.AddRange(ElementEmitter.Emit(element, report.Styles, context, 0, 0));

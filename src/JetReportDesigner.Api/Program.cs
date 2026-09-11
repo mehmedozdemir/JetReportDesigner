@@ -77,6 +77,9 @@ builder.Services.AddScoped<JetReportDesigner.Rendering.IRenderImageResolver>(sp 
     new JetReportDesigner.Api.Infrastructure.RenderImageResolver(
         sp.GetRequiredService<JetReportDesigner.Storage.Assets.IAssetRepository>(),
         imageHttpClient));
+
+// A subreport element embeds another saved report by id.
+builder.Services.AddScoped<JetReportDesigner.Rendering.ISubreportResolver, JetReportDesigner.Api.Infrastructure.SubreportResolver>();
 builder.Services.AddScoped<ReportRenderService>();
 
 builder.Services.AddHealthChecks()
