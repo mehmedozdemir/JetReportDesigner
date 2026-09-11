@@ -112,6 +112,11 @@ body {
   grid-template-areas: "top top top" "left center right";
   height: 100%;
 }
+/* Viewer role: no design surface, so no left/right panels — preview takes the full width. */
+.app.viewer-mode {
+  grid-template-columns: 1fr;
+  grid-template-areas: "top" "center";
+}
 
 .left  { grid-area: left;  overflow-y: auto; background: var(--bg-surface); border-right: 1px solid var(--border); }
 .right { grid-area: right; overflow-y: auto; background: var(--bg-surface); border-left: 1px solid var(--border); }

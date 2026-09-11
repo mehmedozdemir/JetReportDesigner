@@ -89,45 +89,55 @@ export function Toolbar({
       {report && (
         <>
           <div className="divider" />
-          <input
-            className="report-title"
-            value={report.name}
-            title="Report name"
-            aria-label="Report name"
-            placeholder="Untitled report"
-            onChange={(e) => mutate((r) => (r.name = e.target.value), false)}
-            onBlur={(e) => {
-              if (!e.target.value.trim()) mutate((r) => (r.name = "Untitled report"), false);
-            }}
-          />
+          {canEdit ? (
+            <input
+              className="report-title"
+              value={report.name}
+              title="Report name"
+              aria-label="Report name"
+              placeholder="Untitled report"
+              onChange={(e) => mutate((r) => (r.name = e.target.value), false)}
+              onBlur={(e) => {
+                if (!e.target.value.trim()) mutate((r) => (r.name = "Untitled report"), false);
+              }}
+            />
+          ) : (
+            <span className="report-title" title="Report name">
+              {report.name}
+            </span>
+          )}
         </>
       )}
 
       <div className="divider" />
 
-      <button
-        className="btn primary"
-        onClick={onSave}
-        disabled={busy || !report || !reportId || !canEdit}
-        title={canEdit ? "Save (Ctrl+S)" : "Viewer role cannot save changes"}
-      >
-        <Save />
-        <span>Save</span>
-        {dirty && <span className="dot" aria-label="unsaved changes" />}
-      </button>
+      {canEdit && (
+        <>
+          <button
+            className="btn primary"
+            onClick={onSave}
+            disabled={busy || !report || !reportId}
+            title="Save (Ctrl+S)"
+          >
+            <Save />
+            <span>Save</span>
+            {dirty && <span className="dot" aria-label="unsaved changes" />}
+          </button>
 
-      <div className="divider" />
+          <div className="divider" />
 
-      <div className="group">
-        <button className="btn icon" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)" aria-label="Undo">
-          <Undo2 />
-        </button>
-        <button className="btn icon" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo">
-          <Redo2 />
-        </button>
-      </div>
+          <div className="group">
+            <button className="btn icon" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)" aria-label="Undo">
+              <Undo2 />
+            </button>
+            <button className="btn icon" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo">
+              <Redo2 />
+            </button>
+          </div>
 
-      <div className="divider" />
+          <div className="divider" />
+        </>
+      )}
 
       {report && (
         <span
@@ -141,43 +151,53 @@ export function Toolbar({
 
       <div className="divider" />
 
-      <div className="group">
-        <button className="btn icon" onClick={() => setZoom(zoom - 0.1)} disabled={!hasReport} title="Zoom out" aria-label="Zoom out">
-          <ZoomOut />
-        </button>
-        <span
-          className="zoom-label"
-          onClick={() => setZoom(1)}
-          title="Reset zoom to 100%"
-          role="button"
-        >
-          {Math.round(zoom * 100)}%
-        </span>
-        <button className="btn icon" onClick={() => setZoom(zoom + 0.1)} disabled={!hasReport} title="Zoom in" aria-label="Zoom in">
-          <ZoomIn />
-        </button>
-      </div>
+      {canEdit ? (
+        <>
+          <div className="group">
+            <button className="btn icon" onClick={() => setZoom(zoom - 0.1)} disabled={!hasReport} title="Zoom out" aria-label="Zoom out">
+              <ZoomOut />
+            </button>
+            <span
+              className="zoom-label"
+              onClick={() => setZoom(1)}
+              title="Reset zoom to 100%"
+              role="button"
+            >
+              {Math.round(zoom * 100)}%
+            </span>
+            <button className="btn icon" onClick={() => setZoom(zoom + 0.1)} disabled={!hasReport} title="Zoom in" aria-label="Zoom in">
+              <ZoomIn />
+            </button>
+          </div>
 
-      <div className="divider" />
+          <div className="divider" />
 
-      <div className="segmented" role="group" aria-label="View">
-        <button
-          className={tab === "design" ? "on" : ""}
-          onClick={() => onSetTab("design")}
-          disabled={!hasReport}
-          title="Design view"
-        >
-          <PencilRuler /> Design
-        </button>
-        <button
-          className={tab === "preview" ? "on" : ""}
-          onClick={() => onSetTab("preview")}
-          disabled={!hasReport}
-          title="Preview"
-        >
-          <Eye /> Preview
-        </button>
-      </div>
+          <div className="segmented" role="group" aria-label="View">
+            <button
+              className={tab === "design" ? "on" : ""}
+              onClick={() => onSetTab("design")}
+              disabled={!hasReport}
+              title="Design view"
+            >
+              <PencilRuler /> Design
+            </button>
+            <button
+              className={tab === "preview" ? "on" : ""}
+              onClick={() => onSetTab("preview")}
+              disabled={!hasReport}
+              title="Preview"
+            >
+              <Eye /> Preview
+            </button>
+          </div>
+        </>
+      ) : (
+        report && (
+          <span className="mode-badge" title="Viewers only get the read-only preview">
+            <Eye size={14} /> Preview
+          </span>
+        )
+      )}
 
       <div className="spacer" />
 

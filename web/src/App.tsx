@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { api } from "./api";
-import { useAuth } from "./auth";
+import { isDesigner, useAuth } from "./auth";
 import { useDesigner } from "./store";
 import { usePrefs } from "./prefs";
 import { emptyBandedReport, emptyFreeReport, type ReportDefinition, type ReportSummary } from "./types";
@@ -19,6 +19,7 @@ import { PreviewPane } from "./components/PreviewPane";
 
 export function App() {
   const token = useAuth((s) => s.token);
+  const canEdit = isDesigner(useAuth((s) => s.user));
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [samples, setSamples] = useState<{ name: string; definition: ReportDefinition }[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +36,11 @@ export function App() {
   const markSaved = useDesigner((s) => s.markSaved);
   const inspectorPulse = useDesigner((s) => s.inspectorPulse);
   const rightRef = useRef<HTMLDivElement>(null);
+
+  // A Viewer never gets the design surface — always land on (and stay on) Preview.
+  useEffect(() => {
+    if (!canEdit) setTab("preview");
+  }, [canEdit]);
 
   useEffect(() => {
     if (!inspectorPulse) return;
@@ -86,7 +92,7 @@ export function App() {
     setError(null);
     try {
       load(await api.getReport(id));
-      setTab("design");
+      setTab(canEdit ? "design" : "preview");
       setShowStart(false);
     } catch (e) {
       setError(String(e));
@@ -208,7 +214,7 @@ export function App() {
   }
 
   return (
-    <div className="app">
+    <div className={canEdit ? "app" : "app viewer-mode"}>
       <Toolbar
         tab={tab}
         busy={busy}
@@ -220,12 +226,14 @@ export function App() {
         onExport={(format) => void exportAs(format)}
       />
 
-      <div className="left">
-        <Toolbox />
-        <DataPanel key={reportId ?? "none"} />
-        <ParametersPanel />
-        <ProblemsPanel />
-      </div>
+      {canEdit && (
+        <div className="left">
+          <Toolbox />
+          <DataPanel key={reportId ?? "none"} />
+          <ParametersPanel />
+          <ProblemsPanel />
+        </div>
+      )}
 
       <div className="center">
         {report && (report.parameters?.length ?? 0) > 0 && (
@@ -244,9 +252,11 @@ export function App() {
         )}
         {report && (
           <>
-            <div style={{ flex: 1, minHeight: 0, display: tab === "design" ? "flex" : "none" }}>
-              <Canvas active={tab === "design"} />
-            </div>
+            {canEdit && (
+              <div style={{ flex: 1, minHeight: 0, display: tab === "design" ? "flex" : "none" }}>
+                <Canvas active={tab === "design"} />
+              </div>
+            )}
             <div style={{ flex: 1, minHeight: 0, display: tab === "preview" ? "flex" : "none" }}>
               <PreviewPane parameters={paramValues} active={tab === "preview"} />
             </div>
@@ -254,9 +264,11 @@ export function App() {
         )}
       </div>
 
-      <div className="right" ref={rightRef}>
-        <PropertiesPanel />
-      </div>
+      {canEdit && (
+        <div className="right" ref={rightRef}>
+          <PropertiesPanel />
+        </div>
+      )}
 
       {(!report || showStart) && (
         <div className="start-overlay">
