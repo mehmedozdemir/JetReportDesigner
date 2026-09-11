@@ -508,8 +508,9 @@ Her faz **çalışan, gösterilebilir** bir dikey dilim üretir. Faz sonunda "Do
 ### V1.1+ Backlog
 Sıra ile: Excel/XLSX (ClosedXML) ✅, alt raporlar ✅, chart ✅, barkod/QR ✅, matris/pivot ✅,
 çok seviyeli gruplama ✅, auto-height/can-grow/push-up bantlar ✅, çok kolonlu düzen ✅, gelişmiş
-expression fonksiyon kütüphanesi ✅, **auth (JWT + Identity, rol: Designer/Viewer)** ✅ — kalanlar:
-multi-tenant, i18n (TR/EN UI), rapor zamanlama/dağıtım, şablon galerisi, canlı işbirliği, **ardından**
+expression fonksiyon kütüphanesi ✅, **auth (JWT + Identity, rol: Designer/Viewer)** ✅,
+**multi-tenant (organizasyon oluşturma + davet kodu ile katılma + takım yönetimi)** ✅ — kalanlar:
+i18n (TR/EN UI), rapor zamanlama/dağıtım, şablon galerisi, canlı işbirliği, **ardından**
 (bkz. aşağıdaki detay) AI destekli rapor asistanı ve modern görselleştirme (3D/gauge/heatmap/
 sparkline/harita). Önce bu listedeki mevcut kalan maddeler bitirilecek, AI/görselleştirme işi ondan
 sonra ele alınacak — iki liste tek backlog'ta birleştirildi.
