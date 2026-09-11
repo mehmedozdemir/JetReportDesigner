@@ -9,7 +9,10 @@ public sealed class StoredAsset
 {
     public Guid Id { get; set; }
 
-    /// <summary>Lower-case hex SHA-256 of <see cref="Content"/>. Unique — uploads de-duplicate on it.</summary>
+    public Guid TenantId { get; set; }
+
+    /// <summary>Lower-case hex SHA-256 of <see cref="Content"/>. Unique per tenant — uploads
+    /// de-duplicate on it, but two tenants uploading identical bytes each get their own row.</summary>
     public string Sha256 { get; set; } = string.Empty;
 
     /// <summary>MIME type, e.g. <c>image/png</c>. Verified against the file's magic bytes on upload.</summary>

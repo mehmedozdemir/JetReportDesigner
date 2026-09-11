@@ -1,16 +1,18 @@
 using JetReportDesigner.Core.Model;
 using JetReportDesigner.Core.Serialization;
 using JetReportDesigner.Storage.Entities;
+using JetReportDesigner.Storage.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace JetReportDesigner.Storage.Repositories;
 
-internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock) : IReportRepository
+internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock, ICurrentTenant tenant) : IReportRepository
 {
     public async Task<IReadOnlyList<ReportSummary>> ListAsync(CancellationToken cancellationToken)
     {
         var rows = await db.Reports
             .AsNoTracking()
+            .Where(r => r.TenantId == tenant.TenantId)
             .OrderByDescending(r => r.UpdatedAtUtc)
             .Select(r => new { r.Id, r.Name, r.LayoutMode, r.CreatedAtUtc, r.UpdatedAtUtc })
             .ToListAsync(cancellationToken);
@@ -22,7 +24,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
 
     public async Task<ReportRecord?> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var row = await db.Reports.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+        var row = await db.Reports.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id && r.TenantId == tenant.TenantId, cancellationToken);
         return row is null ? null : ToRecord(row);
     }
 
@@ -35,6 +37,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         var row = new StoredReport
         {
             Id = id,
+            TenantId = tenant.TenantId,
             Name = definition.Name,
             Description = definition.Description,
             LayoutMode = LayoutToString(definition.LayoutMode),
@@ -56,7 +59,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         Guid? expectedToken,
         CancellationToken cancellationToken)
     {
-        var row = await db.Reports.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+        var row = await db.Reports.FirstOrDefaultAsync(r => r.Id == id && r.TenantId == tenant.TenantId, cancellationToken);
         if (row is null)
         {
             return null;
@@ -92,6 +95,11 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
+        if (!await OwnedByTenantAsync(id, cancellationToken))
+        {
+            return false;
+        }
+
         await db.ReportVersions.Where(v => v.ReportId == id).ExecuteDeleteAsync(cancellationToken);
         var deleted = await db.Reports.Where(r => r.Id == id).ExecuteDeleteAsync(cancellationToken);
         return deleted > 0;
@@ -99,6 +107,11 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
 
     public async Task<IReadOnlyList<ReportVersionInfo>> ListVersionsAsync(Guid id, CancellationToken cancellationToken)
     {
+        if (!await OwnedByTenantAsync(id, cancellationToken))
+        {
+            return [];
+        }
+
         var rows = await db.ReportVersions
             .AsNoTracking()
             .Where(v => v.ReportId == id)
@@ -111,6 +124,11 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
 
     public async Task<ReportVersionRecord?> GetVersionAsync(Guid id, int version, CancellationToken cancellationToken)
     {
+        if (!await OwnedByTenantAsync(id, cancellationToken))
+        {
+            return null;
+        }
+
         var row = await db.ReportVersions
             .AsNoTracking()
             .FirstOrDefaultAsync(v => v.ReportId == id && v.Version == version, cancellationToken);
@@ -119,6 +137,11 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
             ? null
             : new ReportVersionRecord(row.Version, row.Name, row.SavedAtUtc, ReportJson.Deserialize(row.DefinitionJson));
     }
+
+    /// <summary>Guards the version-related methods, which key off a bare report id with no
+    /// tenant column of their own on <see cref="StoredReportVersion"/>.</summary>
+    private Task<bool> OwnedByTenantAsync(Guid reportId, CancellationToken cancellationToken) =>
+        db.Reports.AnyAsync(r => r.Id == reportId && r.TenantId == tenant.TenantId, cancellationToken);
 
     public async Task<ReportRecord?> RestoreVersionAsync(Guid id, int version, CancellationToken cancellationToken)
     {

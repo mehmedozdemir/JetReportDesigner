@@ -5,6 +5,8 @@ public sealed class StoredSqlQuery
 {
     public Guid Id { get; set; }
 
+    public Guid TenantId { get; set; }
+
     public Guid ConnectionId { get; set; }
 
     public string Name { get; set; } = string.Empty;

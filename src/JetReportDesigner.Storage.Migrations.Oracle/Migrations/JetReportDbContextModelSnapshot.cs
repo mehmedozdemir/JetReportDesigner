@@ -96,6 +96,9 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("NVARCHAR2(2000)");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("RAW(16)");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("BOOLEAN");
 
@@ -112,6 +115,8 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("\"NormalizedUserName\" IS NOT NULL");
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Users", (string)null);
                 });
@@ -146,9 +151,12 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("NVARCHAR2(64)");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("RAW(16)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Sha256")
+                    b.HasIndex("TenantId", "Sha256")
                         .IsUnique();
 
                     b.ToTable("Assets", (string)null);
@@ -176,9 +184,12 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("NVARCHAR2(16)");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("RAW(16)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("TenantId", "Name")
                         .IsUnique();
 
                     b.ToTable("Connections", (string)null);
@@ -214,12 +225,17 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("NVARCHAR2(200)");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("RAW(16)");
+
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("TIMESTAMP(7)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Reports", (string)null);
                 });
@@ -275,6 +291,9 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("NVARCHAR2(200)");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("RAW(16)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ConnectionId");
@@ -283,6 +302,67 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                         .IsUnique();
 
                     b.ToTable("SqlQueries", (string)null);
+                });
+
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.Tenant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("NVARCHAR2(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tenants", (string)null);
+                });
+
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.TenantInvite", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("NVARCHAR2(16)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("NVARCHAR2(16)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<DateTime?>("UsedAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<Guid?>("UsedByUserId")
+                        .HasColumnType("RAW(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TenantInvites", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

@@ -17,6 +17,6 @@ internal sealed class StoredConnectionConfiguration : IEntityTypeConfiguration<S
         builder.Property(c => c.Provider).HasMaxLength(16).IsRequired();
         builder.Property(c => c.EncryptedConnectionString).IsRequired();
 
-        builder.HasIndex(c => c.Name).IsUnique();
+        builder.HasIndex(c => new { c.TenantId, c.Name }).IsUnique();
     }
 }

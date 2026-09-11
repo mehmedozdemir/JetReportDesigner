@@ -2,14 +2,15 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using JetReportDesigner.Core.Model;
 using JetReportDesigner.Core.Serialization;
+using JetReportDesigner.Storage.Tenancy;
 
 namespace JetReportDesigner.Storage.Repositories;
 
 /// <summary>
-/// Stores reports as JSON files under a root directory: <c>{root}/{id}.json</c> for
-/// the current definition (with metadata) and <c>{root}/{id}.versions/v{n}.json</c>
-/// for snapshots. For "reports as files" workflows; registered connections still
-/// live in the database.
+/// Stores reports as JSON files under a per-tenant subdirectory:
+/// <c>{root}/{tenantId}/{id}.json</c> for the current definition (with metadata) and
+/// <c>{root}/{tenantId}/{id}.versions/v{n}.json</c> for snapshots. For "reports as files"
+/// workflows; registered connections still live in the database.
 /// </summary>
 internal sealed class FileSystemReportRepository : IReportRepository
 {
@@ -17,9 +18,9 @@ internal sealed class FileSystemReportRepository : IReportRepository
     private readonly TimeProvider _clock;
     private readonly JsonSerializerOptions _json;
 
-    public FileSystemReportRepository(string root, TimeProvider clock)
+    public FileSystemReportRepository(string root, TimeProvider clock, ICurrentTenant tenant)
     {
-        _root = root;
+        _root = Path.Combine(root, tenant.TenantId.ToString());
         _clock = clock;
         Directory.CreateDirectory(_root);
         _json = ReportJson.Apply(new JsonSerializerOptions { WriteIndented = true });

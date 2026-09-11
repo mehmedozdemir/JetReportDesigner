@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using JetReportDesigner.Storage.Entities;
+using JetReportDesigner.Storage.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace JetReportDesigner.Storage.Assets;
@@ -23,12 +24,13 @@ public interface IAssetRepository
     Task<SavedAsset> AddAsync(byte[] bytes, string contentType, string fileName, CancellationToken cancellationToken);
 }
 
-internal sealed class AssetRepository(JetReportDbContext db, TimeProvider clock) : IAssetRepository
+internal sealed class AssetRepository(JetReportDbContext db, TimeProvider clock, ICurrentTenant tenant) : IAssetRepository
 {
     public async Task<IReadOnlyList<SavedAsset>> ListAsync(CancellationToken cancellationToken)
     {
         var rows = await db.Assets
             .AsNoTracking()
+            .Where(a => a.TenantId == tenant.TenantId)
             .OrderByDescending(a => a.CreatedAtUtc)
             .Select(a => new SavedAsset(a.Id, a.FileName, a.ContentType, a.ByteLength, a.CreatedAtUtc))
             .ToListAsync(cancellationToken);
@@ -40,7 +42,7 @@ internal sealed class AssetRepository(JetReportDbContext db, TimeProvider clock)
     {
         var row = await db.Assets
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(a => a.Id == id && a.TenantId == tenant.TenantId, cancellationToken);
 
         return row is null ? null : new AssetContent(row.Content, row.ContentType, row.Sha256);
     }
@@ -53,7 +55,7 @@ internal sealed class AssetRepository(JetReportDbContext db, TimeProvider clock)
     {
         var sha = Convert.ToHexStringLower(SHA256.HashData(bytes));
 
-        var existing = await db.Assets.AsNoTracking().FirstOrDefaultAsync(a => a.Sha256 == sha, cancellationToken);
+        var existing = await db.Assets.AsNoTracking().FirstOrDefaultAsync(a => a.Sha256 == sha && a.TenantId == tenant.TenantId, cancellationToken);
         if (existing is not null)
         {
             return new SavedAsset(existing.Id, existing.FileName, existing.ContentType, existing.ByteLength, existing.CreatedAtUtc);
@@ -62,6 +64,7 @@ internal sealed class AssetRepository(JetReportDbContext db, TimeProvider clock)
         var row = new StoredAsset
         {
             Id = Guid.NewGuid(),
+            TenantId = tenant.TenantId,
             Sha256 = sha,
             ContentType = contentType,
             FileName = fileName,
@@ -78,7 +81,7 @@ internal sealed class AssetRepository(JetReportDbContext db, TimeProvider clock)
         catch (DbUpdateException)
         {
             // A concurrent upload of the same bytes may have won the unique-index race.
-            var race = await db.Assets.AsNoTracking().FirstOrDefaultAsync(a => a.Sha256 == sha, cancellationToken);
+            var race = await db.Assets.AsNoTracking().FirstOrDefaultAsync(a => a.Sha256 == sha && a.TenantId == tenant.TenantId, cancellationToken);
             if (race is null)
             {
                 throw;

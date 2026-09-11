@@ -9,6 +9,8 @@ public sealed class StoredConnection
 {
     public Guid Id { get; set; }
 
+    public Guid TenantId { get; set; }
+
     public string Name { get; set; } = string.Empty;
 
     /// <summary>"sqlServer" | "postgreSql" | "oracle".</summary>

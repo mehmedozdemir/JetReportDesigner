@@ -23,5 +23,6 @@ internal sealed class StoredReportConfiguration : IEntityTypeConfiguration<Store
         builder.Property(r => r.ConcurrencyToken).IsConcurrencyToken();
 
         builder.HasIndex(r => r.Name);
+        builder.HasIndex(r => r.TenantId);
     }
 }

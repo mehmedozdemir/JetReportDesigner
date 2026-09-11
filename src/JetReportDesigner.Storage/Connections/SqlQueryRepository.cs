@@ -1,4 +1,5 @@
 using JetReportDesigner.Storage.Entities;
+using JetReportDesigner.Storage.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace JetReportDesigner.Storage.Connections;
@@ -20,13 +21,13 @@ public interface ISqlQueryRepository
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken);
 }
 
-internal sealed class SqlQueryRepository(JetReportDbContext db, TimeProvider clock) : ISqlQueryRepository
+internal sealed class SqlQueryRepository(JetReportDbContext db, TimeProvider clock, ICurrentTenant tenant) : ISqlQueryRepository
 {
     public async Task<IReadOnlyList<SavedSqlQuery>> ListAsync(Guid connectionId, CancellationToken cancellationToken)
     {
         var rows = await db.SqlQueries
             .AsNoTracking()
-            .Where(q => q.ConnectionId == connectionId)
+            .Where(q => q.ConnectionId == connectionId && q.TenantId == tenant.TenantId)
             .OrderBy(q => q.Name)
             .ToListAsync(cancellationToken);
 
@@ -35,7 +36,7 @@ internal sealed class SqlQueryRepository(JetReportDbContext db, TimeProvider clo
 
     public async Task<SavedSqlQuery?> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var row = await db.SqlQueries.AsNoTracking().FirstOrDefaultAsync(q => q.Id == id, cancellationToken);
+        var row = await db.SqlQueries.AsNoTracking().FirstOrDefaultAsync(q => q.Id == id && q.TenantId == tenant.TenantId, cancellationToken);
         return row is null ? null : ToDto(row);
     }
 
@@ -48,6 +49,7 @@ internal sealed class SqlQueryRepository(JetReportDbContext db, TimeProvider clo
         var row = new StoredSqlQuery
         {
             Id = Guid.NewGuid(),
+            TenantId = tenant.TenantId,
             ConnectionId = connectionId,
             Name = name,
             CommandText = commandText,
@@ -64,7 +66,7 @@ internal sealed class SqlQueryRepository(JetReportDbContext db, TimeProvider clo
         string commandText,
         CancellationToken cancellationToken)
     {
-        var row = await db.SqlQueries.FirstOrDefaultAsync(q => q.Id == id, cancellationToken);
+        var row = await db.SqlQueries.FirstOrDefaultAsync(q => q.Id == id && q.TenantId == tenant.TenantId, cancellationToken);
         if (row is null)
         {
             return null;
@@ -78,7 +80,7 @@ internal sealed class SqlQueryRepository(JetReportDbContext db, TimeProvider clo
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        var deleted = await db.SqlQueries.Where(q => q.Id == id).ExecuteDeleteAsync(cancellationToken);
+        var deleted = await db.SqlQueries.Where(q => q.Id == id && q.TenantId == tenant.TenantId).ExecuteDeleteAsync(cancellationToken);
         return deleted > 0;
     }
 

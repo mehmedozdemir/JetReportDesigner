@@ -2,6 +2,7 @@ using JetReportDesigner.Storage.Assets;
 using JetReportDesigner.Storage.Connections;
 using JetReportDesigner.Storage.Entities;
 using JetReportDesigner.Storage.Repositories;
+using JetReportDesigner.Storage.Tenancy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +38,8 @@ public static class DependencyInjection
         services.AddScoped<IConnectionRepository, ConnectionRepository>();
         services.AddScoped<ISqlQueryRepository, SqlQueryRepository>();
         services.AddScoped<IAssetRepository, AssetRepository>();
+        services.AddScoped<ITenantRepository, TenantRepository>();
+        services.AddScoped<ITenantInviteRepository, TenantInviteRepository>();
 
         if (options.ReportStore.Equals("filesystem", StringComparison.OrdinalIgnoreCase))
         {
@@ -46,8 +49,10 @@ public static class DependencyInjection
             }
 
             var root = options.FileSystemPath;
-            services.AddSingleton<IReportRepository>(sp =>
-                new FileSystemReportRepository(root, sp.GetRequiredService<TimeProvider>()));
+            // Scoped, not Singleton: the tenant subfolder depends on the current request's
+            // ICurrentTenant, which is itself scoped.
+            services.AddScoped<IReportRepository>(sp =>
+                new FileSystemReportRepository(root, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ICurrentTenant>()));
         }
         else
         {
@@ -96,6 +101,26 @@ public static class DependencyInjection
             {
                 await roles.CreateAsync(new AppRole { Name = name });
             }
+        }
+    }
+
+    /// <summary>
+    /// The tenancy migration backfills every pre-existing row (users, reports, connections, …)
+    /// with <see cref="Guid.Empty"/> as their TenantId, since that data predates tenants
+    /// entirely. This ensures a matching "Tenant" row exists for it, so an upgraded
+    /// single-tenant install keeps working with a real (if implicit) organization instead of
+    /// a dangling id. Call once at startup, after migrations. A no-op on a fresh database
+    /// (nothing will actually reference Guid.Empty).
+    /// </summary>
+    public static async Task SeedDefaultTenantAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JetReportDbContext>();
+        var clock = scope.ServiceProvider.GetRequiredService<TimeProvider>();
+        if (!await db.Tenants.AnyAsync(t => t.Id == Guid.Empty, cancellationToken))
+        {
+            db.Tenants.Add(new Entities.Tenant { Id = Guid.Empty, Name = "Default Organization", CreatedAtUtc = clock.GetUtcNow().UtcDateTime });
+            await db.SaveChangesAsync(cancellationToken);
         }
     }
 

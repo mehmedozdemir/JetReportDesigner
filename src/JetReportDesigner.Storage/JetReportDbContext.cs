@@ -17,6 +17,10 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
 
     public DbSet<StoredAsset> Assets => Set<StoredAsset>();
 
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+
+    public DbSet<TenantInvite> TenantInvites => Set<TenantInvite>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -26,6 +30,8 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
         // Rename the default "AspNetX" Identity tables to match this app's PascalCase,
         // unprefixed naming (Reports, Connections, …).
         modelBuilder.Entity<AppUser>().ToTable("Users");
+        modelBuilder.Entity<AppUser>().Property(u => u.TenantId).IsRequired();
+        modelBuilder.Entity<AppUser>().HasIndex(u => u.TenantId);
         modelBuilder.Entity<AppRole>().ToTable("Roles");
         modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>().ToTable("UserRoles");
         modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserClaim<Guid>>().ToTable("UserClaims");

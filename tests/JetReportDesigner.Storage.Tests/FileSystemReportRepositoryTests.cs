@@ -1,14 +1,20 @@
 using JetReportDesigner.Core.Model;
 using JetReportDesigner.Storage.Repositories;
+using JetReportDesigner.Storage.Tenancy;
 
 namespace JetReportDesigner.Storage.Tests;
+
+internal sealed class FixedTenant(Guid tenantId) : ICurrentTenant
+{
+    public Guid TenantId { get; } = tenantId;
+}
 
 public sealed class FileSystemReportRepositoryTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "jrd-fs-" + Guid.NewGuid().ToString("N"));
     private readonly FileSystemReportRepository _repo;
 
-    public FileSystemReportRepositoryTests() => _repo = new FileSystemReportRepository(_root, TimeProvider.System);
+    public FileSystemReportRepositoryTests() => _repo = new FileSystemReportRepository(_root, TimeProvider.System, new FixedTenant(Guid.NewGuid()));
 
     public void Dispose()
     {

@@ -18,6 +18,6 @@ internal sealed class StoredAssetConfiguration : IEntityTypeConfiguration<Stored
         builder.Property(a => a.FileName).HasMaxLength(260).IsRequired();
         builder.Property(a => a.Content).IsRequired();
 
-        builder.HasIndex(a => a.Sha256).IsUnique();
+        builder.HasIndex(a => new { a.TenantId, a.Sha256 }).IsUnique();
     }
 }

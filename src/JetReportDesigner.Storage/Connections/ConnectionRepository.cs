@@ -1,5 +1,6 @@
 using JetReportDesigner.Core.Model;
 using JetReportDesigner.Storage.Entities;
+using JetReportDesigner.Storage.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace JetReportDesigner.Storage.Connections;
@@ -35,12 +36,14 @@ public interface IConnectionRepository
 internal sealed class ConnectionRepository(
     JetReportDbContext db,
     IConnectionSecretProtector protector,
-    TimeProvider clock) : IConnectionRepository
+    TimeProvider clock,
+    ICurrentTenant tenant) : IConnectionRepository
 {
     public async Task<IReadOnlyList<RegisteredConnection>> ListAsync(CancellationToken cancellationToken)
     {
         var rows = await db.Connections
             .AsNoTracking()
+            .Where(c => c.TenantId == tenant.TenantId)
             .OrderBy(c => c.Name)
             .Select(c => new { c.Id, c.Name, c.Provider, c.CreatedAtUtc })
             .ToListAsync(cancellationToken);
@@ -50,7 +53,7 @@ internal sealed class ConnectionRepository(
 
     public async Task<RegisteredConnection?> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var row = await db.Connections.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        var row = await db.Connections.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id && c.TenantId == tenant.TenantId, cancellationToken);
         return row is null ? null : ToInfo(row);
     }
 
@@ -63,6 +66,7 @@ internal sealed class ConnectionRepository(
         var row = new StoredConnection
         {
             Id = Guid.NewGuid(),
+            TenantId = tenant.TenantId,
             Name = name,
             Provider = ProviderString(provider),
             EncryptedConnectionString = protector.Protect(connectionString),
@@ -80,7 +84,7 @@ internal sealed class ConnectionRepository(
         string? connectionString,
         CancellationToken cancellationToken)
     {
-        var row = await db.Connections.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        var row = await db.Connections.FirstOrDefaultAsync(c => c.Id == id && c.TenantId == tenant.TenantId, cancellationToken);
         if (row is null)
         {
             return null;
@@ -99,13 +103,13 @@ internal sealed class ConnectionRepository(
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        var deleted = await db.Connections.Where(c => c.Id == id).ExecuteDeleteAsync(cancellationToken);
+        var deleted = await db.Connections.Where(c => c.Id == id && c.TenantId == tenant.TenantId).ExecuteDeleteAsync(cancellationToken);
         return deleted > 0;
     }
 
     public async Task<(SqlProvider Provider, string ConnectionString)?> ResolveAsync(Guid id, CancellationToken cancellationToken)
     {
-        var row = await db.Connections.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        var row = await db.Connections.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id && c.TenantId == tenant.TenantId, cancellationToken);
         return row is null
             ? null
             : (ParseProvider(row.Provider), protector.Unprotect(row.EncryptedConnectionString));
