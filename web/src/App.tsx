@@ -11,7 +11,6 @@ import { LoginScreen } from "./components/LoginScreen";
 import { COLLAPSED_WIDTH, ResizablePanel } from "./components/ResizablePanel";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { StartScreen } from "./components/StartScreen";
-import { TeamDialog } from "./components/TeamDialog";
 import { Toolbar } from "./components/Toolbar";
 import { PropertiesPanel } from "./components/PropertiesPanel";
 import { PreviewPane } from "./components/PreviewPane";
@@ -27,7 +26,6 @@ export function App() {
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const [showStart, setShowStart] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showTeam, setShowTeam] = useState(false);
   const autoSaveSeconds = usePrefs((s) => s.autoSaveSeconds);
   const leftPanelWidth = usePrefs((s) => s.leftPanelWidth);
   const rightPanelWidth = usePrefs((s) => s.rightPanelWidth);
@@ -234,7 +232,6 @@ export function App() {
         onNew={() => void createReport()}
         onShowStart={() => setShowStart(true)}
         onSettings={() => setShowSettings(true)}
-        onTeam={() => setShowTeam(true)}
         onSave={() => void save()}
         onExport={(format) => void exportAs(format)}
       />
@@ -338,7 +335,6 @@ export function App() {
       )}
 
       {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
-      {showTeam && <TeamDialog onClose={() => setShowTeam(false)} />}
 
       {error && (
         <div className="toast" role="alert">

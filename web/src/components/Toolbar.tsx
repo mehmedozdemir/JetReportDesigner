@@ -12,7 +12,6 @@ import {
   Save,
   Settings,
   Undo2,
-  Users,
 } from "lucide-react";
 import { isDesigner, useAuth } from "../auth";
 import { useDesigner } from "../store";
@@ -26,12 +25,11 @@ interface ToolbarProps {
   onNew: () => void;
   onShowStart: () => void;
   onSettings: () => void;
-  onTeam: () => void;
   onSave: () => void;
   onExport: (format: "pdf" | "xlsx") => void;
 }
 
-export function Toolbar({ busy, onNew, onShowStart, onSettings, onTeam, onSave, onExport }: ToolbarProps) {
+export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport }: ToolbarProps) {
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
   const canEdit = isDesigner(user);
@@ -89,7 +87,6 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onTeam, onSave, 
             { label: user.email, disabled: true },
             { label: canEdit ? "Designer" : "Viewer", disabled: true },
             { sep: true },
-            ...(canEdit ? [{ label: "Manage team", icon: Users, onClick: onTeam }] : []),
             { label: "Sign out", icon: LogOut, onClick: logout, danger: true },
           ]}
           onClose={() => setUserMenu(null)}
