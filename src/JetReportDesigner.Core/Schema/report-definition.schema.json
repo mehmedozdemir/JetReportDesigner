@@ -245,6 +245,7 @@
         "style": { "oneOf": [{ "$ref": "#/$defs/style" }, { "type": "null" }] },
         "visibleWhen": { "type": ["string", "null"] },
         "formatRules": { "type": "array", "items": { "$ref": "#/$defs/formatRule" } },
+        "canGrow": { "type": "boolean" },
         "text": { "type": ["string", "null"] },
         "value": { "type": ["string", "null"] },
         "format": { "type": ["string", "null"] },

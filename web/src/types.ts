@@ -179,6 +179,8 @@ export interface ReportElement {
   style?: ReportStyle | null;
   visibleWhen?: string | null;
   formatRules?: FormatRule[];
+  /** Grow (instead of clipping) when the resolved text needs more lines than the bounds are tall. */
+  canGrow?: boolean;
   text?: string | null;
   value?: string | null;
   format?: string | null;

@@ -26,6 +26,14 @@ public sealed class ReportElement
     /// <summary>Conditional-formatting rules evaluated per row; all matches layer on, in order.</summary>
     public List<FormatRule> FormatRules { get; set; } = [];
 
+    /// <summary>
+    /// For a label/field/pageInfo: when the resolved text needs more lines than
+    /// <see cref="Bounds"/> is tall, grow the element (and, for a detail band element,
+    /// the band instance) to fit instead of clipping. Other elements in the same band
+    /// keep their designed position — growing one element does not push siblings down.
+    /// </summary>
+    public bool CanGrow { get; set; }
+
     // ---- type-specific ----
 
     /// <summary>Static text for <see cref="ElementType.Label"/>.</summary>
