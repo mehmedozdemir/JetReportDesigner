@@ -16,6 +16,7 @@ import {
   BoxSelect,
   FileStack,
   FileText,
+  Grid3x3,
   Hash,
   Image as ImageIcon,
   Layers,
@@ -110,6 +111,7 @@ const ELEMENT_ICON: Record<ElementType, LucideIcon> = {
   chart: BarChart3,
   subreport: FileStack,
   barcode: QrCode,
+  matrix: Grid3x3,
 };
 
 export function PropertiesPanel() {

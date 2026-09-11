@@ -70,6 +70,7 @@ public enum ElementType
     Chart,
     Subreport,
     Barcode,
+    Matrix,
 }
 
 public enum TextAlign

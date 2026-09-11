@@ -174,6 +174,8 @@ public sealed class ReportDefinitionValidator : AbstractValidator<ReportDefiniti
             });
             When(e => e.Type == ElementType.Barcode, () =>
                 RuleFor(e => e.Barcode).NotNull());
+            When(e => e.Type == ElementType.Matrix, () =>
+                RuleFor(e => e.Matrix).NotNull());
         }
     }
 }

@@ -12,7 +12,8 @@ export type ElementType =
   | "pageInfo"
   | "chart"
   | "subreport"
-  | "barcode";
+  | "barcode"
+  | "matrix";
 
 export type ChartType = "column" | "bar" | "line" | "area" | "pie";
 
@@ -37,6 +38,18 @@ export interface SubreportSpec {
   reportId: string;
   /** Referenced report's parameter name -> a binding/expression against the parent's row. */
   parameters: Record<string, string>;
+}
+
+export interface MatrixSpec {
+  dataSource: string;
+  rowField: string;
+  rowHeader?: string | null;
+  columnField: string;
+  valueField: string;
+  aggregate: AggregateFunction;
+  format?: string | null;
+  showRowTotals: boolean;
+  showColumnTotals: boolean;
 }
 
 export type BarcodeSymbology = "qr" | "code128" | "ean13" | "code39" | "dataMatrix";
@@ -177,6 +190,7 @@ export interface ReportElement {
   chart?: ChartSpec | null;
   subreport?: SubreportSpec | null;
   barcode?: BarcodeSpec | null;
+  matrix?: MatrixSpec | null;
 }
 
 export type BandType =
@@ -450,6 +464,23 @@ export function defaultElement(type: ElementType, x: number, y: number): ReportE
         ...base,
         bounds: { x, y, width: 140, height: 140 },
         barcode: { symbology: "qr", value: "{source.field}", foreColor: "#000000", backColor: "#ffffff", showText: true },
+      };
+    case "matrix":
+      return {
+        ...base,
+        bounds: { x, y, width: 460, height: 160 },
+        matrix: {
+          dataSource: "",
+          rowField: "{source.row}",
+          rowHeader: null,
+          columnField: "{source.column}",
+          valueField: "{source.value}",
+          aggregate: "sum",
+          format: null,
+          showRowTotals: true,
+          showColumnTotals: true,
+        },
+        style: { border: edge(1, "#cbd5e1") },
       };
     case "pageInfo":
       return { ...base, value: "{param:title}" };

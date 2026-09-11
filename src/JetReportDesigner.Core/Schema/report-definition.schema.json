@@ -228,7 +228,7 @@
       "required": ["id", "type", "bounds"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "type": { "enum": ["label", "field", "table", "image", "line", "rectangle", "pageInfo", "chart", "subreport", "barcode"] },
+        "type": { "enum": ["label", "field", "table", "image", "line", "rectangle", "pageInfo", "chart", "subreport", "barcode", "matrix"] },
         "bounds": {
           "type": "object",
           "additionalProperties": false,
@@ -328,6 +328,21 @@
             "foreColor": { "type": "string" },
             "backColor": { "type": "string" },
             "showText": { "type": "boolean" }
+          }
+        },
+        "matrix": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "dataSource": { "type": "string" },
+            "rowField": { "type": "string" },
+            "rowHeader": { "type": ["string", "null"] },
+            "columnField": { "type": "string" },
+            "valueField": { "type": "string" },
+            "aggregate": { "enum": ["none", "sum", "count", "average", "min", "max", "first", "last"] },
+            "format": { "type": ["string", "null"] },
+            "showRowTotals": { "type": "boolean" },
+            "showColumnTotals": { "type": "boolean" }
           }
         }
       }

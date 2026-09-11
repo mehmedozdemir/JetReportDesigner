@@ -52,6 +52,8 @@ public sealed class ReportElement
     public SubreportSpec? Subreport { get; set; }
 
     public BarcodeSpec? Barcode { get; set; }
+
+    public MatrixSpec? Matrix { get; set; }
 }
 
 public sealed class Bounds
@@ -164,4 +166,36 @@ public sealed class BarcodeSpec
 
     /// <summary>Print the human-readable value under the bars. Ignored for the 2D symbologies (qr, dataMatrix).</summary>
     public bool ShowText { get; set; } = true;
+}
+
+/// <summary>
+/// A pivot/cross-tab grid: one row per distinct <see cref="RowField"/> value, one
+/// column per distinct <see cref="ColumnField"/> value (found in the data at render
+/// time — there is no static column list like <see cref="TableSpec"/>), each cell the
+/// <see cref="Aggregate"/> of <see cref="ValueField"/> over the rows matching that
+/// row/column pair.
+/// </summary>
+public sealed class MatrixSpec
+{
+    public string DataSource { get; set; } = string.Empty;
+
+    /// <summary>Binding or expression whose per-row value becomes a row.</summary>
+    public string RowField { get; set; } = string.Empty;
+
+    /// <summary>Header of the row-key column, e.g. "Region". Falls back to <see cref="RowField"/> when blank.</summary>
+    public string? RowHeader { get; set; }
+
+    /// <summary>Binding or expression whose per-row value becomes a column.</summary>
+    public string ColumnField { get; set; } = string.Empty;
+
+    /// <summary>Binding or expression aggregated into each cell.</summary>
+    public string ValueField { get; set; } = string.Empty;
+
+    public AggregateFunction Aggregate { get; set; } = AggregateFunction.Sum;
+
+    public string? Format { get; set; }
+
+    public bool ShowRowTotals { get; set; } = true;
+
+    public bool ShowColumnTotals { get; set; } = true;
 }
