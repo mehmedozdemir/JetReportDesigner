@@ -8,9 +8,10 @@ using Row = IReadOnlyDictionary<string, object?>;
 
 /// <summary>
 /// Builds a paginated <see cref="RenderDocument"/> from a banded report: a repeating
-/// detail band, one grouping level with header/footer, aggregates at group/page/report
-/// scope, and page header/footer with page numbers. Bands are fixed height (no
-/// auto-grow); a band that does not fit forces a page break.
+/// detail band, any number of nested grouping levels (each with its own header/footer
+/// pair), aggregates at group/page/report scope, and page header/footer with page
+/// numbers. Bands are fixed height (no auto-grow); a band that does not fit forces a
+/// page break.
 /// </summary>
 public sealed class BandedLayoutBuilder
 {
@@ -18,7 +19,13 @@ public sealed class BandedLayoutBuilder
     {
         /// <summary>0-based index of this detail row within all rows; -1 for non-detail bands.</summary>
         public int RowIndex { get; init; } = -1;
+
+        /// <summary>Nesting level for a group header/footer instance; -1 for every other band.</summary>
+        public int GroupLevel { get; init; } = -1;
     }
+
+    /// <summary>One nesting level: its header/footer bands (either may be absent) and the shared grouping key.</summary>
+    private sealed record GroupLevel(int Index, Band? Header, Band? Footer, GroupSpec Spec);
 
     public RenderDocument Build(
         ReportDefinition report,
@@ -38,9 +45,7 @@ public sealed class BandedLayoutBuilder
         Band? Band(BandType type) => bands.FirstOrDefault(b => b.Type == type);
         var reportHeader = Band(BandType.ReportHeader);
         var pageHeader = Band(BandType.PageHeader);
-        var groupHeader = Band(BandType.GroupHeader);
         var detail = Band(BandType.Detail);
-        var groupFooter = Band(BandType.GroupFooter);
         var pageFooter = Band(BandType.PageFooter);
         var reportFooter = Band(BandType.ReportFooter);
 
@@ -49,26 +54,47 @@ public sealed class BandedLayoutBuilder
         var detailSource = detail?.DataSource ?? report.DataSources.FirstOrDefault()?.Name ?? string.Empty;
         var allRows = data.Get(detailSource).Rows.ToList();
 
-        var groupSpec = groupHeader?.Group ?? groupFooter?.Group;
-        var grouping = groupSpec is not null
-            && !string.IsNullOrWhiteSpace(groupSpec.Expression)
-            && (groupHeader is not null || groupFooter is not null);
-
         var culture = CultureResolver.Resolve(report.Culture);
         var baseContext = new BindingContext(null, parameters) { Now = now, Culture = culture };
 
-        if (grouping)
-        {
-            var descending = groupSpec!.Sort.Equals("desc", StringComparison.OrdinalIgnoreCase);
-            var comparer = Comparer<object?>.Create(CompareKeys);
-            allRows = (descending
-                    ? allRows.OrderByDescending(r => GroupKey(groupSpec.Expression, r), comparer)
-                    : allRows.OrderBy(r => GroupKey(groupSpec.Expression, r), comparer))
-                .ToList();
-        }
+        // Every group header/footer band, paired up by GroupLevel (0 = outermost); a
+        // level only counts as "grouping" when it has an expression to group by.
+        var headerBands = bands.Where(b => b.Type == BandType.GroupHeader).OrderBy(b => b.GroupLevel).ToList();
+        var footerBands = bands.Where(b => b.Type == BandType.GroupFooter).OrderBy(b => b.GroupLevel).ToList();
+        var levels = headerBands.Select(b => b.GroupLevel)
+            .Concat(footerBands.Select(b => b.GroupLevel))
+            .Distinct()
+            .OrderBy(l => l)
+            .Select(l =>
+            {
+                var header = headerBands.FirstOrDefault(b => b.GroupLevel == l);
+                var footer = footerBands.FirstOrDefault(b => b.GroupLevel == l);
+                return new GroupLevel(l, header, footer, header?.Group ?? footer?.Group!);
+            })
+            .Where(l => l.Spec is { Expression.Length: > 0 })
+            .ToList();
+
+        var grouping = levels.Count > 0;
 
         object? GroupKey(string expression, Row row) =>
             BindingResolver.ResolveGroupKey(expression, baseContext.WithRow(row));
+
+        if (grouping)
+        {
+            var comparer = Comparer<object?>.Create(CompareKeys);
+            IOrderedEnumerable<Row>? ordered = null;
+            foreach (var level in levels)
+            {
+                var expression = level.Spec.Expression;
+                var descending = level.Spec.Sort.Equals("desc", StringComparison.OrdinalIgnoreCase);
+                object? Key(Row r) => GroupKey(expression, r);
+                ordered = ordered is null
+                    ? (descending ? allRows.OrderByDescending(Key, comparer) : allRows.OrderBy(Key, comparer))
+                    : (descending ? ordered.ThenByDescending(Key, comparer) : ordered.ThenBy(Key, comparer));
+            }
+
+            allRows = ordered!.ToList();
+        }
 
         // ---- layout pass ----
         var pages = new List<List<BandInstance>>();
@@ -76,6 +102,16 @@ public sealed class BandedLayoutBuilder
         var pageRows = new List<Row>();
         var y = margins.Top;
         double UsableBottom() => pageHeight - margins.Bottom - H(pageFooter);
+
+        var previousKeys = new object?[levels.Count];
+        var currentGroupRowByLevel = new Row?[levels.Count];
+        var groupRowsByLevel = new List<Row>[levels.Count];
+        for (var i = 0; i < levels.Count; i++)
+        {
+            groupRowsByLevel[i] = [];
+        }
+
+        var hasOpenGroup = false;
 
         void ClosePage()
         {
@@ -85,7 +121,7 @@ public sealed class BandedLayoutBuilder
             }
         }
 
-        void BeginPage(bool first, Row? repeatGroupRow)
+        void BeginPage(bool first)
         {
             if (pages.Count > 0)
             {
@@ -109,26 +145,28 @@ public sealed class BandedLayoutBuilder
                 y += H(pageHeader);
             }
 
-            if (!first && grouping && groupHeader is { RepeatOnEveryPage: true } && repeatGroupRow is not null)
+            if (!first && grouping && hasOpenGroup)
             {
-                page.Add(new BandInstance(groupHeader, y, repeatGroupRow, null));
-                y += H(groupHeader);
+                for (var lvl = 0; lvl < levels.Count; lvl++)
+                {
+                    if (levels[lvl].Header is { RepeatOnEveryPage: true } header && currentGroupRowByLevel[lvl] is { } repeatRow)
+                    {
+                        page.Add(new BandInstance(header, y, repeatRow, null) { GroupLevel = lvl });
+                        y += H(header);
+                    }
+                }
             }
         }
 
-        void Ensure(double height, Row? currentGroupRow)
+        void Ensure(double height)
         {
             if (y + height > UsableBottom())
             {
-                BeginPage(false, currentGroupRow);
+                BeginPage(false);
             }
         }
 
-        BeginPage(first: true, repeatGroupRow: null);
-
-        object? previousKey = null;
-        Row? currentGroupRow = null;
-        var groupRows = new List<Row>();
+        BeginPage(first: true);
 
         for (var i = 0; i < allRows.Count; i++)
         {
@@ -136,73 +174,157 @@ public sealed class BandedLayoutBuilder
 
             if (grouping)
             {
-                var key = GroupKey(groupSpec!.Expression, row);
-                if (i == 0 || !KeyEquals(key, previousKey))
+                var currentKeys = new object?[levels.Count];
+                for (var lvl = 0; lvl < levels.Count; lvl++)
                 {
-                    if (i != 0 && groupFooter is not null)
+                    currentKeys[lvl] = GroupKey(levels[lvl].Spec.Expression, row);
+                }
+
+                var changedAt = -1;
+                if (!hasOpenGroup)
+                {
+                    changedAt = 0;
+                }
+                else
+                {
+                    for (var lvl = 0; lvl < levels.Count; lvl++)
                     {
-                        Ensure(H(groupFooter), currentGroupRow);
-                        page.Add(new BandInstance(groupFooter, y, currentGroupRow, groupRows.ToList()));
-                        y += H(groupFooter);
+                        if (!KeyEquals(currentKeys[lvl], previousKeys[lvl]))
+                        {
+                            changedAt = lvl;
+                            break;
+                        }
+                    }
+                }
+
+                if (changedAt >= 0)
+                {
+                    // Close the innermost open groups first, down to the level that changed.
+                    for (var lvl = levels.Count - 1; lvl >= changedAt; lvl--)
+                    {
+                        if (hasOpenGroup && levels[lvl].Footer is { } footer)
+                        {
+                            Ensure(H(footer));
+                            page.Add(new BandInstance(footer, y, currentGroupRowByLevel[lvl], groupRowsByLevel[lvl].ToList()) { GroupLevel = lvl });
+                            y += H(footer);
+                        }
+
+                        groupRowsByLevel[lvl] = [];
                     }
 
-                    Ensure(H(groupHeader) + H(detail), row);
-                    currentGroupRow = row;
-                    if (groupHeader is not null)
+                    // Open the newly-started levels, outermost first, keeping their headers
+                    // (down to the detail band) together against a page break.
+                    double headersHeight = 0;
+                    for (var lvl = changedAt; lvl < levels.Count; lvl++)
                     {
-                        page.Add(new BandInstance(groupHeader, y, row, null));
-                        y += H(groupHeader);
+                        headersHeight += H(levels[lvl].Header);
                     }
 
-                    groupRows = [];
-                    previousKey = key;
+                    Ensure(headersHeight + H(detail));
+
+                    for (var lvl = changedAt; lvl < levels.Count; lvl++)
+                    {
+                        currentGroupRowByLevel[lvl] = row;
+                        if (levels[lvl].Header is { } header)
+                        {
+                            page.Add(new BandInstance(header, y, row, null) { GroupLevel = lvl });
+                            y += H(header);
+                        }
+                    }
+
+                    previousKeys = currentKeys;
+                    hasOpenGroup = true;
                 }
             }
 
-            Ensure(H(detail), currentGroupRow);
+            Ensure(H(detail));
             if (detail is not null)
             {
                 page.Add(new BandInstance(detail, y, row, null) { RowIndex = i });
                 y += H(detail);
             }
 
-            groupRows.Add(row);
+            for (var lvl = 0; lvl < levels.Count; lvl++)
+            {
+                groupRowsByLevel[lvl].Add(row);
+            }
+
             pageRows.Add(row);
         }
 
-        if (grouping && groupFooter is not null && allRows.Count > 0)
+        if (grouping && allRows.Count > 0)
         {
-            Ensure(H(groupFooter), currentGroupRow);
-            page.Add(new BandInstance(groupFooter, y, currentGroupRow, groupRows.ToList()));
-            y += H(groupFooter);
+            for (var lvl = levels.Count - 1; lvl >= 0; lvl--)
+            {
+                if (levels[lvl].Footer is { } footer)
+                {
+                    Ensure(H(footer));
+                    page.Add(new BandInstance(footer, y, currentGroupRowByLevel[lvl], groupRowsByLevel[lvl].ToList()) { GroupLevel = lvl });
+                    y += H(footer);
+                }
+            }
         }
 
         if (reportFooter is not null)
         {
-            Ensure(H(reportFooter), currentGroupRow);
+            Ensure(H(reportFooter));
             page.Add(new BandInstance(reportFooter, y, null, allRows));
             y += H(reportFooter);
         }
 
         ClosePage();
 
-        // Per-row group membership, so a group header/footer can aggregate its own rows.
-        var rowToGroup = new Dictionary<Row, IReadOnlyList<Row>>(ReferenceEqualityComparer.Instance);
+        // Per-row, per-level group membership, so a header/footer can aggregate its own
+        // (possibly not-yet-fully-seen) group — same row list, aliased across every row
+        // in the run, growing as the run is walked.
+        var rowToGroupByLevel = new Dictionary<Row, IReadOnlyList<Row>>[levels.Count];
+        for (var lvl = 0; lvl < levels.Count; lvl++)
+        {
+            rowToGroupByLevel[lvl] = new Dictionary<Row, IReadOnlyList<Row>>(ReferenceEqualityComparer.Instance);
+        }
+
         if (grouping)
         {
-            List<Row> current = [];
-            object? prev = null;
+            var prevKeys = new object?[levels.Count];
+            var runs = new List<Row>[levels.Count];
+            for (var lvl = 0; lvl < levels.Count; lvl++)
+            {
+                runs[lvl] = [];
+            }
+
             for (var i = 0; i < allRows.Count; i++)
             {
-                var key = GroupKey(groupSpec!.Expression, allRows[i]);
-                if (i == 0 || !KeyEquals(key, prev))
+                var row = allRows[i];
+                var currentKeys = levels.Select(l => GroupKey(l.Spec.Expression, row)).ToArray();
+
+                var changedAt = i == 0 ? 0 : -1;
+                if (i != 0)
                 {
-                    current = [];
-                    prev = key;
+                    for (var lvl = 0; lvl < levels.Count; lvl++)
+                    {
+                        if (!KeyEquals(currentKeys[lvl], prevKeys[lvl]))
+                        {
+                            changedAt = lvl;
+                            break;
+                        }
+                    }
                 }
 
-                current.Add(allRows[i]);
-                rowToGroup[allRows[i]] = current;
+                if (changedAt >= 0)
+                {
+                    for (var lvl = changedAt; lvl < levels.Count; lvl++)
+                    {
+                        runs[lvl] = [];
+                    }
+                }
+
+                for (var lvl = 0; lvl < levels.Count; lvl++)
+                {
+                    runs[lvl].Add(row);
+                    rowToGroupByLevel[lvl][row] = runs[lvl];
+                }
+
+                prevKeys = currentKeys;
             }
         }
 
@@ -234,7 +356,8 @@ public sealed class BandedLayoutBuilder
                     BandType.ReportHeader or BandType.ReportFooter => allRows,
                     BandType.PageHeader or BandType.PageFooter => instance.AggregateRows ?? pageDetailRows,
                     BandType.GroupHeader or BandType.GroupFooter => instance.AggregateRows
-                        ?? (instance.Row is { } gr && rowToGroup.TryGetValue(gr, out var g) ? g : allRows),
+                        ?? (instance.Row is { } gr && instance.GroupLevel is >= 0 && instance.GroupLevel < rowToGroupByLevel.Length
+                            && rowToGroupByLevel[instance.GroupLevel].TryGetValue(gr, out var g) ? g : allRows),
                     _ => allRows,
                 };
 
