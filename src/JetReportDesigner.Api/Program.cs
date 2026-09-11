@@ -1,5 +1,7 @@
+using System.Text;
 using FluentValidation;
 using JetReportDesigner.Api.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using JetReportDesigner.Core.Serialization;
 using JetReportDesigner.Core.Validation;
@@ -12,6 +14,8 @@ using JetReportDesigner.Storage;
 using JetReportDesigner.Storage.Migrations.Oracle;
 using JetReportDesigner.Storage.Migrations.PostgreSql;
 using JetReportDesigner.Storage.Migrations.SqlServer;
+using JetReportDesigner.Storage.Entities;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +33,40 @@ builder.Services.AddJetReportStorage(
     new SqlServerStorageProvider(),
     new PostgreSqlStorageProvider(),
     new OracleStorageProvider());
+builder.Services.AddJetReportIdentity();
+
+// --- Auth: password login exchanged for a JWT (no cookies) ---
+builder.Services.AddOptions<JwtOptions>()
+    .BindConfiguration(JwtOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddSingleton<JwtTokenService>();
+
+var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
+var jwtSecret = jwtSection["Secret"] ?? string.Empty;
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtSection["Issuer"],
+            ValidateAudience = true,
+            ValidAudience = jwtSection["Audience"],
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30),
+        };
+    });
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(AuthPolicies.Designer, policy => policy.RequireRole(AppRole.Designer))
+    // Every endpoint requires a signed-in user (Designer or Viewer) unless it opts out
+    // with [AllowAnonymous] — currently only /api/auth/register and /api/auth/login.
+    .SetFallbackPolicy(new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build());
 
 // --- Web ---
 builder.Services
@@ -99,6 +137,8 @@ if (storageOptions.MigrateOnStartup)
     await app.Services.MigrateJetReportStorageAsync();
 }
 
+await app.Services.SeedJetReportRolesAsync();
+
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
 
@@ -109,14 +149,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors(SpaCorsPolicy);
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 // Serve the built SPA from wwwroot when present (single-container deployment).
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.MapControllers();
-app.MapHealthChecks("/health/live", new() { Predicate = _ => false });
-app.MapHealthChecks("/health/ready");
-app.MapFallbackToFile("index.html");
+app.MapHealthChecks("/health/live", new() { Predicate = _ => false }).AllowAnonymous();
+app.MapHealthChecks("/health/ready").AllowAnonymous();
+// The SPA shell itself (and its login screen) must load before the user has a token.
+app.MapFallbackToFile("index.html").AllowAnonymous();
 
 await app.RunAsync();
 

@@ -1,5 +1,7 @@
 using JetReportDesigner.Api.Contracts;
+using JetReportDesigner.Api.Infrastructure;
 using JetReportDesigner.Storage.Connections;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JetReportDesigner.Api.Controllers;
@@ -31,6 +33,7 @@ public sealed class SqlQueriesController(ISqlQueryRepository repository) : Contr
     }
 
     [HttpPost]
+    [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<ActionResult<SqlQueryResponse>> Create(
         [FromBody] CreateSqlQueryRequest body,
         CancellationToken cancellationToken)
@@ -47,6 +50,7 @@ public sealed class SqlQueriesController(ISqlQueryRepository repository) : Contr
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<ActionResult<SqlQueryResponse>> Update(
         Guid id,
         [FromBody] UpdateSqlQueryRequest body,
@@ -62,6 +66,7 @@ public sealed class SqlQueriesController(ISqlQueryRepository repository) : Contr
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
         await repository.DeleteAsync(id, cancellationToken) ? NoContent() : NotFound();
 }

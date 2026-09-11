@@ -1,8 +1,10 @@
 using FluentValidation;
 using JetReportDesigner.Api.Contracts;
+using JetReportDesigner.Api.Infrastructure;
 using JetReportDesigner.Core.Model;
 using JetReportDesigner.Core.Validation;
 using JetReportDesigner.Storage.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JetReportDesigner.Api.Controllers;
@@ -34,6 +36,7 @@ public sealed class ReportsController(IReportRepository repository, IValidator<R
     }
 
     [HttpPost]
+    [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<ActionResult<ReportResponse>> Create(
         [FromBody] ReportDefinition definition,
         CancellationToken cancellationToken)
@@ -46,6 +49,7 @@ public sealed class ReportsController(IReportRepository repository, IValidator<R
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<ActionResult<ReportResponse>> Update(
         Guid id,
         [FromBody] ReportDefinition definition,
@@ -65,6 +69,7 @@ public sealed class ReportsController(IReportRepository repository, IValidator<R
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
         await repository.DeleteAsync(id, cancellationToken) ? NoContent() : NotFound();
 
@@ -93,6 +98,7 @@ public sealed class ReportsController(IReportRepository repository, IValidator<R
     }
 
     [HttpPost("{id:guid}/versions/{version:int}/restore")]
+    [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<ActionResult<ReportResponse>> Restore(Guid id, int version, CancellationToken cancellationToken)
     {
         var restored = await repository.RestoreVersionAsync(id, version, cancellationToken);

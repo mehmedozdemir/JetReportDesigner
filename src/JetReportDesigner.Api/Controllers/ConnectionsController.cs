@@ -1,6 +1,8 @@
 using JetReportDesigner.Api.Contracts;
+using JetReportDesigner.Api.Infrastructure;
 using JetReportDesigner.Core.Model;
 using JetReportDesigner.Storage.Connections;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JetReportDesigner.Api.Controllers;
@@ -25,6 +27,7 @@ public sealed class ConnectionsController(IConnectionRepository repository) : Co
     }
 
     [HttpPost]
+    [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<ActionResult<ConnectionResponse>> Create(
         [FromBody] CreateConnectionRequest body,
         CancellationToken cancellationToken)
@@ -44,6 +47,7 @@ public sealed class ConnectionsController(IConnectionRepository repository) : Co
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<ActionResult<ConnectionResponse>> Update(
         Guid id,
         [FromBody] UpdateConnectionRequest body,
@@ -59,6 +63,7 @@ public sealed class ConnectionsController(IConnectionRepository repository) : Co
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken) =>
         await repository.DeleteAsync(id, cancellationToken) ? NoContent() : NotFound();
 

@@ -22,6 +22,7 @@ public sealed class ConnectionsApiTests(SqlServerDatabaseFixture fixture) : ICla
             b.UseSetting("Storage:Provider", fixture.Provider);
             b.UseSetting("Storage:ConnectionString", fixture.ConnectionString);
             b.UseSetting("Storage:MigrateOnStartup", "true");
+            b.UseTestJwt();
         });
 
     [Fact]
@@ -33,7 +34,7 @@ public sealed class ConnectionsApiTests(SqlServerDatabaseFixture fixture) : ICla
         }
 
         await using var factory = CreateFactory();
-        var client = factory.CreateClient();
+        var client = await factory.CreateDesignerClientAsync();
 
         const string secret = "Server=db.internal;Database=Sales;User Id=sa;Password=SuperSecret123!";
         var create = await client.PostAsJsonAsync("/api/connections",
@@ -81,7 +82,7 @@ public sealed class ConnectionsApiTests(SqlServerDatabaseFixture fixture) : ICla
         }
 
         await using var factory = CreateFactory();
-        var client = factory.CreateClient();
+        var client = await factory.CreateDesignerClientAsync();
 
         var response = await client.PostAsJsonAsync("/api/connections",
             new CreateConnectionRequest("x", "mongo", "whatever"), Json);

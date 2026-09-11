@@ -29,6 +29,7 @@ public abstract class ReportsApiTestsBase(DatabaseFixture fixture)
             builder.UseSetting("Storage:Provider", fixture.Provider);
             builder.UseSetting("Storage:ConnectionString", fixture.ConnectionString);
             builder.UseSetting("Storage:MigrateOnStartup", "true");
+            builder.UseTestJwt();
         });
 
     [Fact]
@@ -40,7 +41,7 @@ public abstract class ReportsApiTestsBase(DatabaseFixture fixture)
         }
 
         await using var factory = CreateFactory();
-        var client = factory.CreateClient();
+        var client = await factory.CreateDesignerClientAsync();
 
         var definition = new ReportDefinition
         {
@@ -116,7 +117,7 @@ public abstract class ReportsApiTestsBase(DatabaseFixture fixture)
         }
 
         await using var factory = CreateFactory();
-        var client = factory.CreateClient();
+        var client = await factory.CreateDesignerClientAsync();
 
         var definition = new ReportDefinition { Name = "v1", LayoutMode = LayoutMode.Free, Body = new ReportBody { Height = 800, Elements = [] } };
         var created = await (await client.PostAsJsonAsync("/api/reports", definition, Json)).Content.ReadFromJsonAsync<ReportResponse>(Json);
@@ -156,7 +157,7 @@ public abstract class ReportsApiTestsBase(DatabaseFixture fixture)
         }
 
         await using var factory = CreateFactory();
-        var client = factory.CreateClient();
+        var client = await factory.CreateDesignerClientAsync();
 
         var invalid = new ReportDefinition { Name = "", LayoutMode = LayoutMode.Free };
         var response = await client.PostAsJsonAsync("/api/reports", invalid, Json);
@@ -173,7 +174,7 @@ public abstract class ReportsApiTestsBase(DatabaseFixture fixture)
         }
 
         await using var factory = CreateFactory();
-        var client = factory.CreateClient();
+        var client = await factory.CreateDesignerClientAsync();
 
         var schema = await client.GetStringAsync("/api/meta/schema");
 

@@ -1,6 +1,7 @@
 using JetReportDesigner.Api.Contracts;
 using JetReportDesigner.Api.Infrastructure;
 using JetReportDesigner.Storage.Assets;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 
@@ -45,6 +46,7 @@ public sealed class AssetsController(IAssetRepository repository) : ControllerBa
     [HttpPost]
     [Produces("application/json")]
     [RequestSizeLimit(MaxUploadBytes + 64 * 1024)]
+    [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<ActionResult<AssetResponse>> Upload(IFormFile? file, CancellationToken cancellationToken)
     {
         if (file is null || file.Length == 0)

@@ -26,8 +26,9 @@ public sealed class RenderConcurrencyTests(SqlServerDatabaseFixture fixture) : I
             b.UseSetting("Storage:Provider", fixture.Provider);
             b.UseSetting("Storage:ConnectionString", fixture.ConnectionString);
             b.UseSetting("Storage:MigrateOnStartup", "true");
+            b.UseTestJwt();
         });
-        var client = factory.CreateClient();
+        var client = await factory.CreateDesignerClientAsync();
 
         var definition = new ReportDefinition
         {
