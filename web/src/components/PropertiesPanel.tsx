@@ -43,6 +43,7 @@ import { ConditionalFormatDialog } from "./ConditionalFormatDialog";
 import { ImagePicker } from "./ImagePicker";
 import { SubreportPicker } from "./SubreportPicker";
 import type {
+  AggregateFunction,
   BackgroundFit,
   Band,
   BarcodeSymbology,
@@ -597,6 +598,90 @@ function ElementProperties({
               <span>Show value below bars</span>
             </label>
           )}
+        </div>
+      )}
+
+      {element.type === "matrix" && element.matrix && (
+        <div className="table-props">
+          <label className="field">
+            <span>Data source</span>
+            <select
+              value={element.matrix.dataSource}
+              onChange={(v) => onPatch((e) => (e.matrix!.dataSource = v.target.value))}
+            >
+              <option value="">— (first source)</option>
+              {sources.map((src) => (
+                <option key={src.name}>{src.name}</option>
+              ))}
+            </select>
+          </label>
+          <FormulaField
+            label="Row field"
+            value={element.matrix.rowField}
+            fields={fieldNames}
+            onChange={(v) => onPatch((e) => (e.matrix!.rowField = v))}
+          />
+          <label className="field">
+            <span>Row header</span>
+            <input
+              value={element.matrix.rowHeader ?? ""}
+              placeholder="(field name)"
+              onChange={(v) => onPatch((e) => (e.matrix!.rowHeader = v.target.value || null))}
+            />
+          </label>
+          <FormulaField
+            label="Column field"
+            value={element.matrix.columnField}
+            fields={fieldNames}
+            onChange={(v) => onPatch((e) => (e.matrix!.columnField = v))}
+          />
+          <FormulaField
+            label="Value field"
+            value={element.matrix.valueField}
+            fields={fieldNames}
+            onChange={(v) => onPatch((e) => (e.matrix!.valueField = v))}
+          />
+          <div className="grid2">
+            <label className="field">
+              <span>Aggregate</span>
+              <select
+                value={element.matrix.aggregate}
+                onChange={(v) => onPatch((e) => (e.matrix!.aggregate = v.target.value as AggregateFunction))}
+              >
+                <option value="sum">Sum</option>
+                <option value="count">Count</option>
+                <option value="average">Average</option>
+                <option value="min">Min</option>
+                <option value="max">Max</option>
+                <option value="first">First</option>
+                <option value="last">Last</option>
+              </select>
+            </label>
+            <label className="field">
+              <span>Format</span>
+              <input
+                value={element.matrix.format ?? ""}
+                placeholder="n2, c, ..."
+                onChange={(v) => onPatch((e) => (e.matrix!.format = v.target.value || null))}
+              />
+            </label>
+          </div>
+          <label className="row" style={{ marginBottom: 4 }}>
+            <input
+              type="checkbox"
+              checked={element.matrix.showRowTotals}
+              onChange={(v) => onPatch((e) => (e.matrix!.showRowTotals = v.target.checked))}
+            />
+            <span>Row totals</span>
+          </label>
+          <label className="row" style={{ marginBottom: 6 }}>
+            <input
+              type="checkbox"
+              checked={element.matrix.showColumnTotals}
+              onChange={(v) => onPatch((e) => (e.matrix!.showColumnTotals = v.target.checked))}
+            />
+            <span>Column totals</span>
+          </label>
         </div>
       )}
 

@@ -23,6 +23,7 @@ import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { FormulaDialog } from "./FormulaDialog";
 import { ChartPreview } from "./ChartPreview";
 import { BarcodePreview } from "./BarcodePreview";
+import { MatrixPreview } from "./MatrixPreview";
 import { backgroundImageCss, imageSrc } from "../image";
 
 const HANDLES: ResizeHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
@@ -242,6 +243,8 @@ export function ElementView({ element }: { element: ReportElement }) {
       {element.type === "barcode" && element.barcode && (
         <BarcodePreview spec={element.barcode} width={b.width} height={b.height} />
       )}
+
+      {element.type === "matrix" && element.matrix && <MatrixPreview spec={element.matrix} />}
 
       {element.type === "table" && element.table && (
         <table className="tbl-preview">
