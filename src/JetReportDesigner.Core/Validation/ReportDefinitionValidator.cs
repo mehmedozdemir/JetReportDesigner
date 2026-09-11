@@ -172,6 +172,8 @@ public sealed class ReportDefinitionValidator : AbstractValidator<ReportDefiniti
                 RuleFor(e => e.Subreport).NotNull();
                 RuleFor(e => e.Subreport!.ReportId).NotEmpty().When(e => e.Subreport is not null);
             });
+            When(e => e.Type == ElementType.Barcode, () =>
+                RuleFor(e => e.Barcode).NotNull());
         }
     }
 }

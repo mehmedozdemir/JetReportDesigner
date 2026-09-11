@@ -1,4 +1,4 @@
-import { BarChart3, FileStack, Hash, Image, Minus, Square, Table, Type, Variable, Wrench } from "lucide-react";
+import { BarChart3, FileStack, Hash, Image, Minus, QrCode, Square, Table, Type, Variable, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ElementType } from "../types";
 import { useDesigner } from "../store";
@@ -9,6 +9,7 @@ const TOOLS: { type: ElementType; label: string; Icon: LucideIcon }[] = [
   { type: "table", label: "Table", Icon: Table },
   { type: "chart", label: "Chart", Icon: BarChart3 },
   { type: "subreport", label: "Subreport", Icon: FileStack },
+  { type: "barcode", label: "Barcode", Icon: QrCode },
   { type: "rectangle", label: "Rectangle", Icon: Square },
   { type: "line", label: "Line", Icon: Minus },
   { type: "image", label: "Image", Icon: Image },

@@ -50,6 +50,8 @@ public sealed class ReportElement
     public ChartSpec? Chart { get; set; }
 
     public SubreportSpec? Subreport { get; set; }
+
+    public BarcodeSpec? Barcode { get; set; }
 }
 
 public sealed class Bounds
@@ -146,4 +148,20 @@ public sealed class SubreportSpec
     /// against the parent's current row/context, e.g. <c>{"customerId": "{orders.customerId}"}</c>.
     /// </summary>
     public Dictionary<string, string> Parameters { get; set; } = [];
+}
+
+/// <summary>A barcode or QR/2D symbol. <see cref="Value"/> is a binding or expression, evaluated per row like any other bound field.</summary>
+public sealed class BarcodeSpec
+{
+    /// <summary><c>qr</c> | <c>code128</c> | <c>ean13</c> | <c>code39</c> | <c>dataMatrix</c>.</summary>
+    public string Symbology { get; set; } = "qr";
+
+    public string Value { get; set; } = string.Empty;
+
+    public string ForeColor { get; set; } = "#000000";
+
+    public string BackColor { get; set; } = "#ffffff";
+
+    /// <summary>Print the human-readable value under the bars. Ignored for the 2D symbologies (qr, dataMatrix).</summary>
+    public bool ShowText { get; set; } = true;
 }

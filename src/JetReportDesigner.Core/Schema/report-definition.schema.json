@@ -228,7 +228,7 @@
       "required": ["id", "type", "bounds"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "type": { "enum": ["label", "field", "table", "image", "line", "rectangle", "pageInfo", "chart", "subreport"] },
+        "type": { "enum": ["label", "field", "table", "image", "line", "rectangle", "pageInfo", "chart", "subreport", "barcode"] },
         "bounds": {
           "type": "object",
           "additionalProperties": false,
@@ -317,6 +317,17 @@
           "properties": {
             "reportId": { "type": "string" },
             "parameters": { "type": "object", "additionalProperties": { "type": "string" } }
+          }
+        },
+        "barcode": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "symbology": { "enum": ["qr", "code128", "ean13", "code39", "dataMatrix"] },
+            "value": { "type": "string" },
+            "foreColor": { "type": "string" },
+            "backColor": { "type": "string" },
+            "showText": { "type": "boolean" }
           }
         }
       }

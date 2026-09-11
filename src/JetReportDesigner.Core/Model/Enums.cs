@@ -69,6 +69,7 @@ public enum ElementType
     PageInfo,
     Chart,
     Subreport,
+    Barcode,
 }
 
 public enum TextAlign

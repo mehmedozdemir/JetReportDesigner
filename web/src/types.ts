@@ -11,7 +11,8 @@ export type ElementType =
   | "rectangle"
   | "pageInfo"
   | "chart"
-  | "subreport";
+  | "subreport"
+  | "barcode";
 
 export type ChartType = "column" | "bar" | "line" | "area" | "pie";
 
@@ -36,6 +37,17 @@ export interface SubreportSpec {
   reportId: string;
   /** Referenced report's parameter name -> a binding/expression against the parent's row. */
   parameters: Record<string, string>;
+}
+
+export type BarcodeSymbology = "qr" | "code128" | "ean13" | "code39" | "dataMatrix";
+
+export interface BarcodeSpec {
+  symbology: BarcodeSymbology;
+  value: string;
+  foreColor: string;
+  backColor: string;
+  /** Ignored for qr / dataMatrix. */
+  showText: boolean;
 }
 export type PageSize = "A4" | "A5" | "A6" | "Letter" | "Legal" | "IDCard" | "Badge" | "Custom";
 export type Orientation = "portrait" | "landscape";
@@ -164,6 +176,7 @@ export interface ReportElement {
   table?: TableSpec | null;
   chart?: ChartSpec | null;
   subreport?: SubreportSpec | null;
+  barcode?: BarcodeSpec | null;
 }
 
 export type BandType =
@@ -431,6 +444,12 @@ export function defaultElement(type: ElementType, x: number, y: number): ReportE
         bounds: { x, y, width: 300, height: 160 },
         subreport: { reportId: "", parameters: {} },
         style: { border: edge(1, "#cbd5e1") },
+      };
+    case "barcode":
+      return {
+        ...base,
+        bounds: { x, y, width: 140, height: 140 },
+        barcode: { symbology: "qr", value: "{source.field}", foreColor: "#000000", backColor: "#ffffff", showText: true },
       };
     case "pageInfo":
       return { ...base, value: "{param:title}" };

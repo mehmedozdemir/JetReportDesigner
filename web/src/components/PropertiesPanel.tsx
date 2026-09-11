@@ -27,6 +27,7 @@ import {
   PanelRight,
   PanelTop,
   Plus,
+  QrCode,
   Rows3,
   Square,
   Table as TableIcon,
@@ -107,6 +108,7 @@ const ELEMENT_ICON: Record<ElementType, LucideIcon> = {
   pageInfo: Hash,
   chart: BarChart3,
   subreport: FileStack,
+  barcode: QrCode,
 };
 
 export function PropertiesPanel() {
