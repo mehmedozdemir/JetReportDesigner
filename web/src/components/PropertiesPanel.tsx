@@ -851,6 +851,29 @@ function PageProperties() {
         <Num label="Margin L" value={p.margins.left} onChange={(v) => set((page) => (page.margins.left = v))} />
       </div>
 
+      <div className="grid2">
+        <label className="field">
+          <span>Detail columns</span>
+          <select
+            value={p.columns}
+            onChange={(e) => set((page) => (page.columns = Number(e.target.value)))}
+          >
+            {[1, 2, 3, 4, 5, 6].map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+        </label>
+        {p.columns > 1 && (
+          <Num label="Column gap" value={p.columnSpacing ?? 16} onChange={(v) => set((page) => (page.columnSpacing = v))} />
+        )}
+      </div>
+      {p.columns > 1 && (
+        <p className="hint" style={{ marginTop: -4 }}>
+          The detail band flows left to right across {p.columns} columns, then wraps down — for
+          mailing labels or a catalog grid. Headers, footers and group bands stay full width.
+        </p>
+      )}
+
       <ImagePicker
         label="Background image"
         value={p.backgroundImage}
