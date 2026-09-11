@@ -39,6 +39,7 @@ import { FormatField } from "./FormatDialog";
 import { FormulaField } from "./FormulaDialog";
 import { ConditionalFormatDialog } from "./ConditionalFormatDialog";
 import { ImagePicker } from "./ImagePicker";
+import { SubreportPicker } from "./SubreportPicker";
 import type {
   BackgroundFit,
   Band,
@@ -543,6 +544,16 @@ function ElementProperties({
               <Plus /> Series
             </button>
           )}
+        </div>
+      )}
+
+      {element.type === "subreport" && element.subreport && (
+        <div className="table-props">
+          <SubreportPicker
+            value={element.subreport}
+            fieldNames={fieldNames}
+            onChange={(next) => onPatch((e) => (e.subreport = next))}
+          />
         </div>
       )}
 

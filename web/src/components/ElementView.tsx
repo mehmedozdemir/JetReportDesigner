@@ -9,6 +9,7 @@ import {
   Copy,
   CopyPlus,
   Eraser,
+  FileStack,
   FunctionSquare,
   Paintbrush2,
   Scissors,
@@ -228,6 +229,13 @@ export function ElementView({ element }: { element: ReportElement }) {
         ))}
       {element.type === "chart" && element.chart && (
         <ChartPreview spec={element.chart} width={b.width} height={b.height} />
+      )}
+
+      {element.type === "subreport" && (
+        <span className="img-ph" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <FileStack size={14} />
+          {element.subreport?.reportId ? "Subreport" : "Subreport (no report chosen)"}
+        </span>
       )}
 
       {element.type === "table" && element.table && (
