@@ -316,6 +316,10 @@ function BandStrip({ band, index, width }: { band: Band; index: number; width: n
   };
 
   const { label, Icon } = BAND_META[band.type];
+  const isGroup = band.type === "groupHeader" || band.type === "groupFooter";
+  const groupLevelCount = useDesigner((s) =>
+    new Set(s.report!.bands.filter((b) => b.type === "groupHeader" || b.type === "groupFooter").map((b) => b.groupLevel ?? 0)).size,
+  );
 
   return (
     <div className={`band ${selectedBand === index ? "sel" : ""}`}>
@@ -323,6 +327,7 @@ function BandStrip({ band, index, width }: { band: Band; index: number; width: n
         <Icon size={12} />
         {label}
         {band.type === "detail" && band.dataSource ? ` · ${band.dataSource}` : ""}
+        {isGroup && groupLevelCount > 1 ? ` · level ${band.groupLevel ?? 0}` : ""}
       </button>
       <div
         className="band-area"

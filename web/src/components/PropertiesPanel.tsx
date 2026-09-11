@@ -261,11 +261,18 @@ function BandProperties({ index }: { index: number }) {
   const removeBand = useDesigner((s) => s.removeBand);
   const moveBand = useDesigner((s) => s.moveBand);
   const bandCount = useDesigner((s) => s.report!.bands.length);
+  const addGroupLevel = useDesigner((s) => s.addGroupLevel);
   const isGroup = band.type === "groupHeader" || band.type === "groupFooter";
+  const groupLevelCount = useDesigner((s) =>
+    new Set(s.report!.bands.filter((b) => b.type === "groupHeader" || b.type === "groupFooter").map((b) => b.groupLevel ?? 0)).size,
+  );
 
   return (
     <div className="panel">
-      <h2><Rows3 /> {titleCase(band.type)} band</h2>
+      <h2>
+        <Rows3 /> {titleCase(band.type)} band
+        {isGroup && groupLevelCount > 1 && <span className="count-badge">level {band.groupLevel ?? 0}</span>}
+      </h2>
       <div className="row" style={{ marginBottom: 8 }}>
         <button className="mini" onClick={() => moveBand(index, -1)} disabled={index === 0} title="Move band up" aria-label="Move band up">
           <ArrowUp />
@@ -332,6 +339,9 @@ function BandProperties({ index }: { index: number }) {
               <option value="desc">Descending</option>
             </select>
           </label>
+          <button className="mini" style={{ width: "100%", marginBottom: 6 }} onClick={() => addGroupLevel()}>
+            <Plus /> Add nested group
+          </button>
         </>
       )}
 

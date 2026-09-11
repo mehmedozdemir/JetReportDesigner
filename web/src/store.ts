@@ -77,6 +77,8 @@ interface DesignerState {
   removeBand(index: number): void;
   moveBand(index: number, direction: -1 | 1): void;
   patchBand(index: number, recipe: (band: Band) => void): void;
+  /** Adds a nested group level: a groupHeader + groupFooter pair one level deeper than any existing group. */
+  addGroupLevel(): void;
 
   setDataSource(source: DataSourceDefinition | null, connectionRef?: ConnectionRef | null): void;
   addParameter(): void;
@@ -114,7 +116,15 @@ function containerElements(r: ReportDefinition, loc: ElementLocation): ReportEle
 }
 
 function sortBands(bands: Band[]): Band[] {
-  return [...bands].sort((a, b) => BAND_ORDER.indexOf(a.type) - BAND_ORDER.indexOf(b.type));
+  return [...bands].sort((a, b) => {
+    const byType = BAND_ORDER.indexOf(a.type) - BAND_ORDER.indexOf(b.type);
+    if (byType !== 0) return byType;
+    // Nested groups sandwich the detail band: outer header first, inner header last,
+    // then (after detail) inner footer first, outer footer last.
+    if (a.type === "groupHeader") return (a.groupLevel ?? 0) - (b.groupLevel ?? 0);
+    if (a.type === "groupFooter") return (b.groupLevel ?? 0) - (a.groupLevel ?? 0);
+    return 0;
+  });
 }
 
 export const useDesigner = create<DesignerState>((set, get) => ({
@@ -401,6 +411,30 @@ export const useDesigner = create<DesignerState>((set, get) => ({
       r.bands = (r.bands as Band[]).filter((_, i) => i !== index);
     });
     set({ selectedBand: null });
+  },
+
+  addGroupLevel: () => {
+    get().mutate((r) => {
+      const bands = r.bands as Band[];
+      const existingLevels = bands
+        .filter((b) => b.type === "groupHeader" || b.type === "groupFooter")
+        .map((b) => b.groupLevel ?? 0);
+      const nextLevel = existingLevels.length ? Math.max(...existingLevels) + 1 : 0;
+      const source = r.dataSources[0]?.name ?? "";
+      r.bands = sortBands([
+        ...bands,
+        {
+          type: "groupHeader", height: 26, visible: true, elements: [],
+          repeatOnEveryPage: true, groupLevel: nextLevel,
+          group: { dataSource: source, expression: "", sort: "asc" },
+        },
+        {
+          type: "groupFooter", height: 26, visible: true, elements: [],
+          repeatOnEveryPage: false, groupLevel: nextLevel,
+          group: { dataSource: source, expression: "", sort: "asc" },
+        },
+      ]);
+    });
   },
 
   moveBand: (index, direction) => {
