@@ -44,6 +44,7 @@ import { SubreportPicker } from "./SubreportPicker";
 import type {
   BackgroundFit,
   Band,
+  BarcodeSymbology,
   BorderSpec,
   ChartType,
   ElementType,
@@ -556,6 +557,44 @@ function ElementProperties({
             fieldNames={fieldNames}
             onChange={(next) => onPatch((e) => (e.subreport = next))}
           />
+        </div>
+      )}
+
+      {element.type === "barcode" && element.barcode && (
+        <div className="table-props">
+          <label className="field">
+            <span>Symbology</span>
+            <select
+              value={element.barcode.symbology}
+              onChange={(v) => onPatch((e) => (e.barcode!.symbology = v.target.value as BarcodeSymbology))}
+            >
+              <option value="qr">QR code</option>
+              <option value="dataMatrix">Data Matrix</option>
+              <option value="code128">Code 128</option>
+              <option value="ean13">EAN-13</option>
+              <option value="code39">Code 39</option>
+            </select>
+          </label>
+          <FormulaField
+            label="Value"
+            value={element.barcode.value}
+            fields={fieldNames}
+            onChange={(v) => onPatch((e) => (e.barcode!.value = v))}
+          />
+          <div className="grid2">
+            <Color label="Bars" value={element.barcode.foreColor} onChange={(v) => onPatch((e) => (e.barcode!.foreColor = v))} />
+            <Color label="Background" value={element.barcode.backColor} onChange={(v) => onPatch((e) => (e.barcode!.backColor = v))} />
+          </div>
+          {element.barcode.symbology !== "qr" && element.barcode.symbology !== "dataMatrix" && (
+            <label className="row" style={{ marginBottom: 6 }}>
+              <input
+                type="checkbox"
+                checked={element.barcode.showText}
+                onChange={(v) => onPatch((e) => (e.barcode!.showText = v.target.checked))}
+              />
+              <span>Show value below bars</span>
+            </label>
+          )}
         </div>
       )}
 

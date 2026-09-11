@@ -22,6 +22,7 @@ import { useCanvasDrag, type ResizeHandle } from "../hooks/useCanvasDrag";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { FormulaDialog } from "./FormulaDialog";
 import { ChartPreview } from "./ChartPreview";
+import { BarcodePreview } from "./BarcodePreview";
 import { backgroundImageCss, imageSrc } from "../image";
 
 const HANDLES: ResizeHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
@@ -236,6 +237,10 @@ export function ElementView({ element }: { element: ReportElement }) {
           <FileStack size={14} />
           {element.subreport?.reportId ? "Subreport" : "Subreport (no report chosen)"}
         </span>
+      )}
+
+      {element.type === "barcode" && element.barcode && (
+        <BarcodePreview spec={element.barcode} width={b.width} height={b.height} />
       )}
 
       {element.type === "table" && element.table && (
