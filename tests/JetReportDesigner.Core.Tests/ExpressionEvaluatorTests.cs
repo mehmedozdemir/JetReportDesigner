@@ -38,6 +38,41 @@ public class ExpressionEvaluatorTests
         Assert.Equal(expected, BindingResolver.ResolveValue(expression, null, Ctx()));
     }
 
+    [Theory]
+    [InlineData("=startswith(customer, 'Ac')", "True")]
+    [InlineData("=endswith(customer, 'me')", "True")]
+    [InlineData("=indexof(customer, 'me')", "2")]
+    [InlineData("=padleft('7', 3, '0')", "007")]
+    [InlineData("=padright('x', 3, '-')", "x--")]
+    [InlineData("=concat('a', 1, 'b')", "a1b")]
+    [InlineData("=ltrim('  hi')", "hi")]
+    [InlineData("=rtrim('hi  ')", "hi")]
+    [InlineData("=log10(100)", "2")]
+    [InlineData("=exp(0)", "1")]
+    [InlineData("=switch(customer, 'Acme', 'A', 'Other', 'B', 'C')", "A")]
+    [InlineData("=switch(customer, 'Nope', 'A', 'C')", "C")]
+    [InlineData("=isnull(missing)", "True")]
+    [InlineData("=isnull(customer)", "False")]
+    [InlineData("=nullif(1, 1)", "")]
+    [InlineData("=nullif(1, 2)", "1")]
+    [InlineData("=tonumber('42') + 1", "43")]
+    [InlineData("=tostring(42)", "42")]
+    [InlineData("=toboolean('false')", "False")]
+    public void Evaluates_Advanced_Functions(string expression, string expected)
+    {
+        Assert.Equal(expected, BindingResolver.ResolveValue(expression, null, Ctx()));
+    }
+
+    [Fact]
+    public void Datediff_And_Date_Math()
+    {
+        var ctx = Ctx();
+        Assert.Equal(31d, ExpressionEvaluator.Evaluate("=datediff('days', '2026-01-01', '2026-02-01')", ctx));
+        Assert.Equal(new DateTime(2026, 4, 1), ExpressionEvaluator.Evaluate("=addmonths('2026-01-01', 3)", ctx));
+        Assert.Equal(new DateTime(2027, 1, 1), ExpressionEvaluator.Evaluate("=addyears('2026-01-01', 1)", ctx));
+        Assert.Equal(4d, ExpressionEvaluator.Evaluate("=dayofweek('2026-01-01')", ctx)); // Thursday
+    }
+
     [Fact]
     public void Applies_Format_To_Expression_Result()
     {

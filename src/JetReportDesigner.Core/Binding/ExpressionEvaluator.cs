@@ -19,11 +19,13 @@ public static partial class ExpressionEvaluator
     /// <summary>Scalar functions (arguments are evaluated before the call).</summary>
     private static readonly HashSet<string> ScalarFunctions = new(StringComparer.OrdinalIgnoreCase)
     {
-        "if", "iif", "coalesce",
-        "format", "upper", "lower", "len", "trim", "left", "right", "substring", "replace", "contains",
-        "abs", "round", "floor", "ceiling", "ceil", "sqrt", "pow", "sign", "trunc", "mod",
-        "now", "today", "year", "month", "day", "adddays",
+        "if", "iif", "coalesce", "switch", "isnull", "nullif",
+        "format", "upper", "lower", "len", "trim", "ltrim", "rtrim", "left", "right", "substring",
+        "replace", "contains", "startswith", "endswith", "indexof", "padleft", "padright", "concat",
+        "abs", "round", "floor", "ceiling", "ceil", "sqrt", "pow", "sign", "trunc", "mod", "log", "log10", "exp",
+        "now", "today", "year", "month", "day", "adddays", "addmonths", "addyears", "datediff", "dayofweek",
         "pagenumber", "totalpages", "rownumber", "totalrows",
+        "tonumber", "tostring", "toboolean",
     };
 
     /// <summary>Aggregates that iterate the current band's scope rows (argument is lazy).</summary>
@@ -426,11 +428,16 @@ public static partial class ExpressionEvaluator
             {
                 "if" or "iif" => ToBool(args[0]) ? args[1] : args[2],
                 "coalesce" => args.FirstOrDefault(a => a is not null),
+                "switch" => EvalSwitch(args),
+                "isnull" => args.ElementAtOrDefault(0) is null,
+                "nullif" => Equals(args.ElementAtOrDefault(0), args.ElementAtOrDefault(1)) ? null : args.ElementAtOrDefault(0),
                 "format" => BindingResolver.FormatValue(args[0], Convert.ToString(args.ElementAtOrDefault(1), CultureInfo.InvariantCulture), context.Culture),
 
                 "upper" => Str(0).ToUpper(context.Culture),
                 "lower" => Str(0).ToLower(context.Culture),
                 "trim" => Str(0).Trim(),
+                "ltrim" => Str(0).TrimStart(),
+                "rtrim" => Str(0).TrimEnd(),
                 "len" => (double)Str(0).Length,
                 "left" => Slice(Str(0), 0, (int)Nm(1)),
                 "right" => Slice(Str(0), Math.Max(0, Str(0).Length - (int)Nm(1)), (int)Nm(1)),
@@ -439,6 +446,12 @@ public static partial class ExpressionEvaluator
                     : Slice(Str(0), (int)Nm(1), Str(0).Length),
                 "replace" => Str(0).Replace(Str(1), Str(2), StringComparison.Ordinal),
                 "contains" => Str(0).Contains(Str(1), StringComparison.OrdinalIgnoreCase),
+                "startswith" => Str(0).StartsWith(Str(1), StringComparison.OrdinalIgnoreCase),
+                "endswith" => Str(0).EndsWith(Str(1), StringComparison.OrdinalIgnoreCase),
+                "indexof" => (double)Str(0).IndexOf(Str(1), StringComparison.OrdinalIgnoreCase),
+                "padleft" => Str(0).PadLeft((int)Nm(1), args.Count >= 3 ? Str(2)[0] : ' '),
+                "padright" => Str(0).PadRight((int)Nm(1), args.Count >= 3 ? Str(2)[0] : ' '),
+                "concat" => string.Concat(args.Select((_, i) => Str(i))),
 
                 "abs" => Math.Abs(Nm(0)),
                 "round" => Math.Round(Nm(0), args.Count >= 2 ? (int)Nm(1) : 0, MidpointRounding.AwayFromZero),
@@ -449,6 +462,9 @@ public static partial class ExpressionEvaluator
                 "sign" => (double)Math.Sign(Nm(0)),
                 "trunc" => Math.Truncate(Nm(0)),
                 "mod" => Nm(1) == 0 ? 0d : Nm(0) % Nm(1),
+                "log" => args.Count >= 2 ? Math.Log(Nm(0), Nm(1)) : Math.Log(Nm(0)),
+                "log10" => Math.Log10(Nm(0)),
+                "exp" => Math.Exp(Nm(0)),
 
                 "now" => context.Now,
                 "today" => context.Now.Date,
@@ -456,13 +472,57 @@ public static partial class ExpressionEvaluator
                 "month" => (double)Dt(0).Month,
                 "day" => (double)Dt(0).Day,
                 "adddays" => Dt(0).AddDays(Nm(1)),
+                "addmonths" => Dt(0).AddMonths((int)Nm(1)),
+                "addyears" => Dt(0).AddYears((int)Nm(1)),
+                "datediff" => DateDiff(Str(0), Dt(1), Dt(2)),
+                "dayofweek" => (double)(int)Dt(0).DayOfWeek,
 
                 "pagenumber" => (double)context.PageNumber,
                 "totalpages" => (double)context.TotalPages,
                 "rownumber" => (double)context.RowNumber,
                 "totalrows" => (double)context.TotalRows,
 
+                "tonumber" => Nm(0),
+                "tostring" => Str(0),
+                "toboolean" => ToBool(args.ElementAtOrDefault(0)),
+
                 _ => throw new ExpressionException($"Unknown function '{name}'."),
+            };
+        }
+
+        /// <summary>Evaluates <c>switch(expr, case1, result1, case2, result2, …, [default])</c>.</summary>
+        private static object? EvalSwitch(List<object?> args)
+        {
+            if (args.Count < 1)
+            {
+                throw new ExpressionException("'switch' requires at least an expression argument.");
+            }
+
+            var value = args[0];
+            var i = 1;
+            for (; i + 1 < args.Count; i += 2)
+            {
+                if (Equals(value, args[i]) || Compare("=", value, args[i]))
+                {
+                    return args[i + 1];
+                }
+            }
+
+            return i < args.Count ? args[i] : null;
+        }
+
+        private static double DateDiff(string unit, DateTime from, DateTime to)
+        {
+            var span = to - from;
+            return unit.ToLowerInvariant() switch
+            {
+                "day" or "days" => span.TotalDays,
+                "hour" or "hours" => span.TotalHours,
+                "minute" or "minutes" => span.TotalMinutes,
+                "second" or "seconds" => span.TotalSeconds,
+                "month" or "months" => (to.Year - from.Year) * 12 + (to.Month - from.Month),
+                "year" or "years" => to.Year - from.Year,
+                _ => throw new ExpressionException($"Unknown datediff unit '{unit}'."),
             };
         }
 
