@@ -1,14 +1,20 @@
 import { useState } from "react";
-import { AlertTriangle, FileBarChart2, LogIn, UserPlus } from "lucide-react";
+import { AlertTriangle, Building2, FileBarChart2, LogIn, Ticket, UserPlus } from "lucide-react";
 import { useAuth } from "../auth";
 
-/** Full-screen gate shown whenever there is no signed-in user. Login and self-registration
- * both hit the API directly; the very first account ever registered becomes a Designer
- * (bootstrap admin), every account after that starts as a Viewer. */
+type Mode = "login" | "register";
+type JoinMode = "org" | "invite";
+
+/** Full-screen gate shown whenever there is no signed-in user. Registering either starts a
+ * brand-new organization (the registering user becomes its Designer) or joins an existing one
+ * via a Designer's invite code (with whatever role the invite carries). */
 export function LoginScreen() {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<Mode>("login");
+  const [joinMode, setJoinMode] = useState<JoinMode>("org");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [organizationName, setOrganizationName] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const busy = useAuth((s) => s.busy);
   const error = useAuth((s) => s.error);
   const login = useAuth((s) => s.login);
@@ -16,7 +22,15 @@ export function LoginScreen() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    void (mode === "login" ? login(email, password) : register(email, password));
+    if (mode === "login") {
+      void login(email, password);
+      return;
+    }
+    void register(
+      email,
+      password,
+      joinMode === "org" ? { organizationName } : { inviteCode: inviteCode.trim() },
+    );
   };
 
   return (
@@ -36,12 +50,48 @@ export function LoginScreen() {
           </button>
         </div>
 
+        {mode === "register" && (
+          <div className="segmented" role="group" aria-label="New organization or join with invite">
+            <button type="button" className={joinMode === "org" ? "on" : ""} onClick={() => setJoinMode("org")}>
+              <Building2 size={14} /> New organization
+            </button>
+            <button type="button" className={joinMode === "invite" ? "on" : ""} onClick={() => setJoinMode("invite")}>
+              <Ticket size={14} /> Join with invite
+            </button>
+          </div>
+        )}
+
+        {mode === "register" && joinMode === "org" && (
+          <label className="field">
+            <span>Organization name</span>
+            <input
+              required
+              value={organizationName}
+              onChange={(e) => setOrganizationName(e.target.value)}
+              placeholder="Acme Corp"
+            />
+          </label>
+        )}
+
+        {mode === "register" && joinMode === "invite" && (
+          <label className="field">
+            <span>Invite code</span>
+            <input
+              required
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+              placeholder="e.g. VQZTW4U5"
+              style={{ textTransform: "uppercase" }}
+            />
+          </label>
+        )}
+
         <label className="field">
           <span>Email</span>
           <input
             type="email"
             required
-            autoFocus
+            autoFocus={mode === "login"}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
@@ -62,8 +112,9 @@ export function LoginScreen() {
 
         {mode === "register" && (
           <p className="hint">
-            The first account ever created becomes a Designer (full access). Every account after
-            that starts as a Viewer — an existing Designer can promote it later.
+            {joinMode === "org"
+              ? "You'll be the Designer (full access) of this new organization."
+              : "Your role (Designer or Viewer) is set by whoever gave you this code."}
           </p>
         )}
 

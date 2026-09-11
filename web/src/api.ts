@@ -9,7 +9,7 @@ import type {
   ReportSummary,
   SqlQueryResponse,
 } from "./types";
-import { useAuth } from "./auth";
+import { useAuth, type PendingInvite, type TeamMember, type TenantInfo } from "./auth";
 import { problemMessage } from "./httpError";
 
 /** Every API call goes through this so the JWT is always attached; a 401 means the
@@ -128,6 +128,32 @@ export const api = {
 
   deleteSqlQuery: (id: string): Promise<void> =>
     fetchWithAuth(`/api/sqlqueries/${id}`, { method: "DELETE" }).then((r) => {
+      if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
+    }),
+
+  // --- tenant / team ---
+  getTenant: (): Promise<TenantInfo> => fetchWithAuth("/api/tenant").then(json<TenantInfo>),
+
+  listTeam: (): Promise<TeamMember[]> => fetchWithAuth("/api/auth/users").then(json<TeamMember[]>),
+
+  setUserRole: (id: string, role: string): Promise<TeamMember> =>
+    fetchWithAuth(`/api/auth/users/${id}/role`, {
+      method: "PUT",
+      headers: jsonHeaders,
+      body: JSON.stringify({ role }),
+    }).then(json<TeamMember>),
+
+  createInvite: (role: string, expiresInHours?: number): Promise<PendingInvite> =>
+    fetchWithAuth("/api/tenant/invites", {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({ role, expiresInHours: expiresInHours ?? null }),
+    }).then(json<PendingInvite>),
+
+  listInvites: (): Promise<PendingInvite[]> => fetchWithAuth("/api/tenant/invites").then(json<PendingInvite[]>),
+
+  revokeInvite: (code: string): Promise<void> =>
+    fetchWithAuth(`/api/tenant/invites/${code}`, { method: "DELETE" }).then((r) => {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
 

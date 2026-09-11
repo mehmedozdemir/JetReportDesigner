@@ -8,10 +8,33 @@ export interface AuthUser {
   roles: string[];
 }
 
+/** A teammate in the current tenant, as returned by GET /api/auth/users. */
+export type TeamMember = AuthUser;
+
+export interface TenantInfo {
+  id: string;
+  name: string;
+  createdAtUtc: string;
+}
+
+export interface PendingInvite {
+  code: string;
+  role: string;
+  createdAtUtc: string;
+  expiresAtUtc: string;
+}
+
 interface AuthResponse {
   token: string;
   expiresAtUtc: string;
   user: AuthUser;
+}
+
+/** Exactly one of the two must be set — create a brand-new organization, or join one via a
+ * Designer's invite code. */
+export interface RegisterJoin {
+  organizationName?: string;
+  inviteCode?: string;
 }
 
 interface AuthState {
@@ -20,15 +43,15 @@ interface AuthState {
   busy: boolean;
   error: string | null;
   login(email: string, password: string): Promise<void>;
-  register(email: string, password: string): Promise<void>;
+  register(email: string, password: string, join: RegisterJoin): Promise<void>;
   logout(): void;
 }
 
-async function post(path: string, email: string, password: string): Promise<AuthResponse> {
+async function post(path: string, body: Record<string, unknown>): Promise<AuthResponse> {
   const res = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     throw new Error(problemMessage(await res.text()));
@@ -46,17 +69,22 @@ export const useAuth = create<AuthState>()(
       login: async (email, password) => {
         set({ busy: true, error: null });
         try {
-          const auth = await post("/api/auth/login", email, password);
+          const auth = await post("/api/auth/login", { email, password });
           set({ token: auth.token, user: auth.user, busy: false });
         } catch (e) {
           set({ busy: false, error: String(e instanceof Error ? e.message : e) });
           throw e;
         }
       },
-      register: async (email, password) => {
+      register: async (email, password, join) => {
         set({ busy: true, error: null });
         try {
-          const auth = await post("/api/auth/register", email, password);
+          const auth = await post("/api/auth/register", {
+            email,
+            password,
+            organizationName: join.organizationName ?? null,
+            inviteCode: join.inviteCode ?? null,
+          });
           set({ token: auth.token, user: auth.user, busy: false });
         } catch (e) {
           set({ busy: false, error: String(e instanceof Error ? e.message : e) });
