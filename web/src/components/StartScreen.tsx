@@ -46,6 +46,9 @@ import { TeamPage } from "./TeamPage";
 type View = "reports" | "team" | "email" | "jobs" | "schedules";
 type DragPayload = { kind: "report" | "folder"; id: string };
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
+// layoutMode is "free"/"banded" on the wire — capitalized here only for display, to match
+// "Folder" in the same TYPE column instead of sitting next to it lowercase.
+const typeLabel = (mode: string) => mode.charAt(0).toUpperCase() + mode.slice(1);
 
 /** Paths each view lives at — StartScreen is mounted directly under one of these routes (see
  * App.tsx), so switching tabs is a real navigation, not local state. */
@@ -598,6 +601,12 @@ export function StartScreen({
                   <div className="drive-toolbar">
                     {isSearching ? (
                       <span className="drive-path">Search results</span>
+                    ) : breadcrumb.length === 0 ? (
+                      // At the root, "All reports" already appears as the page title above and
+                      // as the highlighted tree item — repeating it here as a breadcrumb too
+                      // was pure redundancy. The trail earns its place once you're actually
+                      // inside a folder, as a way back.
+                      <span className="drive-path">All reports</span>
                     ) : (
                       <nav className="breadcrumb">
                         <button className={currentFolderId === null ? "on" : ""} onClick={() => setCurrentFolderId(null)}>
@@ -759,7 +768,7 @@ export function StartScreen({
                                   <span className="drive-tile-path">{folderPath(r.folderId)}</span>
                                 )}
                                 <span className="drive-tile-meta">
-                                  <span className="chip">{r.layoutMode}</span> {timeAgo(r.updatedAtUtc)}
+                                  <span className="chip">{typeLabel(r.layoutMode)}</span> {timeAgo(r.updatedAtUtc)}
                                 </span>
                               </a>
                               <button
@@ -883,7 +892,7 @@ export function StartScreen({
                                     <span className="drive-tile-count">{folderPath(r.folderId)}</span>
                                   )}
                                 </td>
-                                <td><span className="chip">{r.layoutMode}</span></td>
+                                <td><span className="chip">{typeLabel(r.layoutMode)}</span></td>
                                 <td>{new Date(r.createdAtUtc).toLocaleDateString()}</td>
                                 <td>{r.createdByEmail ?? "—"}</td>
                                 <td>

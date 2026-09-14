@@ -89,28 +89,38 @@ export function TeamPage() {
     <>
       <section className="start-section">
         <h3>Members{tenant ? ` — ${tenant.name}` : ""}</h3>
-        {members.map((m) => (
-          <div className="settings-row" key={m.id}>
-            <span>
-              {m.email}
-              {m.id === currentUserId && <span className="hint"> (you)</span>}
-            </span>
-            <div className="settings-control">
-              <select
-                value={m.roles[0] ?? "Viewer"}
-                onChange={(e) => void changeRole(m.id, e.target.value)}
-                disabled={m.id === currentUserId}
-                title={m.id === currentUserId ? "You cannot change your own role" : undefined}
-              >
-                <option value="Designer">Designer</option>
-                <option value="Viewer">Viewer</option>
-              </select>
-            </div>
-          </div>
-        ))}
+        <table className="drive-table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            {members.map((m) => (
+              <tr key={m.id}>
+                <td className="drive-table-name">
+                  {m.email}
+                  {m.id === currentUserId && <span className="hint"> (you)</span>}
+                </td>
+                <td>
+                  <select
+                    value={m.roles[0] ?? "Viewer"}
+                    onChange={(e) => void changeRole(m.id, e.target.value)}
+                    disabled={m.id === currentUserId}
+                    title={m.id === currentUserId ? "You cannot change your own role" : undefined}
+                  >
+                    <option value="Designer">Designer</option>
+                    <option value="Viewer">Viewer</option>
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
 
-      <section className="start-section">
+      <section className="start-section start-section-narrow">
         <h3>Invite a teammate</h3>
         <div className="settings-row">
           <span>Role</span>
@@ -138,7 +148,7 @@ export function TeamPage() {
       </section>
 
       {pending.length > 0 && (
-        <section className="start-section">
+        <section className="start-section start-section-narrow">
           <h3>Pending invites</h3>
           {pending.map((p) => (
             <div className="settings-row" key={p.code}>
@@ -154,7 +164,7 @@ export function TeamPage() {
       )}
 
       {err && (
-        <section className="start-section">
+        <section className="start-section start-section-narrow">
           <div className="error small">
             <AlertTriangle /> <span>{err}</span>
           </div>

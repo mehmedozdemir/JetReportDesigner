@@ -127,7 +127,7 @@ export function EmailSettingsPage() {
 
   if (!loaded) {
     return (
-      <section className="start-section">
+      <section className="start-section start-section-narrow">
         <div className="share-loading">
           <Loader2 size={16} className="spin" />
         </div>
@@ -137,7 +137,7 @@ export function EmailSettingsPage() {
 
   return (
     <>
-      <section className="start-section">
+      <section className="start-section start-section-narrow">
         <h3>Mail account</h3>
         <p className="hint">
           Used to send scheduled reports by email. Any standard SMTP account works — Exchange/Office 365, Gmail
@@ -236,7 +236,7 @@ export function EmailSettingsPage() {
       </section>
 
       {(existing || host.trim()) && (
-        <section className="start-section">
+        <section className="start-section start-section-narrow">
           <h3>Send a test email</h3>
           <p className="hint">Tests whatever's in the form above — no need to save first.</p>
           <div className="settings-row">
@@ -264,7 +264,7 @@ export function EmailSettingsPage() {
       )}
 
       {err && (
-        <section className="start-section">
+        <section className="start-section start-section-narrow">
           <div className="error small">
             <AlertTriangle /> <span>{err}</span>
           </div>
@@ -272,7 +272,7 @@ export function EmailSettingsPage() {
       )}
 
       {!existing && (
-        <section className="start-section">
+        <section className="start-section start-section-narrow">
           <div className="start-empty">
             <Mail />
             <div>No mail account configured yet.</div>
