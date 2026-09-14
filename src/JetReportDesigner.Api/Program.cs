@@ -92,6 +92,7 @@ if (!string.IsNullOrWhiteSpace(keyPath))
 builder.Services.AddSingleton<
     JetReportDesigner.Storage.Connections.IConnectionSecretProtector,
     JetReportDesigner.Api.Infrastructure.DataProtectionSecretProtector>();
+builder.Services.AddSingleton<JetReportDesigner.Api.Infrastructure.Email.IEmailSender, JetReportDesigner.Api.Infrastructure.Email.SmtpEmailSender>();
 
 // --- Data sources + rendering ---
 var restOptions = builder.Configuration.GetSection(RestSourceOptions.SectionName).Get<RestSourceOptions>()

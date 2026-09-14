@@ -1,5 +1,6 @@
 using JetReportDesigner.Storage.Assets;
 using JetReportDesigner.Storage.Connections;
+using JetReportDesigner.Storage.Email;
 using JetReportDesigner.Storage.Entities;
 using JetReportDesigner.Storage.Folders;
 using JetReportDesigner.Storage.Repositories;
@@ -44,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantInviteRepository, TenantInviteRepository>();
         services.AddScoped<IFolderRepository, FolderRepository>();
         services.AddScoped<IReportShareRepository, ReportShareRepository>();
+        services.AddScoped<ISmtpSettingsRepository, SmtpSettingsRepository>();
 
         if (options.ReportStore.Equals("filesystem", StringComparison.OrdinalIgnoreCase))
         {

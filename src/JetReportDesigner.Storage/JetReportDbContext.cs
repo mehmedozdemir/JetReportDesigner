@@ -27,6 +27,8 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
 
     public DbSet<ReportShare> ReportShares => Set<ReportShare>();
 
+    public DbSet<SmtpSettings> SmtpSettings => Set<SmtpSettings>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

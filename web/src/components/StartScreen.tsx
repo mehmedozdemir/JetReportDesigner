@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   List,
   LogOut,
+  Mail,
   Pencil,
   Plus,
   Search,
@@ -28,12 +29,13 @@ import { usePrefs } from "../prefs";
 import { timeAgo } from "../time";
 import type { FolderSummary, Orientation, PageSize, ReportDefinition, ReportSummary } from "../types";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
+import { EmailSettingsPage } from "./EmailSettingsPage";
 import { NewReportDialog } from "./NewReportDialog";
 import { ReportPreviewDialog } from "./ReportPreviewDialog";
 import { ShareDialog } from "./ShareDialog";
 import { TeamPage } from "./TeamPage";
 
-type View = "reports" | "team";
+type View = "reports" | "team" | "email";
 type DragPayload = { kind: "report" | "folder"; id: string };
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -348,6 +350,9 @@ export function StartScreen({
             <button className={view === "team" ? "on" : ""} onClick={() => setView("team")}>
               <Users size={14} /> Team
             </button>
+            <button className={view === "email" ? "on" : ""} onClick={() => setView("email")}>
+              <Mail size={14} /> Email
+            </button>
           </div>
         )}
 
@@ -401,6 +406,8 @@ export function StartScreen({
       <div className="start-scroll">
         {view === "team" ? (
           <TeamPage />
+        ) : view === "email" ? (
+          <EmailSettingsPage />
         ) : (
           <>
             <section className="start-section start-new-section">

@@ -509,11 +509,28 @@ Her faz **çalışan, gösterilebilir** bir dikey dilim üretir. Faz sonunda "Do
 Sıra ile: Excel/XLSX (ClosedXML) ✅, alt raporlar ✅, chart ✅, barkod/QR ✅, matris/pivot ✅,
 çok seviyeli gruplama ✅, auto-height/can-grow/push-up bantlar ✅, çok kolonlu düzen ✅, gelişmiş
 expression fonksiyon kütüphanesi ✅, **auth (JWT + Identity, rol: Designer/Viewer)** ✅,
-**multi-tenant (organizasyon oluşturma + davet kodu ile katılma + takım yönetimi)** ✅ — kalanlar:
-i18n (TR/EN UI), rapor zamanlama/dağıtım, şablon galerisi, canlı işbirliği, **ardından**
+**multi-tenant (organizasyon oluşturma + davet kodu ile katılma + takım yönetimi)** ✅,
+**e-posta hesabı tanımlama (Exchange/Gmail/özel SMTP + test gönderimi, MailKit)** ✅ — kalanlar:
+i18n (TR/EN UI), **rapor zamanlama/dağıtım (devam ediyor — bkz. alt madde)**, şablon galerisi
+(kullanıcının kendi raporunu organizasyon şablonu olarak kaydetmesi), canlı işbirliği, **ardından**
 (bkz. aşağıdaki detay) AI destekli rapor asistanı ve modern görselleştirme (3D/gauge/heatmap/
 sparkline/harita). Önce bu listedeki mevcut kalan maddeler bitirilecek, AI/görselleştirme işi ondan
 sonra ele alınacak — iki liste tek backlog'ta birleştirildi.
+
+**Rapor zamanlama/dağıtım — plan:**
+- ✅ E-posta hesabı tanımlama ekranı (Exchange/Gmail/özel sunucu presetleri, host/port/security/
+  kullanıcı-şifre/gönderen adresi, "test e-postası gönder" — şifre `IConnectionSecretProtector` ile
+  şifrelenmiş saklanıyor, tenant başına tek hesap).
+- ⬜ Arka plan iş kuyruğu (`ReportJob`: kuyruğa alınan bir render işini arka planda işler, sonucu
+  mevcut asset-storage'a — `StoredAsset`/`IAssetRepository`, DB-blob — kaydeder, kullanıcı
+  uygulama içinden durumu bir "İşler" ekranından takip eder). Bu motor hem "büyük veri çeken raporu
+  beklemeden arka plana at" ihtiyacını hem de zamanlamanın çalıştırma mekanizmasını tek bir
+  altyapıda birleştirir.
+- ⬜ `ReportSchedule` (günlük/haftalık/aylık + saat — basit form, cron değil): job kuyruğunu tetikler;
+  her çalıştığında dağıtım seçeneklerine göre (geçmişe kaydet / otomatik paylaşım linki oluştur /
+  yapılandırılmış e-posta hesabından gönder) sonucu dağıtır.
+- ⬜ **Backlog'a eklendi (ayrı iş turu, şimdi değil):** harici depolama hedefleri — MinIO, S3,
+  Google Drive, OneDrive — iş çıktısının yerel/DB-blob dışında bu hedeflere de yazılabilmesi.
 
 ---
 

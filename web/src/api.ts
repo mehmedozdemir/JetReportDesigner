@@ -196,6 +196,36 @@ export const api = {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
 
+  // --- email account (scheduled-report distribution) ---
+  getEmailSettings: (): Promise<SmtpSettingsInfo | null> =>
+    fetchWithAuth("/api/email-settings").then(async (r) => {
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
+      return json<SmtpSettingsInfo>(r);
+    }),
+
+  setEmailSettings: (settings: SmtpSettingsInput): Promise<SmtpSettingsInfo> =>
+    fetchWithAuth("/api/email-settings", { method: "PUT", headers: jsonHeaders, body: JSON.stringify(settings) }).then(
+      async (r) => {
+        if (!r.ok) throw new Error(problemMessage(await r.text()));
+        return json<SmtpSettingsInfo>(r);
+      },
+    ),
+
+  deleteEmailSettings: (): Promise<void> =>
+    fetchWithAuth("/api/email-settings", { method: "DELETE" }).then((r) => {
+      if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
+    }),
+
+  sendTestEmail: (toEmail: string): Promise<void> =>
+    fetchWithAuth("/api/email-settings/test", {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({ toEmail }),
+    }).then(async (r) => {
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
+    }),
+
   // --- assets ---
   listAssets: (): Promise<AssetResponse[]> => fetchWithAuth("/api/assets").then(json<AssetResponse[]>),
 
@@ -259,6 +289,30 @@ export interface ShareInfo {
   token: string;
   createdAtUtc: string;
   createdByEmail?: string | null;
+}
+
+export type SmtpSecurity = "None" | "StartTls" | "SslOnConnect";
+
+export interface SmtpSettingsInfo {
+  host: string;
+  port: number;
+  security: SmtpSecurity;
+  username: string;
+  fromEmail: string;
+  fromName?: string | null;
+  hasPassword: boolean;
+  updatedAtUtc: string;
+}
+
+export interface SmtpSettingsInput {
+  host: string;
+  port: number;
+  security: SmtpSecurity;
+  username: string;
+  /** Omit or leave blank to keep the previously saved password. */
+  password?: string;
+  fromEmail: string;
+  fromName?: string | null;
 }
 
 function renderBlob(
