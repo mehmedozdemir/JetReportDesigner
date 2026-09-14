@@ -598,6 +598,16 @@ Rapor oluşturma (Blank/Sample) bir `POST` gerektirdiği için doğrudan link ol
   çözülmüyor (ileride `BroadcastChannel` ile dedup edilebilir), rahatsız ederse ayrı iş olarak ele
   alınır.
 
+**Start ekranı UX gözden geçirmesi (2026-09-14) — büyük maddeler, backlog'a eklendi:**
+Yüksek/orta/küçük öncelikli maddeler uygulandı (yerel saatli zamanlama, dağıtım durumu
+görünürlüğü, zamanlama düzenleme, kebab menü, yükleme durumları, arama'da klasör yolu, nav
+rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük işler:
+- ⬜ **Jobs listesi büyüme riski**: günlük zamanlamalarla haftalar içinde yüzlerce satır birikir
+  (her satır bir DB-blob), sayfalama/filtre/otomatik temizlik yok.
+- ⬜ **Çoklu seçim / toplu işlem** yok — birden fazla raporu tek seferde taşı/sil için context
+  menu'yü tek tek kullanmak gerekiyor.
+- ⬜ **Team'de üye çıkarma** yok, sadece rol değiştirme var.
+
 ---
 
 ### AI Destekli Raporlama ve Modern Görselleştirme (backlog'un devamı — mevcut sıradaki işler bitince)
