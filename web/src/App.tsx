@@ -13,6 +13,7 @@ import {
   type ReportSummary,
 } from "./types";
 import { Canvas } from "./components/Canvas";
+import { JobNotifications } from "./components/JobNotifications";
 import { LeftSidebar } from "./components/LeftSidebar";
 import { LoginScreen } from "./components/LoginScreen";
 import { COLLAPSED_WIDTH, ResizablePanel } from "./components/ResizablePanel";
@@ -366,6 +367,8 @@ export function App() {
       )}
 
       {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
+
+      <JobNotifications />
 
       {error && (
         <div className="toast" role="alert">

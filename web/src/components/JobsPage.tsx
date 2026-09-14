@@ -1,17 +1,21 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clock, Download, Loader2 } from "lucide-react";
+import { AlertTriangle, Bell, CheckCircle2, Clock, Download, Loader2 } from "lucide-react";
 import { api, type ReportJob } from "../api";
 import { downloadBlob } from "../download";
+import { notificationPermission, requestNotificationPermission } from "../notifications";
 import { timeAgo } from "../time";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /** Background report jobs — tenant-wide, auto-refreshing while any are still in flight.
- * Reached from the Start screen like Team/Email: not tied to whatever report you have open. */
+ * Reached from the Start screen like Team/Email: not tied to whatever report you have open.
+ * (The actual notify-when-done logic lives in JobNotifications, mounted app-wide — this
+ * page just offers the permission opt-in and the full history/status table.) */
 export function JobsPage() {
   const [jobs, setJobs] = useState<ReportJob[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [notifyPermission, setNotifyPermission] = useState(notificationPermission());
 
   const refresh = () => api.listJobs().then(setJobs).catch((e) => setErr(msg(e)));
 
@@ -21,6 +25,10 @@ export function JobsPage() {
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const enableNotifications = async () => {
+    setNotifyPermission(await requestNotificationPermission());
+  };
 
   const download = async (job: ReportJob) => {
     setDownloading(job.id);
@@ -47,7 +55,24 @@ export function JobsPage() {
 
   return (
     <section className="start-section">
-      <h3>Background jobs</h3>
+      <div className="start-list-head">
+        <h3>Background jobs</h3>
+        {notifyPermission === "default" && (
+          <button className="mini" onClick={() => void enableNotifications()}>
+            <Bell size={13} /> Enable browser notifications
+          </button>
+        )}
+        {notifyPermission === "denied" && (
+          <span className="hint" style={{ margin: 0 }}>
+            Browser notifications blocked — allow them for this site to get notified.
+          </span>
+        )}
+        {notifyPermission === "granted" && (
+          <span className="hint" style={{ margin: 0, display: "flex", alignItems: "center", gap: 4 }}>
+            <Bell size={13} /> Notifications on
+          </span>
+        )}
+      </div>
       <p className="hint">Reports exported without waiting — status updates automatically.</p>
 
       {err && (

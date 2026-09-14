@@ -913,6 +913,25 @@ body {
 .job-status-ok { color: var(--success); }
 .job-status-error { color: var(--error); cursor: help; }
 
+/* background job "ready" toasts — top-right, distinct from the bottom-right error .toast */
+.job-toast-stack {
+  position: fixed; top: 16px; right: 16px; z-index: 60;
+  display: flex; flex-direction: column; gap: 8px; max-width: 340px;
+}
+.job-toast {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 10px 12px; border-radius: var(--radius-md);
+  background: var(--bg-surface); border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+  color: var(--success);
+  animation: toast-in 140ms ease-out;
+}
+.job-toast-error { color: var(--error); }
+.job-toast > svg { flex: 0 0 auto; margin-top: 1px; }
+.job-toast-body { flex: 1; min-width: 0; }
+.job-toast-title { font-size: 12.5px; font-weight: 650; color: var(--text-primary); }
+.job-toast-name { font-size: 11.5px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
 /* formula editor */
 .formula-dialog { width: 620px; }
 .formula-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; }

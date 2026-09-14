@@ -27,6 +27,7 @@ import {
 import { api } from "../api";
 import { isDesigner, useAuth, type TenantInfo } from "../auth";
 import { downloadBlob } from "../download";
+import { notificationPermission, requestNotificationPermission } from "../notifications";
 import { usePrefs } from "../prefs";
 import { timeAgo } from "../time";
 import type { FolderSummary, Orientation, PageSize, ReportDefinition, ReportSummary } from "../types";
@@ -288,6 +289,11 @@ export function StartScreen({
   };
 
   const runInBackground = async (r: ReportSummary, format: "pdf" | "xlsx") => {
+    // Fired synchronously (before any await) so it still counts as a direct result of the
+    // click — browsers ignore Notification.requestPermission() calls that aren't. A no-op
+    // once the user has already answered once, so this is safe to call every time.
+    if (notificationPermission() === "default") void requestNotificationPermission();
+
     setActionError(null);
     try {
       await api.enqueueReportJob(r.id, format);
