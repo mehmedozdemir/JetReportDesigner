@@ -511,8 +511,8 @@ Sıra ile: Excel/XLSX (ClosedXML) ✅, alt raporlar ✅, chart ✅, barkod/QR �
 expression fonksiyon kütüphanesi ✅, **auth (JWT + Identity, rol: Designer/Viewer)** ✅,
 **multi-tenant (organizasyon oluşturma + davet kodu ile katılma + takım yönetimi)** ✅,
 **e-posta hesabı tanımlama (Exchange/Gmail/özel SMTP + test gönderimi, MailKit)** ✅ — kalanlar:
-i18n (TR/EN UI), **rapor zamanlama/dağıtım** ✅, **URL/routing tabanlı sayfa geçişleri**
-(planlandı — bkz. aşağıdaki detay), şablon galerisi
+i18n (TR/EN UI), **rapor zamanlama/dağıtım** ✅, **URL/routing tabanlı sayfa geçişleri** ✅,
+şablon galerisi
 (kullanıcının kendi raporunu organizasyon şablonu olarak kaydetmesi), canlı işbirliği, **ardından**
 (bkz. aşağıdaki detay) AI destekli rapor asistanı ve modern görselleştirme (3D/gauge/heatmap/
 sparkline/harita). Önce bu listedeki mevcut kalan maddeler bitirilecek, AI/görselleştirme işi ondan
@@ -550,7 +550,7 @@ sonra ele alınacak — iki liste tek backlog'ta birleştirildi.
 - ⬜ **Backlog'a eklendi (ayrı iş turu, şimdi değil):** harici depolama hedefleri — MinIO, S3,
   Google Drive, OneDrive — iş çıktısının yerel/DB-blob dışında bu hedeflere de yazılabilmesi.
 
-**URL/routing tabanlı sayfa geçişleri — plan (ayrı iş turu, şimdi değil):**
+**URL/routing tabanlı sayfa geçişleri — ✅ tamamlandı:**
 Arka plan iş bildirimlerini (yukarıdaki madde) test ederken gerçek bir bug'a rastlandı: Start
 ekranı, designer'ın üzerine `position: fixed` bir overlay (`.start-overlay`, z-index 90) olarak
 biniyor — ayrı bir sayfa değil. Bildirim toast'ı (z-index 60) bu overlay'in arkasında sessizce
@@ -597,6 +597,14 @@ Rapor oluşturma (Blank/Sample) bir `POST` gerektirdiği için doğrudan link ol
   bağımsız çalıştırır — aynı job bitince birden fazla sekmede ayrı toast görülebilir. Şimdilik
   çözülmüyor (ileride `BroadcastChannel` ile dedup edilebilir), rahatsız ederse ayrı iş olarak ele
   alınır.
+
+Yukarıdaki plan aynen uygulandı: `react-router-dom` eklendi (`^7.18.3` — 6.0-7.17 arası iki orta
+seviye CVE taşıyor, 7.18.3 düzeltilmiş sürüm; bu projenin kullandığı API yüzeyi v6 ile aynı).
+Rapor tile/satırları artık gerçek `<a href>` — Ctrl/Cmd/orta-tık ile yeni sekmede açılıyor
+(kullanıcının asıl isteklerinden biri). Backend'de değişiklik gerekmedi:
+`Program.cs`'teki `MapFallbackToFile("index.html")` zaten her derin linki doğru karşılıyor.
+`tsc --noEmit` ve `npm run build` temiz; tarayıcı MCP aracı bu oturumda kaldırıldığı için canlı
+tarayıcıda görsel doğrulama yapılamadı — kullanıcıdan hard-refresh sonrası elle denemesi istendi.
 
 **Start ekranı UX gözden geçirmesi (2026-09-14) — büyük maddeler, backlog'a eklendi:**
 Yüksek/orta/küçük öncelikli maddeler uygulandı (yerel saatli zamanlama, dağıtım durumu
