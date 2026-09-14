@@ -78,7 +78,11 @@ export function App() {
     void api.listSamples().then(setSamples).catch(() => undefined);
   }, [refresh, token]);
 
-  const createFromSample = async (name: string, page?: { size: PageSize; orientation: Orientation }) => {
+  const createFromSample = async (
+    name: string,
+    page?: { size: PageSize; orientation: Orientation },
+    folderId?: string | null,
+  ) => {
     const sample = samples.find((s) => s.name === name);
     if (!sample) return;
     setBusy(true);
@@ -90,6 +94,7 @@ export function App() {
         name: `${definition.name} ${new Date().toISOString().slice(11, 19)}`,
         page: page ? { ...definition.page, ...page } : definition.page,
       });
+      if (folderId) await api.setReportFolder(created.id, folderId);
       load(created);
       await refresh();
       setTab("design");
@@ -148,6 +153,7 @@ export function App() {
   const createReport = async (
     mode: "free" | "banded" = "free",
     page?: { size: PageSize; orientation: Orientation },
+    folderId?: string | null,
   ) => {
     const layout = mode;
     setBusy(true);
@@ -158,6 +164,7 @@ export function App() {
       const created = await api.createReport(
         page ? { ...definition, page: { ...definition.page, ...page } } : definition,
       );
+      if (folderId) await api.setReportFolder(created.id, folderId);
       load(created);
       await refresh();
       setTab("design");
@@ -347,8 +354,8 @@ export function App() {
             reports={reports}
             samples={samples}
             busy={busy}
-            onBlank={(mode, page) => void createReport(mode, page)}
-            onSample={(name, page) => void createFromSample(name, page)}
+            onBlank={(mode, page, folderId) => void createReport(mode, page, folderId)}
+            onSample={(name, page, folderId) => void createFromSample(name, page, folderId)}
             onOpen={(id) => void open(id)}
             onDelete={(id) => void removeReport(id)}
             onMoveToFolder={(id, folderId) => void moveReportToFolder(id, folderId)}

@@ -43,8 +43,8 @@ export function StartScreen({
   reports: ReportSummary[];
   samples: { name: string; category: string; definition: ReportDefinition }[];
   busy: boolean;
-  onBlank: (mode: "free" | "banded", page: { size: PageSize; orientation: Orientation }) => void;
-  onSample: (name: string, page: { size: PageSize; orientation: Orientation }) => void;
+  onBlank: (mode: "free" | "banded", page: { size: PageSize; orientation: Orientation }, folderId: string | null) => void;
+  onSample: (name: string, page: { size: PageSize; orientation: Orientation }, folderId: string | null) => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
   onMoveToFolder: (id: string, folderId: string | null) => void;
@@ -338,11 +338,11 @@ export function StartScreen({
                 busy={busy}
                 onCreateBlank={(mode, page) => {
                   setNewReportOpen(false);
-                  onBlank(mode, page);
+                  onBlank(mode, page, currentFolderId);
                 }}
                 onCreateFromSample={(name, page) => {
                   setNewReportOpen(false);
-                  onSample(name, page);
+                  onSample(name, page, currentFolderId);
                 }}
                 onClose={() => setNewReportOpen(false)}
               />
