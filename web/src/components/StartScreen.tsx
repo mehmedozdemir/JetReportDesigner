@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   CalendarClock,
   ChevronDown,
@@ -40,10 +40,11 @@ import { NewReportDialog } from "./NewReportDialog";
 import { ReportPreviewDialog } from "./ReportPreviewDialog";
 import { ScheduleDialog } from "./ScheduleDialog";
 import { SchedulesPage } from "./SchedulesPage";
+import { SettingsPage } from "./SettingsPage";
 import { ShareDialog } from "./ShareDialog";
 import { TeamPage } from "./TeamPage";
 
-type View = "reports" | "team" | "email" | "jobs" | "schedules";
+type View = "reports" | "team" | "email" | "jobs" | "schedules" | "settings";
 type DragPayload = { kind: "report" | "folder"; id: string };
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 // layoutMode is "free"/"banded" on the wire — capitalized here only for display, to match
@@ -58,6 +59,7 @@ const VIEW_PATH: Record<View, string> = {
   team: "/team",
   email: "/email-settings",
   schedules: "/schedules",
+  settings: "/settings",
 };
 
 export function StartScreen({
@@ -85,7 +87,29 @@ export function StartScreen({
 }) {
   const navigate = useNavigate();
   const setView = (v: View) => navigate(VIEW_PATH[v]);
-  const [query, setQuery] = useState("");
+
+  // Which folder you're in and what you searched for live in the URL, not component state:
+  // otherwise a trip to Jobs and back dumped you at the root with an empty search box, and a
+  // folder couldn't be linked to or bookmarked. Folder changes push (so Back walks up the
+  // tree); typing replaces, so a search doesn't bury the history in one entry per keystroke.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentFolderId = searchParams.get("folder");
+  const query = searchParams.get("q") ?? "";
+  const patchParams = (patch: Record<string, string | null>, replace: boolean) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const [k, v] of Object.entries(patch)) {
+          if (v) next.set(k, v);
+          else next.delete(k);
+        }
+        return next;
+      },
+      { replace },
+    );
+  const setCurrentFolderId = (id: string | null) => patchParams({ folder: id }, false);
+  const setQuery = (q: string) => patchParams({ q: q || null }, true);
+
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [newReportOpen, setNewReportOpen] = useState(false);
   const [previewReport, setPreviewReport] = useState<ReportSummary | null>(null);
@@ -136,7 +160,6 @@ export function StartScreen({
   }, [canEdit, view]);
 
   const [folders, setFolders] = useState<FolderSummary[]>([]);
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
@@ -470,11 +493,11 @@ export function StartScreen({
         )}
 
         <div className="start-nav-footer">
-          {canEdit && (
-            <button className="start-nav-item" onClick={onSettings}>
-              <Settings size={16} /> <span>Settings</span>
-            </button>
-          )}
+          {/* Not gated on canEdit — everything in Settings is a personal preference (theme,
+              units, panel behaviour), so a Viewer needs it just as much as a Designer. */}
+          <button className={`start-nav-item${view === "settings" ? " on" : ""}`} onClick={onSettings}>
+            <Settings size={16} /> <span>Settings</span>
+          </button>
 
           {user && (
             <>
@@ -489,7 +512,14 @@ export function StartScreen({
                 title={user.email}
               >
                 <span className="user-avatar">{user.email[0]?.toUpperCase()}</span>
-                <span className="user-email">{user.email}</span>
+                {/* The full address never fit the 228px rail — it was rendering as
+                    "admin@asi…", which is useless for telling accounts apart. Show the
+                    local part plus the role; the full address is in the tooltip and as the
+                    first line of the menu this opens. */}
+                <span className="start-nav-user-text">
+                  <span className="start-nav-user-name">{user.email.split("@")[0]}</span>
+                  <span className="start-nav-user-role">{canEdit ? "Designer" : "Viewer"}</span>
+                </span>
                 <ChevronDown size={12} />
               </button>
               {userMenu && (
@@ -519,6 +549,8 @@ export function StartScreen({
           <JobsPage />
         ) : view === "schedules" ? (
           <SchedulesPage />
+        ) : view === "settings" ? (
+          <SettingsPage />
         ) : (
           <>
             {newReportOpen && (

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, Eye, Loader2, PencilRuler, ZoomIn, ZoomOut } from "lucide-react";
-import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
 import { isDesigner, useAuth } from "./auth";
 import { useDesigner } from "./store";
@@ -18,7 +18,6 @@ import { JobNotifications } from "./components/JobNotifications";
 import { LeftSidebar } from "./components/LeftSidebar";
 import { LoginScreen } from "./components/LoginScreen";
 import { COLLAPSED_WIDTH, ResizablePanel } from "./components/ResizablePanel";
-import { SettingsDialog } from "./components/SettingsDialog";
 import { StartScreen } from "./components/StartScreen";
 import { Toolbar } from "./components/Toolbar";
 import { PropertiesPanel } from "./components/PropertiesPanel";
@@ -59,7 +58,6 @@ export function App() {
   const rightRef = useRef<HTMLDivElement>(null);
 
   const isDesignerRoute = routeReportId != null;
-  const isSettingsRoute = location.pathname === "/settings";
   const tab = location.pathname.endsWith("/preview") ? "preview" : "design";
 
   useEffect(() => {
@@ -114,6 +112,21 @@ export function App() {
       cancelled = true;
     };
   }, [routeReportId, load]);
+
+  // Every tab otherwise reads "JetReportDesigner", which is useless once you're working with
+  // several reports open at once (Ctrl-click, "New report" in a new tab). Name the tab after
+  // whatever it's actually showing.
+  useEffect(() => {
+    const page =
+      isDesignerRoute && report
+        ? `${report.name}${tab === "preview" ? " — Preview" : ""}`
+        : isDesignerRoute
+          ? "Loading…"
+          : { "/jobs": "Jobs", "/team": "Team", "/email-settings": "Email", "/schedules": "Schedules", "/settings": "Settings" }[
+              location.pathname
+            ] ?? "Reports";
+    document.title = `${page} · JetReportDesigner`;
+  }, [isDesignerRoute, report, tab, location.pathname]);
 
   // A Viewer never gets the design surface — bounce straight to Preview for the same report.
   useEffect(() => {
@@ -282,16 +295,6 @@ export function App() {
     return <LoginScreen />;
   }
 
-  if (isSettingsRoute) {
-    if (!canEdit) return <Navigate to="/reports" replace />;
-    return (
-      <>
-        <SettingsDialog onClose={() => navigate(-1)} />
-        <JobNotifications />
-      </>
-    );
-  }
-
   if (!isDesignerRoute) {
     const view =
       location.pathname === "/jobs"
@@ -302,7 +305,9 @@ export function App() {
             ? "email"
             : location.pathname === "/schedules"
               ? "schedules"
-              : "reports";
+              : location.pathname === "/settings"
+                ? "settings"
+                : "reports";
     return (
       <>
         <StartScreen
