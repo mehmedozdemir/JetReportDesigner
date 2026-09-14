@@ -780,8 +780,12 @@ body {
   box-sizing: border-box;
 }
 .start-nav-item svg { width: 16px; height: 16px; flex: 0 0 auto; }
-/* Direct child only — the user row nests spans (name over role) that must not inherit this. */
-.start-nav-item > span:not(.nav-badge) { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Direct child only — the user row nests spans (name over role) that must not inherit this.
+   The avatar is excluded by name: it's also a direct-child span, and this selector outweighs
+   its own flex:0 0 auto, which stretched the circle into an ellipse. */
+.start-nav-item > span:not(.nav-badge):not(.user-avatar) {
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .start-nav-item:hover { background: var(--bg-elevated); color: var(--text-primary); }
 .start-nav-item.on { background: var(--accent-muted); color: var(--accent); font-weight: 650; }
 .start-nav-footer {
