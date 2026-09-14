@@ -8,6 +8,7 @@ import {
   FolderOpen,
   FolderPlus,
   LayoutGrid,
+  List,
   Pencil,
   Plus,
   Search,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { api } from "../api";
 import { isDesigner, useAuth } from "../auth";
+import { usePrefs } from "../prefs";
 import { timeAgo } from "../time";
 import type { FolderSummary, Orientation, PageSize, ReportDefinition, ReportSummary } from "../types";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
@@ -64,6 +66,8 @@ export function StartScreen({
   const [folderError, setFolderError] = useState<string | null>(null);
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null | "root">(null);
   const [menu, setMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const viewMode = usePrefs((s) => s.folderViewMode);
+  const setViewMode = (mode: "grid" | "detail") => usePrefs.getState().set("folderViewMode", mode);
 
   const refreshFolders = () => {
     api.listFolders().then(setFolders).catch((e) => setFolderError(msg(e)));
@@ -108,6 +112,14 @@ export function StartScreen({
   }, [currentFolderId, folderById]);
 
   const subfolders = childrenOf.get(currentFolderId) ?? [];
+
+  const reportCountByFolder = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of reports) {
+      if (r.folderId) map.set(r.folderId, (map.get(r.folderId) ?? 0) + 1);
+    }
+    return map;
+  }, [reports]);
 
   const folderDepth = (f: FolderSummary): number => {
     let depth = 0;
@@ -410,25 +422,46 @@ export function StartScreen({
                       </nav>
                     )}
 
-                    {canEdit && !isSearching && (
-                      creatingFolder ? (
-                        <form className="row" onSubmit={submitNewFolder}>
-                          <input
-                            autoFocus
-                            value={newFolderName}
-                            placeholder="Folder name"
-                            onChange={(e) => setNewFolderName(e.target.value)}
-                            onKeyDown={(e) => e.key === "Escape" && setCreatingFolder(false)}
-                          />
-                          <button className="mini" type="submit">Add</button>
-                          <button className="mini" type="button" onClick={() => setCreatingFolder(false)}>Cancel</button>
-                        </form>
-                      ) : (
-                        <button className="mini" onClick={() => setCreatingFolder(true)}>
-                          <FolderPlus size={13} /> New folder
+                    <div className="row">
+                      <div className="segmented" role="group" aria-label="View">
+                        <button
+                          className={viewMode === "grid" ? "on" : ""}
+                          onClick={() => setViewMode("grid")}
+                          title="Grid view"
+                          aria-label="Grid view"
+                        >
+                          <LayoutGrid size={13} />
                         </button>
-                      )
-                    )}
+                        <button
+                          className={viewMode === "detail" ? "on" : ""}
+                          onClick={() => setViewMode("detail")}
+                          title="Detail view"
+                          aria-label="Detail view"
+                        >
+                          <List size={13} />
+                        </button>
+                      </div>
+
+                      {canEdit && !isSearching && (
+                        creatingFolder ? (
+                          <form className="row" onSubmit={submitNewFolder}>
+                            <input
+                              autoFocus
+                              value={newFolderName}
+                              placeholder="Folder name"
+                              onChange={(e) => setNewFolderName(e.target.value)}
+                              onKeyDown={(e) => e.key === "Escape" && setCreatingFolder(false)}
+                            />
+                            <button className="mini" type="submit">Add</button>
+                            <button className="mini" type="button" onClick={() => setCreatingFolder(false)}>Cancel</button>
+                          </form>
+                        ) : (
+                          <button className="mini" onClick={() => setCreatingFolder(true)}>
+                            <FolderPlus size={13} /> New folder
+                          </button>
+                        )
+                      )}
+                    </div>
                   </div>
 
                   <div
@@ -447,7 +480,7 @@ export function StartScreen({
                         </div>
                         {reports.length === 0 && <p>Start from a blank report or a sample above.</p>}
                       </div>
-                    ) : (
+                    ) : viewMode === "grid" ? (
                       <div className="drive-grid">
                         {!isSearching &&
                           subfolders.map((f) =>
@@ -486,6 +519,9 @@ export function StartScreen({
                               >
                                 <Folder className="tile-icon" />
                                 <span className="drive-tile-name">{f.name}</span>
+                                <span className="drive-tile-count">
+                                  {reportCountByFolder.get(f.id) ?? 0} report{(reportCountByFolder.get(f.id) ?? 0) === 1 ? "" : "s"}
+                                </span>
                               </button>
                             ),
                           )}
@@ -527,6 +563,100 @@ export function StartScreen({
                           ),
                         )}
                       </div>
+                    ) : (
+                      <table className="drive-table">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Created</th>
+                            <th>Created by</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {!isSearching &&
+                            subfolders.map((f) =>
+                              renamingFolderId === f.id ? (
+                                <tr key={f.id}>
+                                  <td colSpan={4} className="drive-table-editing">
+                                    <Folder className="tile-icon" />
+                                    <input
+                                      autoFocus
+                                      value={renameValue}
+                                      onChange={(e) => setRenameValue(e.target.value)}
+                                      onKeyDown={(e) => e.key === "Enter" && void commitRename(f.id)}
+                                    />
+                                    <button className="mini" onClick={() => void commitRename(f.id)}>Save</button>
+                                    <button className="mini" onClick={() => setRenamingFolderId(null)}>Cancel</button>
+                                  </td>
+                                </tr>
+                              ) : confirmFolderId === f.id ? (
+                                <tr key={f.id}>
+                                  <td colSpan={4} className="drive-table-editing">
+                                    <Folder className="tile-icon" />
+                                    <span>Delete “{f.name}”?</span>
+                                    <button className="mini danger" onClick={() => void doDeleteFolder(f.id)}>Delete</button>
+                                    <button className="mini" onClick={() => setConfirmFolderId(null)}>Cancel</button>
+                                  </td>
+                                </tr>
+                              ) : (
+                                <tr
+                                  key={f.id}
+                                  className={dragOverFolderId === f.id ? "drag-over" : ""}
+                                  onClick={() => setCurrentFolderId(f.id)}
+                                  onContextMenu={(e) => openFolderMenu(e, f)}
+                                  draggable={canEdit}
+                                  onDragStart={(e) => startDrag(e, { kind: "folder", id: f.id })}
+                                  {...dragOverProps(f.id)}
+                                >
+                                  <td className="drive-table-name">
+                                    <Folder /> {f.name}
+                                    <span className="drive-tile-count">
+                                      {reportCountByFolder.get(f.id) ?? 0} report{(reportCountByFolder.get(f.id) ?? 0) === 1 ? "" : "s"}
+                                    </span>
+                                  </td>
+                                  <td>Folder</td>
+                                  <td>{new Date(f.createdAtUtc).toLocaleDateString()}</td>
+                                  <td>—</td>
+                                </tr>
+                              ),
+                            )}
+
+                          {reportsShown.map((r) =>
+                            confirmId === r.id ? (
+                              <tr key={r.id}>
+                                <td colSpan={4} className="drive-table-editing">
+                                  <FileText className="tile-icon" />
+                                  <span>Delete “{r.name}”?</span>
+                                  <button
+                                    className="mini danger"
+                                    onClick={() => {
+                                      onDelete(r.id);
+                                      setConfirmId(null);
+                                    }}
+                                  >
+                                    Delete
+                                  </button>
+                                  <button className="mini" onClick={() => setConfirmId(null)}>Cancel</button>
+                                </td>
+                              </tr>
+                            ) : (
+                              <tr
+                                key={r.id}
+                                onClick={() => !busy && onOpen(r.id)}
+                                onContextMenu={(e) => openReportMenu(e, r)}
+                                draggable={canEdit}
+                                onDragStart={(e) => startDrag(e, { kind: "report", id: r.id })}
+                              >
+                                <td className="drive-table-name"><FileText /> {r.name}</td>
+                                <td><span className="chip">{r.layoutMode}</span></td>
+                                <td>{new Date(r.createdAtUtc).toLocaleDateString()}</td>
+                                <td>{r.createdByEmail ?? "—"}</td>
+                              </tr>
+                            ),
+                          )}
+                        </tbody>
+                      </table>
                     )}
                   </div>
                 </div>

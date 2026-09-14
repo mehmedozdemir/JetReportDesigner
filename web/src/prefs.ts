@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 
 export type RulerUnit = "px" | "mm" | "cm";
 export type ThemePref = "light" | "dark";
+export type FolderViewMode = "grid" | "detail";
 
 export interface Prefs {
   showRulers: boolean;
@@ -17,6 +18,7 @@ export interface Prefs {
   rightPanelWidth: number;
   leftPanelCollapsed: boolean;
   rightPanelCollapsed: boolean;
+  folderViewMode: FolderViewMode;
 }
 
 export const DEFAULT_PREFS: Prefs = {
@@ -32,6 +34,7 @@ export const DEFAULT_PREFS: Prefs = {
   rightPanelWidth: 300,
   leftPanelCollapsed: false,
   rightPanelCollapsed: false,
+  folderViewMode: "grid",
 };
 
 interface PrefsState extends Prefs {

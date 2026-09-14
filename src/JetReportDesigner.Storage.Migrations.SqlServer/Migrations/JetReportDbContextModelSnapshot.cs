@@ -256,6 +256,12 @@ namespace JetReportDesigner.Storage.Migrations.SqlServer.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("CreatedByEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("DefinitionJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

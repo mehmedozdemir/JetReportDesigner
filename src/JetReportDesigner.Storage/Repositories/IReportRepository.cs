@@ -7,14 +7,16 @@ public sealed record ReportSummary(
     string Name,
     LayoutMode LayoutMode,
     DateTime CreatedAtUtc,
-    DateTime UpdatedAtUtc);
+    DateTime UpdatedAtUtc,
+    string? CreatedByEmail = null);
 
 public sealed record ReportRecord(
     Guid Id,
     ReportDefinition Definition,
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
-    Guid ConcurrencyToken);
+    Guid ConcurrencyToken,
+    string? CreatedByEmail = null);
 
 public sealed record ReportVersionInfo(int Version, string Name, DateTime SavedAtUtc);
 
@@ -30,7 +32,11 @@ public interface IReportRepository
 
     Task<ReportRecord?> GetAsync(Guid id, CancellationToken cancellationToken);
 
-    Task<ReportRecord> CreateAsync(ReportDefinition definition, CancellationToken cancellationToken);
+    Task<ReportRecord> CreateAsync(
+        ReportDefinition definition,
+        CancellationToken cancellationToken,
+        Guid? createdByUserId = null,
+        string? createdByEmail = null);
 
     /// <summary>Returns null when the report does not exist. Throws <see cref="ReportConcurrencyException"/> on a token mismatch.</summary>
     Task<ReportRecord?> UpdateAsync(

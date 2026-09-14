@@ -64,7 +64,12 @@ public sealed class ReportsController(
     {
         await validator.ValidateAndThrowAsync(definition, cancellationToken);
 
-        var created = await repository.CreateAsync(definition, cancellationToken);
+        var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")!.Value);
+        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+            ?? User.FindFirst("email")?.Value;
+
+        var created = await repository.CreateAsync(definition, cancellationToken, userId, email);
         Response.Headers.ETag = $"\"{created.ConcurrencyToken}\"";
         return CreatedAtAction(nameof(Get), new { id = created.Id }, ReportResponse.From(created));
     }

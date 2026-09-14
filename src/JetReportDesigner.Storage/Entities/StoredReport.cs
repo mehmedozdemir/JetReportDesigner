@@ -25,6 +25,12 @@ public sealed class StoredReport
 
     public DateTime UpdatedAtUtc { get; set; }
 
+    /// <summary>Who created this report. Null for reports created before this column existed.
+    /// A snapshot at creation time — deliberately not kept in sync with later email changes.</summary>
+    public Guid? CreatedByUserId { get; set; }
+
+    public string? CreatedByEmail { get; set; }
+
     /// <summary>Provider-agnostic optimistic-concurrency token, regenerated on every update.</summary>
     public Guid ConcurrencyToken { get; set; }
 }

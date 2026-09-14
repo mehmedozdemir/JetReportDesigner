@@ -335,6 +335,7 @@ export interface ReportSummary {
   createdAtUtc: string;
   updatedAtUtc: string;
   folderId?: string | null;
+  createdByEmail?: string | null;
 }
 
 export interface FolderSummary {

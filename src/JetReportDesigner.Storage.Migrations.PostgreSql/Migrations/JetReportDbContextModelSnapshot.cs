@@ -254,6 +254,12 @@ namespace JetReportDesigner.Storage.Migrations.PostgreSql.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CreatedByEmail")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("DefinitionJson")
                         .IsRequired()
                         .HasColumnType("text");

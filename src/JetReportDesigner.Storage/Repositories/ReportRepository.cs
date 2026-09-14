@@ -14,11 +14,11 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
             .AsNoTracking()
             .Where(r => r.TenantId == tenant.TenantId)
             .OrderByDescending(r => r.UpdatedAtUtc)
-            .Select(r => new { r.Id, r.Name, r.LayoutMode, r.CreatedAtUtc, r.UpdatedAtUtc })
+            .Select(r => new { r.Id, r.Name, r.LayoutMode, r.CreatedAtUtc, r.UpdatedAtUtc, r.CreatedByEmail })
             .ToListAsync(cancellationToken);
 
         return rows
-            .Select(r => new ReportSummary(r.Id, r.Name, ParseLayout(r.LayoutMode), r.CreatedAtUtc, r.UpdatedAtUtc))
+            .Select(r => new ReportSummary(r.Id, r.Name, ParseLayout(r.LayoutMode), r.CreatedAtUtc, r.UpdatedAtUtc, r.CreatedByEmail))
             .ToList();
     }
 
@@ -28,7 +28,11 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         return row is null ? null : ToRecord(row);
     }
 
-    public async Task<ReportRecord> CreateAsync(ReportDefinition definition, CancellationToken cancellationToken)
+    public async Task<ReportRecord> CreateAsync(
+        ReportDefinition definition,
+        CancellationToken cancellationToken,
+        Guid? createdByUserId = null,
+        string? createdByEmail = null)
     {
         var now = clock.GetUtcNow().UtcDateTime;
         var id = definition.Id == Guid.Empty ? Guid.NewGuid() : definition.Id;
@@ -45,6 +49,8 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
             CreatedAtUtc = now,
             UpdatedAtUtc = now,
             ConcurrencyToken = Guid.NewGuid(),
+            CreatedByUserId = createdByUserId,
+            CreatedByEmail = createdByEmail,
         };
 
         db.Reports.Add(row);
@@ -178,7 +184,8 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         ReportJson.Deserialize(row.DefinitionJson),
         row.CreatedAtUtc,
         row.UpdatedAtUtc,
-        row.ConcurrencyToken);
+        row.ConcurrencyToken,
+        row.CreatedByEmail);
 
     private static string LayoutToString(LayoutMode mode) =>
         mode == LayoutMode.Banded ? "banded" : "free";

@@ -30,7 +30,8 @@ internal sealed class FileSystemReportRepository : IReportRepository
         [property: JsonPropertyName("definition")] ReportDefinition Definition,
         [property: JsonPropertyName("createdAtUtc")] DateTime CreatedAtUtc,
         [property: JsonPropertyName("updatedAtUtc")] DateTime UpdatedAtUtc,
-        [property: JsonPropertyName("concurrencyToken")] Guid ConcurrencyToken);
+        [property: JsonPropertyName("concurrencyToken")] Guid ConcurrencyToken,
+        [property: JsonPropertyName("createdByEmail")] string? CreatedByEmail = null);
 
     private sealed record VersionFile(
         [property: JsonPropertyName("version")] int Version,
@@ -55,7 +56,8 @@ internal sealed class FileSystemReportRepository : IReportRepository
                     envelope.Definition.Name,
                     envelope.Definition.LayoutMode,
                     envelope.CreatedAtUtc,
-                    envelope.UpdatedAtUtc));
+                    envelope.UpdatedAtUtc,
+                    envelope.CreatedByEmail));
             }
         }
 
@@ -67,20 +69,24 @@ internal sealed class FileSystemReportRepository : IReportRepository
         var envelope = await ReadAsync<Envelope>(ReportPath(id), cancellationToken);
         return envelope is null
             ? null
-            : new ReportRecord(id, envelope.Definition, envelope.CreatedAtUtc, envelope.UpdatedAtUtc, envelope.ConcurrencyToken);
+            : new ReportRecord(id, envelope.Definition, envelope.CreatedAtUtc, envelope.UpdatedAtUtc, envelope.ConcurrencyToken, envelope.CreatedByEmail);
     }
 
-    public async Task<ReportRecord> CreateAsync(ReportDefinition definition, CancellationToken cancellationToken)
+    public async Task<ReportRecord> CreateAsync(
+        ReportDefinition definition,
+        CancellationToken cancellationToken,
+        Guid? createdByUserId = null,
+        string? createdByEmail = null)
     {
         var now = _clock.GetUtcNow().UtcDateTime;
         var id = definition.Id == Guid.Empty ? Guid.NewGuid() : definition.Id;
         definition.Id = id;
 
-        var envelope = new Envelope(definition, now, now, Guid.NewGuid());
+        var envelope = new Envelope(definition, now, now, Guid.NewGuid(), createdByEmail);
         await WriteAsync(ReportPath(id), envelope, cancellationToken);
         await WriteVersionAsync(id, 1, definition, now, cancellationToken);
 
-        return new ReportRecord(id, definition, now, now, envelope.ConcurrencyToken);
+        return new ReportRecord(id, definition, now, now, envelope.ConcurrencyToken, createdByEmail);
     }
 
     public async Task<ReportRecord?> UpdateAsync(
@@ -102,13 +108,13 @@ internal sealed class FileSystemReportRepository : IReportRepository
 
         var now = _clock.GetUtcNow().UtcDateTime;
         definition.Id = id;
-        var envelope = new Envelope(definition, existing.CreatedAtUtc, now, Guid.NewGuid());
+        var envelope = new Envelope(definition, existing.CreatedAtUtc, now, Guid.NewGuid(), existing.CreatedByEmail);
         await WriteAsync(ReportPath(id), envelope, cancellationToken);
 
         var nextVersion = NextVersionNumber(id);
         await WriteVersionAsync(id, nextVersion, definition, now, cancellationToken);
 
-        return new ReportRecord(id, definition, existing.CreatedAtUtc, now, envelope.ConcurrencyToken);
+        return new ReportRecord(id, definition, existing.CreatedAtUtc, now, envelope.ConcurrencyToken, existing.CreatedByEmail);
     }
 
     public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
