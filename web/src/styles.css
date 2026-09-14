@@ -915,7 +915,9 @@ body {
 
 /* background job "ready" toasts — top-right, distinct from the bottom-right error .toast */
 .job-toast-stack {
-  position: fixed; top: 16px; right: 16px; z-index: 60;
+  /* Above .start-overlay (90) — the Jobs tab a job finishes while you're watching lives
+     inside that overlay, so this must outrank it or the toast renders invisibly behind it. */
+  position: fixed; top: 16px; right: 16px; z-index: 100;
   display: flex; flex-direction: column; gap: 8px; max-width: 340px;
 }
 .job-toast {

@@ -511,7 +511,8 @@ Sıra ile: Excel/XLSX (ClosedXML) ✅, alt raporlar ✅, chart ✅, barkod/QR �
 expression fonksiyon kütüphanesi ✅, **auth (JWT + Identity, rol: Designer/Viewer)** ✅,
 **multi-tenant (organizasyon oluşturma + davet kodu ile katılma + takım yönetimi)** ✅,
 **e-posta hesabı tanımlama (Exchange/Gmail/özel SMTP + test gönderimi, MailKit)** ✅ — kalanlar:
-i18n (TR/EN UI), **rapor zamanlama/dağıtım** ✅, şablon galerisi
+i18n (TR/EN UI), **rapor zamanlama/dağıtım** ✅, **URL/routing tabanlı sayfa geçişleri**
+(planlandı — bkz. aşağıdaki detay), şablon galerisi
 (kullanıcının kendi raporunu organizasyon şablonu olarak kaydetmesi), canlı işbirliği, **ardından**
 (bkz. aşağıdaki detay) AI destekli rapor asistanı ve modern görselleştirme (3D/gauge/heatmap/
 sparkline/harita). Önce bu listedeki mevcut kalan maddeler bitirilecek, AI/görselleştirme işi ondan
@@ -548,6 +549,54 @@ sonra ele alınacak — iki liste tek backlog'ta birleştirildi.
   hem başarı hem hata yollarının gerçekten çalıştığının kanıtı.
 - ⬜ **Backlog'a eklendi (ayrı iş turu, şimdi değil):** harici depolama hedefleri — MinIO, S3,
   Google Drive, OneDrive — iş çıktısının yerel/DB-blob dışında bu hedeflere de yazılabilmesi.
+
+**URL/routing tabanlı sayfa geçişleri — plan (ayrı iş turu, şimdi değil):**
+Arka plan iş bildirimlerini (yukarıdaki madde) test ederken gerçek bir bug'a rastlandı: Start
+ekranı, designer'ın üzerine `position: fixed` bir overlay (`.start-overlay`, z-index 90) olarak
+biniyor — ayrı bir sayfa değil. Bildirim toast'ı (z-index 60) bu overlay'in arkasında sessizce
+render oluyordu, görünmüyordu (z-index 100'e çıkarılarak geçici olarak düzeltildi). Bu, mevcut
+"tek sayfa + overlay" mimarisinin yapısal bir zaafı: her ekranın kendi URL'i olsaydı bu bug sınıfı
+hiç oluşmazdı. Ayrıca kullanıcı isteği: yeni rapor oluşturma/var olan raporu açma ayrı sekmede
+yapılabilsin.
+
+Karar: her ekran kendi route'una sahip olacak (`react-router-dom` eklenecek — şu an proje bunu
+kullanmıyor, `package.json`'da yok).
+
+*Route haritası:*
+| URL | Ekran |
+|---|---|
+| `/login` | Giriş (mevcut `LoginScreen`) |
+| `/reports` | Start ekranı — Reports sekmesi (varsayılan) |
+| `/reports/:id/design` | Designer (Canvas) |
+| `/reports/:id/preview` | Preview |
+| `/jobs` | Jobs sekmesi |
+| `/schedules` | Schedules sekmesi (Designer-only) |
+| `/email-settings` | Email sekmesi (Designer-only) |
+| `/team` | Team sekmesi (Designer-only) |
+| `/settings` | Ayarlar — şu an modal (`SettingsDialog`), kendi route'u olacak (karar verildi) |
+
+Rapor oluşturma (Blank/Sample) bir `POST` gerektirdiği için doğrudan link olamaz — buton API
+çağrısından sonra dönen id ile `navigate('/reports/:id/design')` yapar. "Yeni sekmede aç" sadece
+**var olan** raporlar için gerçek `<a href>` ile mümkün olur (Ctrl+tık/orta tık).
+
+*Aşamalar:*
+1. `react-router-dom` ekle, `App.tsx`'i `BrowserRouter` + `<Routes>` ile sarmalayıp mevcut
+   ekranları route bileşenlerine taşı. Auth guard: token yoksa her route `/login`'e yönlendirir
+   (auth zaten `zustand/persist` ile localStorage'da — yeni sekme otomatik login'li açılır).
+2. StartScreen'in iç sekmeleri (Reports/Jobs/Team/Email/Schedules) local `useState` yerine URL
+   segmenti olur.
+3. Designer/Preview tab'ı da route'a taşınır (`design`/`preview`); `showStart` overlay state'i
+   tamamen kalkar — bug'ın kaynağı olan overlay yapısı ortadan kalkmış olur.
+4. Deep-link yükleme: `/reports/:id/design` direkt açıldığında (yeni sekme/refresh)
+   `api.getReport(id)` ile rapor çekilip store'a yüklenir; 404/yanlış tenant durumunda
+   `/reports`'a dönüş linkli, anlaşılır bir hata ekranı gösterilir.
+
+*Bilinçli kapsam dışı (v1 için):*
+- Parametre değerleri (`paramValues`) URL'e yansımayacak, hâlâ bellekte kalacak.
+- Aynı raporun iki sekmede açılması: her sekme kendi auto-save/job-notification poller'ını
+  bağımsız çalıştırır — aynı job bitince birden fazla sekmede ayrı toast görülebilir. Şimdilik
+  çözülmüyor (ileride `BroadcastChannel` ile dedup edilebilir), rahatsız ederse ayrı iş olarak ele
+  alınır.
 
 ---
 

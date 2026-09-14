@@ -6,6 +6,9 @@ import { notifyIfBackgrounded } from "../notifications";
 
 const POLL_MS = 5000;
 const AUTO_DISMISS_MS = 8000;
+// A job finished within this long before we ever saw it (e.g. the tab was reloaded right
+// as it completed) still counts as "just finished" — anything older is stale history.
+const RECENT_MS = 15000;
 
 interface Toast {
   id: string;
@@ -20,7 +23,6 @@ interface Toast {
 export function JobNotifications() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const knownStatus = useRef<Map<string, ReportJob["status"]>>(new Map());
-  const isFirstPoll = useRef(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,10 +41,15 @@ export function JobNotifications() {
         knownStatus.current.set(job.id, job.status);
 
         const justFinished = job.status === "Succeeded" || job.status === "Failed";
-        // Skip the very first poll after mount (or load) entirely — otherwise every job
-        // that already finished before this tab opened would "notify" all at once — and
-        // otherwise only fire on an actual transition into a finished state.
-        if (isFirstPoll.current || !justFinished || previous === job.status) continue;
+        if (!justFinished) continue;
+        if (previous === job.status) continue;
+        // The first time we ever see a job that's already finished, only notify if it
+        // finished recently — e.g. the tab was reloaded right as it completed. Otherwise
+        // every job that finished long before this tab opened would "notify" all at once.
+        if (previous === undefined) {
+          const finishedAt = job.completedAtUtc ? Date.parse(job.completedAtUtc) : NaN;
+          if (!(Date.now() - finishedAt < RECENT_MS)) continue;
+        }
 
         setToasts((cur) => [...cur, { id: job.id, job }]);
         notifyIfBackgrounded(
@@ -50,8 +57,6 @@ export function JobNotifications() {
           job.status === "Succeeded" ? `${job.reportName} finished rendering.` : `${job.reportName} failed to render.`,
         );
       }
-
-      isFirstPoll.current = false;
     };
 
     void poll();

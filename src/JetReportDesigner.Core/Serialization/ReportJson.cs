@@ -36,6 +36,28 @@ public static class ReportJson
             options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
         }
 
+        if (!options.Converters.Any(c => c is UtcDateTimeConverter))
+        {
+            // Every DateTime in this codebase is a *Utc field by convention, but EF Core
+            // hands values back with DateTimeKind.Unspecified (SQL Server/PostgreSql/Oracle
+            // don't round-trip Kind), so the default converter serializes those without a
+            // "Z" — while a freshly-constructed DateTime.UtcNow elsewhere in the same
+            // response DOES get one. Clients then parse the un-marked ones as local time.
+            // Forcing Kind=Utc here makes every DateTime on the wire unambiguous.
+            options.Converters.Add(new UtcDateTimeConverter());
+        }
+
         return options;
     }
+}
+
+/// <summary>Serializes/deserializes DateTime as UTC unconditionally — see the comment where
+/// this is registered in <see cref="ReportJson.Apply"/>.</summary>
+internal sealed class UtcDateTimeConverter : JsonConverter<DateTime>
+{
+    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+        DateTime.SpecifyKind(reader.GetDateTime(), DateTimeKind.Utc);
+
+    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options) =>
+        writer.WriteStringValue(DateTime.SpecifyKind(value, DateTimeKind.Utc));
 }
