@@ -433,48 +433,50 @@ export function StartScreen({
 
   return (
     <div className="start-screen">
-      <header className="start-head">
-        <div className="brand">
+      <nav className="start-nav">
+        <div className="start-nav-brand">
           <FileBarChart2 size={18} />
           <span>JetReportDesigner</span>
-          {tenant && <span className="start-org">{tenant.name}</span>}
         </div>
+        {tenant && <div className="start-nav-org">{tenant.name}</div>}
 
-        <div className="segmented" role="group" aria-label="Start screen section">
-          <button className={view === "reports" ? "on" : ""} onClick={() => setView("reports")}>
-            <LayoutGrid size={14} /> Reports
+        <div className="start-nav-group">
+          <button className={`start-nav-item${view === "reports" ? " on" : ""}`} onClick={() => setView("reports")}>
+            <LayoutGrid size={16} /> <span>Reports</span>
           </button>
-          <button className={view === "jobs" ? "on" : ""} onClick={() => setView("jobs")}>
-            <Clock size={14} /> Jobs
+          <button className={`start-nav-item${view === "jobs" ? " on" : ""}`} onClick={() => setView("jobs")}>
+            <Clock size={16} /> <span>Jobs</span>
             {runningJobs > 0 && <span className="nav-badge">{runningJobs}</span>}
           </button>
-          {canEdit && (
-            <>
-              <button className={view === "team" ? "on" : ""} onClick={() => setView("team")}>
-                <Users size={14} /> Team
-                {pendingInvites > 0 && <span className="nav-badge">{pendingInvites}</span>}
-              </button>
-              <button className={view === "email" ? "on" : ""} onClick={() => setView("email")}>
-                <Mail size={14} /> Email
-              </button>
-              <button className={view === "schedules" ? "on" : ""} onClick={() => setView("schedules")}>
-                <CalendarClock size={14} /> Schedules
-              </button>
-            </>
-          )}
         </div>
 
-        <div className="row" style={{ marginLeft: "auto" }}>
+        {canEdit && (
+          <div className="start-nav-group">
+            <div className="start-nav-label">Organization</div>
+            <button className={`start-nav-item${view === "team" ? " on" : ""}`} onClick={() => setView("team")}>
+              <Users size={16} /> <span>Team</span>
+              {pendingInvites > 0 && <span className="nav-badge">{pendingInvites}</span>}
+            </button>
+            <button className={`start-nav-item${view === "email" ? " on" : ""}`} onClick={() => setView("email")}>
+              <Mail size={16} /> <span>Email</span>
+            </button>
+            <button className={`start-nav-item${view === "schedules" ? " on" : ""}`} onClick={() => setView("schedules")}>
+              <CalendarClock size={16} /> <span>Schedules</span>
+            </button>
+          </div>
+        )}
+
+        <div className="start-nav-footer">
           {canEdit && (
-            <button className="btn icon" onClick={onSettings} title="Settings" aria-label="Settings">
-              <Settings />
+            <button className="start-nav-item" onClick={onSettings}>
+              <Settings size={16} /> <span>Settings</span>
             </button>
           )}
 
           {user && (
             <>
               <button
-                className="btn user-chip"
+                className="start-nav-item start-nav-user"
                 onClick={(e) =>
                   setUserMenu({
                     x: e.currentTarget.getBoundingClientRect().right,
@@ -502,9 +504,8 @@ export function StartScreen({
               )}
             </>
           )}
-
         </div>
-      </header>
+      </nav>
 
       <div className="start-scroll">
         {view === "team" ? (
