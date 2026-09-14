@@ -51,4 +51,15 @@ public sealed class ReportSchedule
     /// <summary>The most recent job this schedule created — a plain denormalised pointer, not
     /// an FK, matching this codebase's convention for cross-entity references.</summary>
     public Guid? LastJobId { get; set; }
+
+    /// <summary>When distribution (share link / email) was last attempted for this schedule.
+    /// Null until the first run that has anything to distribute (a schedule with neither
+    /// <see cref="CreateShareLink"/> nor <see cref="EmailRecipients"/> never sets this).</summary>
+    public DateTime? LastDistributionAtUtc { get; set; }
+
+    /// <summary>Null if <see cref="LastDistributionAtUtc"/>'s attempt succeeded (or nothing has
+    /// been attempted yet); otherwise the error from that attempt — e.g. a bad SMTP password.
+    /// A distribution failure never fails the run's own job, so this is the only place it's
+    /// visible short of the server log.</summary>
+    public string? LastDistributionError { get; set; }
 }

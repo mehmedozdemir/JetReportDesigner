@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Check, Copy, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, Copy, Loader2, Plus, Trash2 } from "lucide-react";
 import { api } from "../api";
 import { useAuth, type PendingInvite, type TeamMember, type TenantInfo } from "../auth";
 
@@ -18,6 +18,7 @@ export function TeamPage() {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const refresh = async () => {
     const [t, m, p] = await Promise.all([api.getTenant(), api.listTeam(), api.listInvites()]);
@@ -27,8 +28,20 @@ export function TeamPage() {
   };
 
   useEffect(() => {
-    refresh().catch((e) => setErr(msg(e)));
+    refresh()
+      .catch((e) => setErr(msg(e)))
+      .finally(() => setLoaded(true));
   }, []);
+
+  if (!loaded) {
+    return (
+      <section className="start-section">
+        <div className="share-loading">
+          <Loader2 size={16} className="spin" />
+        </div>
+      </section>
+    );
+  }
 
   const changeRole = async (id: string, role: string) => {
     setErr(null);

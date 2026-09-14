@@ -15,7 +15,9 @@ public sealed record ReportScheduleInfo(
     DateTime CreatedAtUtc,
     DateTime NextRunAtUtc,
     DateTime? LastRunAtUtc,
-    Guid? LastJobId);
+    Guid? LastJobId,
+    DateTime? LastDistributionAtUtc,
+    string? LastDistributionError);
 
 public sealed record ReportScheduleFields(
     string Format,
@@ -57,4 +59,9 @@ public interface IReportScheduleRepository
     Task RecordRunAsync(Guid scheduleId, Guid jobId, CancellationToken cancellationToken);
 
     Task<ScheduleDistributionSettings?> GetDistributionSettingsAsync(Guid scheduleId, CancellationToken cancellationToken);
+
+    /// <summary>Records the outcome of a distribution attempt (share link / email) — null
+    /// <paramref name="error"/> means it succeeded. A no-op if the schedule was deleted in the
+    /// meantime.</summary>
+    Task RecordDistributionResultAsync(Guid scheduleId, string? error, CancellationToken cancellationToken);
 }

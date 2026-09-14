@@ -381,6 +381,8 @@ export interface ReportSchedule {
   nextRunAtUtc: string;
   lastRunAtUtc?: string | null;
   lastJobId?: string | null;
+  lastDistributionAtUtc?: string | null;
+  lastDistributionError?: string | null;
 }
 
 export type SmtpSecurity = "None" | "StartTls" | "SslOnConnect";

@@ -273,6 +273,13 @@ namespace JetReportDesigner.Storage.Migrations.SqlServer.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("nvarchar(16)");
 
+                    b.Property<DateTime?>("LastDistributionAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastDistributionError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<Guid?>("LastJobId")
                         .HasColumnType("uniqueidentifier");
 

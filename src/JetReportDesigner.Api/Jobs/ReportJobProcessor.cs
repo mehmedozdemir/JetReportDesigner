@@ -114,15 +114,17 @@ internal sealed class ReportJobProcessor(IServiceScopeFactory scopeFactory, ILog
     /// failure (bad SMTP creds, a revoked share, …) undo the job's own success.</summary>
     private async Task DistributeAsync(IServiceScope scope, ClaimedReportJob claimed, Guid scheduleId, CancellationToken cancellationToken)
     {
+        var schedules = scope.ServiceProvider.GetRequiredService<IReportScheduleRepository>();
+        var settings = await schedules.GetDistributionSettingsAsync(scheduleId, cancellationToken);
+        if (settings is null || (!settings.CreateShareLink && string.IsNullOrWhiteSpace(settings.EmailRecipients)))
+        {
+            // Nothing to distribute — a "history only" schedule never touches
+            // LastDistributionAtUtc, so the UI can tell "never attempted" from "succeeded".
+            return;
+        }
+
         try
         {
-            var schedules = scope.ServiceProvider.GetRequiredService<IReportScheduleRepository>();
-            var settings = await schedules.GetDistributionSettingsAsync(scheduleId, cancellationToken);
-            if (settings is null)
-            {
-                return;
-            }
-
             if (settings.CreateShareLink)
             {
                 var shares = scope.ServiceProvider.GetRequiredService<IReportShareRepository>();
@@ -133,10 +135,13 @@ internal sealed class ReportJobProcessor(IServiceScopeFactory scopeFactory, ILog
             {
                 await EmailResultAsync(scope, claimed, settings, cancellationToken);
             }
+
+            await schedules.RecordDistributionResultAsync(scheduleId, error: null, cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Distributing schedule {ScheduleId} (job {JobId}) failed", scheduleId, claimed.Id);
+            await schedules.RecordDistributionResultAsync(scheduleId, ex.Message, cancellationToken);
         }
     }
 

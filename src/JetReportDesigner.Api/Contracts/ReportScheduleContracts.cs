@@ -17,11 +17,14 @@ public sealed record ReportScheduleResponse(
     DateTime CreatedAtUtc,
     DateTime NextRunAtUtc,
     DateTime? LastRunAtUtc,
-    Guid? LastJobId)
+    Guid? LastJobId,
+    DateTime? LastDistributionAtUtc,
+    string? LastDistributionError)
 {
     public static ReportScheduleResponse From(ReportScheduleInfo s) => new(
         s.Id, s.ReportId, s.ReportName, s.Format, s.Frequency, s.MinuteOfDayUtc, s.DayOfWeek, s.DayOfMonth,
-        s.Enabled, s.CreateShareLink, s.EmailRecipients, s.CreatedAtUtc, s.NextRunAtUtc, s.LastRunAtUtc, s.LastJobId);
+        s.Enabled, s.CreateShareLink, s.EmailRecipients, s.CreatedAtUtc, s.NextRunAtUtc, s.LastRunAtUtc, s.LastJobId,
+        s.LastDistributionAtUtc, s.LastDistributionError);
 }
 
 public sealed record ReportScheduleRequest(

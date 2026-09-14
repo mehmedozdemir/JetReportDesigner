@@ -273,6 +273,13 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("NVARCHAR2(16)");
 
+                    b.Property<DateTime?>("LastDistributionAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<string>("LastDistributionError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("NVARCHAR2(2000)");
+
                     b.Property<Guid?>("LastJobId")
                         .HasColumnType("RAW(16)");
 

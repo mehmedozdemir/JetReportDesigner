@@ -17,6 +17,7 @@ internal sealed class ReportScheduleConfiguration : IEntityTypeConfiguration<Rep
         builder.Property(s => s.Format).HasMaxLength(8).IsRequired();
         builder.Property(s => s.Frequency).HasMaxLength(16).IsRequired();
         builder.Property(s => s.EmailRecipients).HasMaxLength(2000);
+        builder.Property(s => s.LastDistributionError).HasMaxLength(2000);
 
         builder.HasIndex(s => s.TenantId);
         builder.HasIndex(s => s.ReportId);

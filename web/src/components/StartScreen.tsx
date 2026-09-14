@@ -13,8 +13,10 @@ import {
   FolderPlus,
   LayoutGrid,
   List,
+  Loader2,
   LogOut,
   Mail,
+  MoreVertical,
   Pencil,
   Plus,
   Search,
@@ -96,11 +98,16 @@ export function StartScreen({
   const [folderError, setFolderError] = useState<string | null>(null);
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null | "root">(null);
   const [menu, setMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const [foldersLoaded, setFoldersLoaded] = useState(false);
   const viewMode = usePrefs((s) => s.folderViewMode);
   const setViewMode = (mode: "grid" | "detail") => usePrefs.getState().set("folderViewMode", mode);
 
   const refreshFolders = () => {
-    api.listFolders().then(setFolders).catch((e) => setFolderError(msg(e)));
+    api
+      .listFolders()
+      .then(setFolders)
+      .catch((e) => setFolderError(msg(e)))
+      .finally(() => setFoldersLoaded(true));
   };
   useEffect(refreshFolders, []);
 
@@ -142,6 +149,19 @@ export function StartScreen({
   }, [currentFolderId, folderById]);
 
   const subfolders = childrenOf.get(currentFolderId) ?? [];
+
+  // Search flattens every folder into one result list — without this, two reports with the
+  // same name in different folders (or just "which folder was that in?") are indistinguishable.
+  const folderPath = (folderId: string | null | undefined): string | null => {
+    if (!folderId) return null;
+    const chain: string[] = [];
+    let cur = folderById.get(folderId);
+    while (cur) {
+      chain.unshift(cur.name);
+      cur = cur.parentFolderId ? folderById.get(cur.parentFolderId) : undefined;
+    }
+    return chain.join(" / ") || null;
+  };
 
   const reportCountByFolder = useMemo(() => {
     const map = new Map<string, number>();
@@ -453,16 +473,6 @@ export function StartScreen({
           <SchedulesPage />
         ) : (
           <>
-            <section className="start-section start-new-section">
-              {!canEdit ? (
-                <p className="hint">Viewer role — sign in as a Designer to create reports.</p>
-              ) : (
-                <button className="btn primary" onClick={() => setNewReportOpen(true)} disabled={busy}>
-                  <Plus /> New report
-                </button>
-              )}
-            </section>
-
             {newReportOpen && (
               <NewReportDialog
                 samples={samples}
@@ -482,6 +492,7 @@ export function StartScreen({
             <section className="start-section">
               <div className="start-list-head">
                 <h3>Reports</h3>
+                {!canEdit && <span className="hint" style={{ margin: 0 }}>Viewer role — sign in as a Designer to create reports.</span>}
                 <label className="start-search">
                   <Search size={14} />
                   <input
@@ -496,6 +507,11 @@ export function StartScreen({
                 <p className="hint" style={{ color: "var(--error)" }}>{folderError ?? actionError}</p>
               )}
 
+              {!foldersLoaded ? (
+                <div className="share-loading">
+                  <Loader2 size={16} className="spin" />
+                </div>
+              ) : (
               <div className="drive">
                 <nav className="drive-sidebar">
                   <div className="tree-row">
@@ -572,6 +588,12 @@ export function StartScreen({
                           <List size={13} />
                         </button>
                       </div>
+
+                      {canEdit && (
+                        <button className="btn primary" onClick={() => setNewReportOpen(true)} disabled={busy}>
+                          <Plus size={14} /> New report
+                        </button>
+                      )}
 
                       {canEdit && !isSearching && (
                         creatingFolder ? (
@@ -676,21 +698,36 @@ export function StartScreen({
                               </div>
                             </div>
                           ) : (
-                            <button
-                              key={r.id}
-                              className="drive-tile"
-                              onClick={() => onOpen(r.id)}
-                              onContextMenu={(e) => openReportMenu(e, r)}
-                              disabled={busy}
-                              draggable={canEdit}
-                              onDragStart={(e) => startDrag(e, { kind: "report", id: r.id })}
-                            >
-                              <FileText className="tile-icon" />
-                              <span className="drive-tile-name">{r.name}</span>
-                              <span className="drive-tile-meta">
-                                <span className="chip">{r.layoutMode}</span> {timeAgo(r.updatedAtUtc)}
-                              </span>
-                            </button>
+                            <div key={r.id} className="drive-tile-cell">
+                              <button
+                                className="drive-tile"
+                                onClick={() => onOpen(r.id)}
+                                onContextMenu={(e) => openReportMenu(e, r)}
+                                disabled={busy}
+                                draggable={canEdit}
+                                onDragStart={(e) => startDrag(e, { kind: "report", id: r.id })}
+                              >
+                                <FileText className="tile-icon" />
+                                <span className="drive-tile-name">{r.name}</span>
+                                {isSearching && folderPath(r.folderId) && (
+                                  <span className="drive-tile-path">{folderPath(r.folderId)}</span>
+                                )}
+                                <span className="drive-tile-meta">
+                                  <span className="chip">{r.layoutMode}</span> {timeAgo(r.updatedAtUtc)}
+                                </span>
+                              </button>
+                              <button
+                                className="mini ghost drive-tile-kebab"
+                                title="More actions"
+                                aria-label="More actions"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openReportMenu(e, r);
+                                }}
+                              >
+                                <MoreVertical size={14} />
+                              </button>
+                            </div>
                           ),
                         )}
                       </div>
@@ -702,6 +739,7 @@ export function StartScreen({
                             <th>Type</th>
                             <th>Created</th>
                             <th>Created by</th>
+                            <th />
                           </tr>
                         </thead>
                         <tbody>
@@ -709,7 +747,7 @@ export function StartScreen({
                             subfolders.map((f) =>
                               renamingFolderId === f.id ? (
                                 <tr key={f.id}>
-                                  <td colSpan={4} className="drive-table-editing">
+                                  <td colSpan={5} className="drive-table-editing">
                                     <Folder className="tile-icon" />
                                     <input
                                       autoFocus
@@ -723,7 +761,7 @@ export function StartScreen({
                                 </tr>
                               ) : confirmFolderId === f.id ? (
                                 <tr key={f.id}>
-                                  <td colSpan={4} className="drive-table-editing">
+                                  <td colSpan={5} className="drive-table-editing">
                                     <Folder className="tile-icon" />
                                     <span>Delete “{f.name}”?</span>
                                     <button className="mini danger" onClick={() => void doDeleteFolder(f.id)}>Delete</button>
@@ -749,6 +787,19 @@ export function StartScreen({
                                   <td>Folder</td>
                                   <td>{new Date(f.createdAtUtc).toLocaleDateString()}</td>
                                   <td>—</td>
+                                  <td>
+                                    <button
+                                      className="mini ghost row-kebab"
+                                      title="More actions"
+                                      aria-label="More actions"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openFolderMenu(e, f);
+                                      }}
+                                    >
+                                      <MoreVertical size={14} />
+                                    </button>
+                                  </td>
                                 </tr>
                               ),
                             )}
@@ -756,7 +807,7 @@ export function StartScreen({
                           {reportsShown.map((r) =>
                             confirmId === r.id ? (
                               <tr key={r.id}>
-                                <td colSpan={4} className="drive-table-editing">
+                                <td colSpan={5} className="drive-table-editing">
                                   <FileText className="tile-icon" />
                                   <span>Delete “{r.name}”?</span>
                                   <button
@@ -779,10 +830,28 @@ export function StartScreen({
                                 draggable={canEdit}
                                 onDragStart={(e) => startDrag(e, { kind: "report", id: r.id })}
                               >
-                                <td className="drive-table-name"><FileText /> {r.name}</td>
+                                <td className="drive-table-name">
+                                  <FileText /> {r.name}
+                                  {isSearching && folderPath(r.folderId) && (
+                                    <span className="drive-tile-count">{folderPath(r.folderId)}</span>
+                                  )}
+                                </td>
                                 <td><span className="chip">{r.layoutMode}</span></td>
                                 <td>{new Date(r.createdAtUtc).toLocaleDateString()}</td>
                                 <td>{r.createdByEmail ?? "—"}</td>
+                                <td>
+                                  <button
+                                    className="mini ghost row-kebab"
+                                    title="More actions"
+                                    aria-label="More actions"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openReportMenu(e, r);
+                                    }}
+                                  >
+                                    <MoreVertical size={14} />
+                                  </button>
+                                </td>
                               </tr>
                             ),
                           )}
@@ -792,6 +861,7 @@ export function StartScreen({
                   </div>
                 </div>
               </div>
+              )}
             </section>
           </>
         )}
@@ -812,7 +882,13 @@ export function StartScreen({
 
       {shareReport && <ShareDialog report={shareReport} onClose={() => setShareReport(null)} />}
 
-      {scheduleReport && <ScheduleDialog report={scheduleReport} onClose={() => setScheduleReport(null)} />}
+      {scheduleReport && (
+        <ScheduleDialog
+          reportId={scheduleReport.id}
+          reportName={scheduleReport.name}
+          onClose={() => setScheduleReport(null)}
+        />
+      )}
     </div>
   );
 }

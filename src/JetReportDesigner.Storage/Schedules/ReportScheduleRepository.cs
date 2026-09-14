@@ -125,7 +125,21 @@ internal sealed class ReportScheduleRepository(JetReportDbContext db, TimeProvid
             : new ScheduleDistributionSettings(row.ReportId, row.ReportName, row.CreatedByUserId, row.CreateShareLink, row.EmailRecipients);
     }
 
+    public async Task RecordDistributionResultAsync(Guid scheduleId, string? error, CancellationToken cancellationToken)
+    {
+        var schedule = await db.ReportSchedules.FirstOrDefaultAsync(s => s.Id == scheduleId, cancellationToken);
+        if (schedule is null)
+        {
+            return;
+        }
+
+        schedule.LastDistributionAtUtc = clock.GetUtcNow().UtcDateTime;
+        schedule.LastDistributionError = error;
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
     private static ReportScheduleInfo ToInfo(ReportSchedule s) => new(
         s.Id, s.ReportId, s.ReportName, s.Format, s.Frequency, s.MinuteOfDayUtc, s.DayOfWeek, s.DayOfMonth,
-        s.Enabled, s.CreateShareLink, s.EmailRecipients, s.CreatedAtUtc, s.NextRunAtUtc, s.LastRunAtUtc, s.LastJobId);
+        s.Enabled, s.CreateShareLink, s.EmailRecipients, s.CreatedAtUtc, s.NextRunAtUtc, s.LastRunAtUtc, s.LastJobId,
+        s.LastDistributionAtUtc, s.LastDistributionError);
 }

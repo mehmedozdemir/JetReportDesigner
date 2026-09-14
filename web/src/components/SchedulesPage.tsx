@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, CalendarClock, Loader2, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, Loader2, Pencil, Trash2 } from "lucide-react";
 import { api, type ReportSchedule } from "../api";
+import { hhmm, utcToLocal } from "../scheduleTime";
+import { ScheduleDialog } from "./ScheduleDialog";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+/** Recurrence description in the viewer's own timezone — the API stores everything in UTC
+ * (see scheduleTime.ts), so day-of-week/day-of-month can shift by one relative to what's
+ * stored, not just the time. */
 function describe(s: ReportSchedule): string {
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  const time = `${pad(Math.floor(s.minuteOfDayUtc / 60))}:${pad(s.minuteOfDayUtc % 60)} UTC`;
-  if (s.frequency === "Weekly") return `Weekly on ${WEEKDAYS[s.dayOfWeek ?? 0]} at ${time}`;
-  if (s.frequency === "Monthly") return `Monthly on day ${s.dayOfMonth ?? 1} at ${time}`;
+  const local = utcToLocal({ minuteOfDayUtc: s.minuteOfDayUtc, dayOfWeek: s.dayOfWeek ?? null, dayOfMonth: s.dayOfMonth ?? null });
+  const time = hhmm(local.minuteOfDay);
+  if (s.frequency === "Weekly") return `Weekly on ${WEEKDAYS[local.dayOfWeek ?? 0]} at ${time}`;
+  if (s.frequency === "Monthly") return `Monthly on day ${local.dayOfMonth ?? 1} at ${time}`;
   return `Daily at ${time}`;
 }
 
@@ -19,6 +24,7 @@ function describe(s: ReportSchedule): string {
 export function SchedulesPage() {
   const [schedules, setSchedules] = useState<ReportSchedule[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [editing, setEditing] = useState<ReportSchedule | null>(null);
 
   const refresh = () => api.listSchedules().then(setSchedules).catch((e) => setErr(msg(e)));
   useEffect(() => {
@@ -87,31 +93,62 @@ export function SchedulesPage() {
             </tr>
           </thead>
           <tbody>
-            {schedules.map((s) => (
-              <tr key={s.id}>
-                <td className="drive-table-name">
-                  {s.reportName} <span className="chip">{s.format}</span>
-                </td>
-                <td>{describe(s)}</td>
-                <td>
-                  {[s.createShareLink && "link", s.emailRecipients && "email"].filter(Boolean).join(" + ") || "history only"}
-                </td>
-                <td>{new Date(s.nextRunAtUtc).toLocaleString()}</td>
-                <td>{s.lastRunAtUtc ? new Date(s.lastRunAtUtc).toLocaleString() : "—"}</td>
-                <td>
-                  <label className="settings-check">
-                    <input type="checkbox" checked={s.enabled} onChange={() => void toggle(s)} />
-                  </label>
-                </td>
-                <td>
-                  <button className="mini danger" title="Delete schedule" aria-label="Delete schedule" onClick={() => void remove(s.id)}>
-                    <Trash2 size={13} />
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {schedules.map((s) => {
+              const distributionLabel =
+                [s.createShareLink && "link", s.emailRecipients && "email"].filter(Boolean).join(" + ") || "history only";
+              return (
+                <tr key={s.id}>
+                  <td className="drive-table-name">
+                    {s.reportName} <span className="chip">{s.format}</span>
+                  </td>
+                  <td>{describe(s)}</td>
+                  <td>
+                    <span className="row" style={{ gap: 4 }}>
+                      {distributionLabel}
+                      {s.lastDistributionAtUtc &&
+                        (s.lastDistributionError ? (
+                          <span title={`Last attempt failed: ${s.lastDistributionError}`}>
+                            <AlertTriangle size={13} style={{ color: "var(--error)" }} />
+                          </span>
+                        ) : (
+                          <span title="Last attempt delivered">
+                            <CheckCircle2 size={13} style={{ color: "var(--success)" }} />
+                          </span>
+                        ))}
+                    </span>
+                  </td>
+                  <td>{new Date(s.nextRunAtUtc).toLocaleString()}</td>
+                  <td>{s.lastRunAtUtc ? new Date(s.lastRunAtUtc).toLocaleString() : "—"}</td>
+                  <td>
+                    <label className="settings-check">
+                      <input type="checkbox" checked={s.enabled} onChange={() => void toggle(s)} />
+                    </label>
+                  </td>
+                  <td>
+                    <div className="row" style={{ gap: 4 }}>
+                      <button className="mini" title="Edit schedule" aria-label="Edit schedule" onClick={() => setEditing(s)}>
+                        <Pencil size={13} />
+                      </button>
+                      <button className="mini danger" title="Delete schedule" aria-label="Delete schedule" onClick={() => void remove(s.id)}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
+      )}
+
+      {editing && (
+        <ScheduleDialog
+          reportId={editing.reportId}
+          reportName={editing.reportName}
+          schedule={editing}
+          onClose={() => setEditing(null)}
+          onSaved={refresh}
+        />
       )}
     </section>
   );
