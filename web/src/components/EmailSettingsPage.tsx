@@ -106,7 +106,17 @@ export function EmailSettingsPage() {
     setTesting(true);
     setTestResult(null);
     try {
-      await api.sendTestEmail(testTo.trim());
+      // Test whatever's currently in the form — no need to Save first and find out it was
+      // wrong. A blank password here still falls back to the saved one (see api.ts).
+      await api.sendTestEmail(testTo.trim(), {
+        host: host.trim(),
+        port,
+        security,
+        username: username.trim(),
+        password: password || undefined,
+        fromEmail: fromEmail.trim(),
+        fromName: fromName.trim() || null,
+      });
       setTestResult("ok");
     } catch (e) {
       setTestResult(msg(e));
@@ -225,14 +235,15 @@ export function EmailSettingsPage() {
         </div>
       </section>
 
-      {existing && (
+      {(existing || host.trim()) && (
         <section className="start-section">
           <h3>Send a test email</h3>
+          <p className="hint">Tests whatever's in the form above — no need to save first.</p>
           <div className="settings-row">
             <span>To</span>
             <div className="settings-control">
               <input value={testTo} placeholder="you@example.com" onChange={(e) => setTestTo(e.target.value)} />
-              <button className="mini" onClick={() => void sendTest()} disabled={testing || !testTo.trim()}>
+              <button className="mini" onClick={() => void sendTest()} disabled={testing || !testTo.trim() || !host.trim()}>
                 <Send size={13} /> {testing ? "Sending…" : "Send test"}
               </button>
             </div>

@@ -20,4 +20,16 @@ public sealed record SmtpSettingsResponse(
 /// <summary>A null/blank <see cref="Password"/> keeps the previously saved one.</summary>
 public sealed record SetSmtpSettingsRequest(string Host, int Port, string Security, string Username, string? Password, string FromEmail, string? FromName);
 
-public sealed record SendTestEmailRequest(string ToEmail);
+/// <summary>Fields beyond <see cref="ToEmail"/> are optional — when <see cref="Host"/> is given,
+/// the test is sent with these in-progress form values instead of the saved account, so a
+/// wrong setting can be caught before Save. A blank/missing <see cref="Password"/> falls back to
+/// the already-saved one, same as Save's own convention.</summary>
+public sealed record SendTestEmailRequest(
+    string ToEmail,
+    string? Host = null,
+    int? Port = null,
+    string? Security = null,
+    string? Username = null,
+    string? Password = null,
+    string? FromEmail = null,
+    string? FromName = null);

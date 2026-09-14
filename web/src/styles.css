@@ -310,6 +310,12 @@ body {
 .segmented button.on { background: var(--bg-surface); color: var(--accent); box-shadow: var(--shadow-sm); }
 .segmented button:disabled { color: var(--text-disabled); cursor: default; }
 
+.nav-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 15px; height: 15px; padding: 0 4px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-contrast, #fff); font-size: 10px; font-weight: 650;
+}
+
 /* menu (dropdown wrapping a native select) */
 .menu-select { position: relative; display: inline-flex; align-items: center; }
 .menu-select > svg { position: absolute; left: 9px; pointer-events: none; color: var(--text-secondary); width: 15px; height: 15px; }

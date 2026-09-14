@@ -56,11 +56,41 @@ public sealed class EmailSettingsController(ISmtpSettingsRepository settings, IE
     public async Task<IActionResult> Delete(CancellationToken cancellationToken) =>
         await settings.DeleteAsync(cancellationToken) ? NoContent() : NotFound();
 
-    /// <summary>Sends a real message through the already-saved account. Save first.</summary>
+    /// <summary>Sends a real message — through the saved account, or through
+    /// <paramref name="request"/>'s own fields when it carries a <c>Host</c>, so the settings
+    /// screen can test what's in the form before Save.</summary>
     [HttpPost("test")]
     public async Task<IActionResult> SendTest([FromBody] SendTestEmailRequest request, CancellationToken cancellationToken)
     {
-        var forSending = await settings.GetForTenantAsync(tenant.TenantId, cancellationToken);
+        SmtpSettingsForSending? forSending;
+        if (!string.IsNullOrWhiteSpace(request.Host))
+        {
+            var password = request.Password;
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                var saved = await settings.GetForTenantAsync(tenant.TenantId, cancellationToken);
+                password = saved?.Password;
+            }
+
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                return ValidationProblem("Enter a password to test with (or save the account once first).");
+            }
+
+            forSending = new SmtpSettingsForSending(
+                request.Host.Trim(),
+                request.Port ?? 587,
+                request.Security ?? "StartTls",
+                (request.Username ?? string.Empty).Trim(),
+                password,
+                (request.FromEmail ?? string.Empty).Trim(),
+                request.FromName);
+        }
+        else
+        {
+            forSending = await settings.GetForTenantAsync(tenant.TenantId, cancellationToken);
+        }
+
         if (forSending is null)
         {
             return ValidationProblem("Save the mail account before sending a test.");

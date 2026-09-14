@@ -217,11 +217,14 @@ export const api = {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
 
-  sendTestEmail: (toEmail: string): Promise<void> =>
+  /** Pass `draft` to test the in-progress form before saving it — a blank/omitted password
+   * falls back to the already-saved one, same as Save's own convention. Omit `draft` to test
+   * the already-saved account (fails if there isn't one). */
+  sendTestEmail: (toEmail: string, draft?: SmtpSettingsInput): Promise<void> =>
     fetchWithAuth("/api/email-settings/test", {
       method: "POST",
       headers: jsonHeaders,
-      body: JSON.stringify({ toEmail }),
+      body: JSON.stringify({ toEmail, ...draft }),
     }).then(async (r) => {
       if (!r.ok) throw new Error(problemMessage(await r.text()));
     }),

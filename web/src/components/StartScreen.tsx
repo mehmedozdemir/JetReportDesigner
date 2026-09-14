@@ -88,6 +88,39 @@ export function StartScreen({
     api.getTenant().then(setTenant).catch(() => undefined);
   }, []);
 
+  // Nav badges — a running-job count and a pending-invite count are otherwise invisible
+  // unless you happen to click into Jobs/Team, so surface them right on the tab.
+  const [runningJobs, setRunningJobs] = useState(0);
+  const [pendingInvites, setPendingInvites] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const poll = () => {
+      api
+        .listJobs()
+        .then((jobs) => {
+          if (!cancelled) setRunningJobs(jobs.filter((j) => j.status === "Queued" || j.status === "Running").length);
+        })
+        .catch(() => undefined);
+    };
+    poll();
+    const id = window.setInterval(poll, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!canEdit) return;
+    api
+      .listInvites()
+      .then((invites) => setPendingInvites(invites.length))
+      .catch(() => undefined);
+    // Re-checked whenever the Team tab is left, so generating/revoking an invite there
+    // updates the badge without a separate polling loop.
+  }, [canEdit, view]);
+
   const [folders, setFolders] = useState<FolderSummary[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
@@ -399,11 +432,13 @@ export function StartScreen({
           </button>
           <button className={view === "jobs" ? "on" : ""} onClick={() => setView("jobs")}>
             <Clock size={14} /> Jobs
+            {runningJobs > 0 && <span className="nav-badge">{runningJobs}</span>}
           </button>
           {canEdit && (
             <>
               <button className={view === "team" ? "on" : ""} onClick={() => setView("team")}>
                 <Users size={14} /> Team
+                {pendingInvites > 0 && <span className="nav-badge">{pendingInvites}</span>}
               </button>
               <button className={view === "email" ? "on" : ""} onClick={() => setView("email")}>
                 <Mail size={14} /> Email
