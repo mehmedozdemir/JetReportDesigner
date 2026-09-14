@@ -38,6 +38,7 @@ import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { EmailSettingsPage } from "./EmailSettingsPage";
 import { JobsPage } from "./JobsPage";
 import { NewReportDialog } from "./NewReportDialog";
+import { PageHeader } from "./PageHeader";
 import { ReportPreviewDialog } from "./ReportPreviewDialog";
 import { ScheduleDialog } from "./ScheduleDialog";
 import { SchedulesPage } from "./SchedulesPage";
@@ -591,18 +592,16 @@ export function StartScreen({
             )}
 
             <section className="start-section">
-              <div className="start-list-head">
-                <h3>Reports</h3>
-                {!canEdit && <span className="hint" style={{ margin: 0 }}>Viewer role — sign in as a Designer to create reports.</span>}
-                <label className="start-search">
-                  <Search size={14} />
-                  <input
-                    value={query}
-                    placeholder="Search reports"
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                </label>
-              </div>
+              <PageHeader
+                title="Reports"
+                description={canEdit ? undefined : "Viewer role — sign in as a Designer to create reports."}
+                actions={
+                  <label className="start-search">
+                    <Search size={14} />
+                    <input value={query} placeholder="Search reports" onChange={(e) => setQuery(e.target.value)} />
+                  </label>
+                }
+              />
 
               {(folderError || actionError) && (
                 <p className="hint" style={{ color: "var(--error)" }}>{folderError ?? actionError}</p>
@@ -845,7 +844,7 @@ export function StartScreen({
                           <tr>
                             <th>Name</th>
                             <th>Type</th>
-                            <th>Created</th>
+                            <th>Updated</th>
                             <th>Created by</th>
                             <th />
                           </tr>
@@ -946,7 +945,7 @@ export function StartScreen({
                                   )}
                                 </td>
                                 <td><span className="chip">{typeLabel(r.layoutMode)}</span></td>
-                                <td>{new Date(r.createdAtUtc).toLocaleDateString()}</td>
+                                <td title={new Date(r.updatedAtUtc).toLocaleString()}>{timeAgo(r.updatedAtUtc)}</td>
                                 <td>{r.createdByEmail ?? "—"}</td>
                                 <td>
                                   <button

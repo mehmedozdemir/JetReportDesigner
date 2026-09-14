@@ -3,6 +3,7 @@ import { AlertTriangle, Check, Copy, Loader2, Plus, Trash2 } from "lucide-react"
 import { api } from "../api";
 import { useAuth, type PendingInvite, type TeamMember, type TenantInfo } from "../auth";
 import { ConfirmButton } from "./ConfirmButton";
+import { PageHeader } from "./PageHeader";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -88,8 +89,10 @@ export function TeamPage() {
 
   return (
     <>
+      <PageHeader title="Team" description={tenant ? tenant.name : undefined} />
+
       <section className="start-section">
-        <h3>Members{tenant ? ` — ${tenant.name}` : ""}</h3>
+        <h3>Members</h3>
         <table className="drive-table">
           <thead>
             <tr>

@@ -3,6 +3,7 @@ import { AlertTriangle, CalendarClock, CheckCircle2, Loader2, Pencil, Trash2 } f
 import { api, type ReportSchedule } from "../api";
 import { hhmm, utcToLocal } from "../scheduleTime";
 import { ConfirmButton } from "./ConfirmButton";
+import { PageHeader } from "./PageHeader";
 import { ScheduleDialog } from "./ScheduleDialog";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -64,10 +65,10 @@ export function SchedulesPage() {
 
   return (
     <section className="start-section">
-      <h3>Schedules</h3>
-      <p className="hint">
-        Right-click a report in the list and choose "Schedule…" to set up a new recurring run.
-      </p>
+      <PageHeader
+        title="Schedules"
+        description={"Open a report's ⋮ menu (or right-click it) in Reports and choose “Schedule…” to add one."}
+      />
 
       {err && (
         <div className="error small">

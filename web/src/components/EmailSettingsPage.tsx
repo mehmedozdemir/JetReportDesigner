@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Loader2, Mail, Send, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, Send, Trash2 } from "lucide-react";
 import { api, type SmtpSecurity, type SmtpSettingsInfo } from "../api";
 import { ConfirmButton } from "./ConfirmButton";
+import { PageHeader } from "./PageHeader";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -11,6 +12,11 @@ const PRESETS: Record<Exclude<Preset, "custom">, { host: string; port: number; s
   exchange: { host: "smtp.office365.com", port: 587, security: "StartTls" },
   gmail: { host: "smtp.gmail.com", port: 587, security: "StartTls" },
 };
+
+const presetForHost = (host: string): Preset =>
+  (Object.keys(PRESETS) as Exclude<Preset, "custom">[]).find(
+    (k) => PRESETS[k].host.toLowerCase() === host.trim().toLowerCase(),
+  ) ?? "custom";
 
 /** Tenant's outgoing-mail account — a page reached from the Start screen (like Team), since
  * it's an organization-wide setting, not something tied to whatever report you have open. */
@@ -39,6 +45,9 @@ export function EmailSettingsPage() {
       .then((s) => {
         setExisting(s);
         if (s) {
+          // Otherwise a saved Exchange/Gmail account always came back showing "Custom",
+          // because the preset was only ever set by clicking one of the buttons.
+          setPreset(presetForHost(s.host));
           setHost(s.host);
           setPort(s.port);
           setSecurity(s.security);
@@ -138,12 +147,17 @@ export function EmailSettingsPage() {
 
   return (
     <>
+      <PageHeader
+        narrow
+        title="Email"
+        description="Used to send scheduled reports by email. Any standard SMTP account works — Exchange/Office 365, Gmail (with an app password), or your own mail server."
+      />
+
       <section className="start-section start-section-narrow">
         <h3>Mail account</h3>
-        <p className="hint">
-          Used to send scheduled reports by email. Any standard SMTP account works — Exchange/Office 365, Gmail
-          (with an app password), or your own mail server.
-        </p>
+        {!existing && (
+          <p className="hint">No account configured yet — fill this in and save to enable emailing scheduled reports.</p>
+        )}
 
         <div className="settings-row">
           <span>Provider</span>
@@ -272,16 +286,6 @@ export function EmailSettingsPage() {
         <section className="start-section start-section-narrow">
           <div className="error small">
             <AlertTriangle /> <span>{err}</span>
-          </div>
-        </section>
-      )}
-
-      {!existing && (
-        <section className="start-section start-section-narrow">
-          <div className="start-empty">
-            <Mail />
-            <div>No mail account configured yet.</div>
-            <p>Fill in the form above and save to enable emailing scheduled reports.</p>
           </div>
         </section>
       )}

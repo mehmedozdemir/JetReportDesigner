@@ -4,6 +4,7 @@ import { api, type ReportJob } from "../api";
 import { downloadBlob } from "../download";
 import { notificationPermission, requestNotificationPermission } from "../notifications";
 import { timeAgo } from "../time";
+import { PageHeader } from "./PageHeader";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -55,25 +56,29 @@ export function JobsPage() {
 
   return (
     <section className="start-section">
-      <div className="start-list-head">
-        <h3>Background jobs</h3>
-        {notifyPermission === "default" && (
-          <button className="mini" onClick={() => void enableNotifications()}>
-            <Bell size={13} /> Enable browser notifications
-          </button>
-        )}
-        {notifyPermission === "denied" && (
-          <span className="hint" style={{ margin: 0 }}>
-            Browser notifications blocked — allow them for this site to get notified.
-          </span>
-        )}
-        {notifyPermission === "granted" && (
-          <span className="hint" style={{ margin: 0, display: "flex", alignItems: "center", gap: 4 }}>
-            <Bell size={13} /> Notifications on
-          </span>
-        )}
-      </div>
-      <p className="hint">Reports exported without waiting — status updates automatically.</p>
+      <PageHeader
+        title="Jobs"
+        description="Reports exported without waiting — status updates automatically."
+        actions={
+          <>
+            {notifyPermission === "default" && (
+              <button className="mini" onClick={() => void enableNotifications()}>
+                <Bell size={13} /> Enable browser notifications
+              </button>
+            )}
+            {notifyPermission === "denied" && (
+              <span className="hint" style={{ margin: 0 }}>
+                Browser notifications blocked — allow them for this site to get notified.
+              </span>
+            )}
+            {notifyPermission === "granted" && (
+              <span className="hint" style={{ margin: 0, display: "flex", alignItems: "center", gap: 4 }}>
+                <Bell size={13} /> Notifications on
+              </span>
+            )}
+          </>
+        }
+      />
 
       {err && (
         <div className="error small">
@@ -85,7 +90,7 @@ export function JobsPage() {
         <div className="start-empty">
           <Clock />
           <div>No background jobs yet.</div>
-          <p>Right-click a report in the list and choose "Run in background" to see one here.</p>
+          <p>Open a report's ⋮ menu (or right-click it) in Reports and choose "Run in background".</p>
         </div>
       ) : (
         <table className="drive-table">

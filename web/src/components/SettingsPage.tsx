@@ -1,5 +1,6 @@
 import { RotateCcw } from "lucide-react";
 import { usePrefs, type RulerUnit, type ThemePref } from "../prefs";
+import { PageHeader } from "./PageHeader";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -58,6 +59,8 @@ export function SettingsPage() {
 
   return (
     <>
+      <PageHeader narrow title="Settings" description="Your own preferences — stored in this browser, not shared with the team." />
+
       <section className="start-section start-section-narrow">
         <h3>View</h3>
         <Check label="Show rulers" value={p.showRulers} onChange={(v) => set("showRulers", v)} />
