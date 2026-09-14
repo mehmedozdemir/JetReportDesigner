@@ -14,17 +14,33 @@ namespace JetReportDesigner.Storage.Repositories;
 /// </summary>
 internal sealed class FileSystemReportRepository : IReportRepository
 {
-    private readonly string _root;
+    private readonly string _rootBase;
+    private readonly ICurrentTenant _tenant;
     private readonly TimeProvider _clock;
     private readonly JsonSerializerOptions _json;
 
     public FileSystemReportRepository(string root, TimeProvider clock, ICurrentTenant tenant)
     {
-        _root = Path.Combine(root, tenant.TenantId.ToString());
+        _rootBase = root;
+        _tenant = tenant;
         _clock = clock;
-        Directory.CreateDirectory(_root);
         _json = ReportJson.Apply(new JsonSerializerOptions { WriteIndented = true });
     }
+
+    /// <summary>The current signed-in tenant's directory. Lazy — <see cref="ICurrentTenant.TenantId"/>
+    /// throws for an anonymous caller (the share/render path), which must go through
+    /// <see cref="GetForTenantAsync"/> instead and never touch this.</summary>
+    private string Root
+    {
+        get
+        {
+            var dir = RootFor(_tenant.TenantId);
+            Directory.CreateDirectory(dir);
+            return dir;
+        }
+    }
+
+    private string RootFor(Guid tenantId) => Path.Combine(_rootBase, tenantId.ToString());
 
     private sealed record Envelope(
         [property: JsonPropertyName("definition")] ReportDefinition Definition,
@@ -39,14 +55,14 @@ internal sealed class FileSystemReportRepository : IReportRepository
         [property: JsonPropertyName("savedAtUtc")] DateTime SavedAtUtc,
         [property: JsonPropertyName("definition")] ReportDefinition Definition);
 
-    private string ReportPath(Guid id) => Path.Combine(_root, $"{id}.json");
+    private string ReportPath(Guid id) => Path.Combine(Root, $"{id}.json");
 
-    private string VersionsDir(Guid id) => Path.Combine(_root, $"{id}.versions");
+    private string VersionsDir(Guid id) => Path.Combine(Root, $"{id}.versions");
 
     public async Task<IReadOnlyList<ReportSummary>> ListAsync(CancellationToken cancellationToken)
     {
         var list = new List<ReportSummary>();
-        foreach (var file in Directory.EnumerateFiles(_root, "*.json"))
+        foreach (var file in Directory.EnumerateFiles(Root, "*.json"))
         {
             var envelope = await ReadAsync<Envelope>(file, cancellationToken);
             if (envelope is not null)
@@ -67,6 +83,15 @@ internal sealed class FileSystemReportRepository : IReportRepository
     public async Task<ReportRecord?> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         var envelope = await ReadAsync<Envelope>(ReportPath(id), cancellationToken);
+        return envelope is null
+            ? null
+            : new ReportRecord(id, envelope.Definition, envelope.CreatedAtUtc, envelope.UpdatedAtUtc, envelope.ConcurrencyToken, envelope.CreatedByEmail);
+    }
+
+    public async Task<ReportRecord?> GetForTenantAsync(Guid tenantId, Guid id, CancellationToken cancellationToken)
+    {
+        var path = Path.Combine(RootFor(tenantId), $"{id}.json");
+        var envelope = await ReadAsync<Envelope>(path, cancellationToken);
         return envelope is null
             ? null
             : new ReportRecord(id, envelope.Definition, envelope.CreatedAtUtc, envelope.UpdatedAtUtc, envelope.ConcurrencyToken, envelope.CreatedByEmail);

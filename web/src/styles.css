@@ -942,6 +942,44 @@ body {
 .formula-sig { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; }
 .formula-doc { margin: 0; min-height: 32px; font-size: 11.5px; color: var(--text-secondary); }
 
+/* report preview dialog (list "Preview") */
+.preview-dialog { width: 780px; height: 82vh; }
+.preview-dialog-body { flex: 1; min-height: 0; display: flex; }
+.preview-dialog-body .preview-frame { flex: 1; }
+.preview-dialog-loading {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+  color: var(--text-secondary); font-size: 13px;
+}
+.preview-dialog footer { justify-content: flex-start; }
+
+/* share dialog (OneDrive-style "get a link") */
+.share-dialog { width: 480px; }
+.share-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.share-loading { display: flex; justify-content: center; padding: 12px; color: var(--text-secondary); }
+.share-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.share-row { display: flex; align-items: center; gap: 6px; }
+.share-link-input {
+  flex: 1; min-width: 0; font: inherit; font-size: 12px; padding: 7px 9px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  background: var(--bg-elevated); color: var(--text-secondary);
+}
+
+/* shared report — public, unauthenticated page (/share/:token) */
+.shared-view { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg-base); }
+.shared-view-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg-surface);
+}
+.shared-view-head .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; }
+.shared-view-head .brand svg { color: var(--accent); }
+.shared-view-head .btn { text-decoration: none; }
+.shared-view-frame { flex: 1; width: 100%; border: 0; background: #fff; }
+.shared-view-message {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  color: var(--text-secondary); font-size: 13px; text-align: center; padding: 24px;
+}
+.shared-view-message svg { color: var(--error); width: 24px; height: 24px; }
+
 /* settings dialog */
 .settings-dialog { width: 460px; }
 .settings-body { padding: 6px 14px 14px; overflow-y: auto; max-height: 66vh; }

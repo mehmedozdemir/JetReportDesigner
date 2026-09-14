@@ -221,7 +221,45 @@ export const api = {
 
   renderXlsxBlob: (definition: ReportDefinition, parameters: ParamValues = {}): Promise<Blob> =>
     renderBlob("xlsx", definition, parameters),
+
+  /** Preview/export a saved report by id — no need to open it in the designer first. */
+  previewSavedHtml: (id: string): Promise<string> =>
+    fetchWithAuth(`/api/reports/${id}/preview`, { method: "POST", headers: jsonHeaders, body: "{}" }).then(
+      async (r) => {
+        if (!r.ok) throw new Error(problemMessage(await r.text()));
+        return r.text();
+      },
+    ),
+
+  exportSavedBlob: (id: string, format: "pdf" | "xlsx"): Promise<Blob> =>
+    fetchWithAuth(`/api/reports/${id}/render?format=${format}`, { method: "POST", headers: jsonHeaders, body: "{}" }).then(
+      async (r) => {
+        if (!r.ok) throw new Error(problemMessage(await r.text()));
+        return r.blob();
+      },
+    ),
+
+  // --- sharing ---
+  listShares: (reportId: string): Promise<ShareInfo[]> =>
+    fetchWithAuth(`/api/reports/${reportId}/shares`).then(json<ShareInfo[]>),
+
+  createShare: (reportId: string): Promise<ShareInfo> =>
+    fetchWithAuth(`/api/reports/${reportId}/shares`, { method: "POST" }).then(async (r) => {
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
+      return json<ShareInfo>(r);
+    }),
+
+  revokeShare: (reportId: string, token: string): Promise<void> =>
+    fetchWithAuth(`/api/reports/${reportId}/shares/${token}`, { method: "DELETE" }).then((r) => {
+      if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
+    }),
 };
+
+export interface ShareInfo {
+  token: string;
+  createdAtUtc: string;
+  createdByEmail?: string | null;
+}
 
 function renderBlob(
   format: "pdf" | "xlsx",

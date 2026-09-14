@@ -32,6 +32,10 @@ public interface IReportRepository
 
     Task<ReportRecord?> GetAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>Looks up a report by an explicit tenant id rather than the current signed-in
+    /// tenant — for the anonymous share/render path, which has no signed-in tenant to key off.</summary>
+    Task<ReportRecord?> GetForTenantAsync(Guid tenantId, Guid id, CancellationToken cancellationToken);
+
     Task<ReportRecord> CreateAsync(
         ReportDefinition definition,
         CancellationToken cancellationToken,

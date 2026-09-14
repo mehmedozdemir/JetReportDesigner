@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
+  Eye,
   FileBarChart2,
+  FileSpreadsheet,
   FileText,
   Folder,
   FolderOpen,
@@ -12,17 +14,21 @@ import {
   Pencil,
   Plus,
   Search,
+  Share2,
   Trash2,
   Users,
   X,
 } from "lucide-react";
 import { api } from "../api";
 import { isDesigner, useAuth } from "../auth";
+import { downloadBlob } from "../download";
 import { usePrefs } from "../prefs";
 import { timeAgo } from "../time";
 import type { FolderSummary, Orientation, PageSize, ReportDefinition, ReportSummary } from "../types";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { NewReportDialog } from "./NewReportDialog";
+import { ReportPreviewDialog } from "./ReportPreviewDialog";
+import { ShareDialog } from "./ShareDialog";
 import { TeamPage } from "./TeamPage";
 
 type View = "reports" | "team";
@@ -54,6 +60,9 @@ export function StartScreen({
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [view, setView] = useState<View>("reports");
   const [newReportOpen, setNewReportOpen] = useState(false);
+  const [previewReport, setPreviewReport] = useState<ReportSummary | null>(null);
+  const [shareReport, setShareReport] = useState<ReportSummary | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const canEdit = isDesigner(useAuth((s) => s.user));
 
   const [folders, setFolders] = useState<FolderSummary[]>([]);
@@ -248,6 +257,16 @@ export function StartScreen({
     })),
   ];
 
+  const exportReport = async (r: ReportSummary, format: "pdf" | "xlsx") => {
+    setActionError(null);
+    try {
+      const blob = await api.exportSavedBlob(r.id, format);
+      downloadBlob(blob, `${r.name || "report"}.${format}`);
+    } catch (err) {
+      setActionError(msg(err));
+    }
+  };
+
   const openReportMenu = (e: React.MouseEvent, r: ReportSummary) => {
     e.preventDefault();
     setMenu({
@@ -255,9 +274,18 @@ export function StartScreen({
       y: e.clientY,
       items: [
         { label: "Open", icon: FolderOpen, onClick: () => onOpen(r.id) },
+        { label: "Preview", icon: Eye, onClick: () => setPreviewReport(r) },
+        {
+          label: "Export",
+          children: [
+            { label: "PDF", icon: FileText, onClick: () => void exportReport(r, "pdf") },
+            { label: "Excel", icon: FileSpreadsheet, onClick: () => void exportReport(r, "xlsx") },
+          ],
+        },
         ...(canEdit
           ? ([
               { label: "Move to", children: moveToSubmenu(r) },
+              { label: "Share", icon: Share2, onClick: () => setShareReport(r) },
               { sep: true },
               { label: "Delete", icon: Trash2, danger: true, onClick: () => setConfirmId(r.id) },
             ] as MenuItem[])
@@ -361,8 +389,8 @@ export function StartScreen({
                 </label>
               </div>
 
-              {folderError && (
-                <p className="hint" style={{ color: "var(--error)" }}>{folderError}</p>
+              {(folderError || actionError) && (
+                <p className="hint" style={{ color: "var(--error)" }}>{folderError ?? actionError}</p>
               )}
 
               <div className="drive">
@@ -667,6 +695,19 @@ export function StartScreen({
       </div>
 
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
+
+      {previewReport && (
+        <ReportPreviewDialog
+          report={previewReport}
+          onShare={() => {
+            setShareReport(previewReport);
+            setPreviewReport(null);
+          }}
+          onClose={() => setPreviewReport(null)}
+        />
+      )}
+
+      {shareReport && <ShareDialog report={shareReport} onClose={() => setShareReport(null)} />}
     </div>
   );
 }

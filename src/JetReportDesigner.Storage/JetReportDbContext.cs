@@ -25,6 +25,8 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
 
     public DbSet<ReportFolderEntry> ReportFolderEntries => Set<ReportFolderEntry>();
 
+    public DbSet<ReportShare> ReportShares => Set<ReportShare>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

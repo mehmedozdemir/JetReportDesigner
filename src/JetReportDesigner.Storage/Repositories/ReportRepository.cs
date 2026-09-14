@@ -28,6 +28,12 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         return row is null ? null : ToRecord(row);
     }
 
+    public async Task<ReportRecord?> GetForTenantAsync(Guid tenantId, Guid id, CancellationToken cancellationToken)
+    {
+        var row = await db.Reports.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id && r.TenantId == tenantId, cancellationToken);
+        return row is null ? null : ToRecord(row);
+    }
+
     public async Task<ReportRecord> CreateAsync(
         ReportDefinition definition,
         CancellationToken cancellationToken,
