@@ -6,7 +6,7 @@ namespace JetReportDesigner.Storage.Jobs;
 
 internal sealed class ReportJobRepository(JetReportDbContext db, TimeProvider clock, ICurrentTenant tenant) : IReportJobRepository
 {
-    public async Task<ReportJobInfo?> EnqueueAsync(Guid reportId, string format, Guid createdByUserId, CancellationToken cancellationToken)
+    public async Task<ReportJobInfo?> EnqueueAsync(Guid reportId, string format, Guid createdByUserId, CancellationToken cancellationToken, Guid? scheduleId = null)
     {
         var report = await db.Reports
             .AsNoTracking()
@@ -23,6 +23,7 @@ internal sealed class ReportJobRepository(JetReportDbContext db, TimeProvider cl
             Id = Guid.NewGuid(),
             TenantId = tenant.TenantId,
             ReportId = reportId,
+            ScheduleId = scheduleId,
             ReportName = report.Name,
             Format = format,
             Status = ReportJobStatus.Queued,
@@ -77,7 +78,7 @@ internal sealed class ReportJobRepository(JetReportDbContext db, TimeProvider cl
         job.Status = ReportJobStatus.Running;
         job.StartedAtUtc = clock.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync(cancellationToken);
-        return new ClaimedReportJob(job.Id, job.TenantId, job.ReportId, job.Format);
+        return new ClaimedReportJob(job.Id, job.TenantId, job.ReportId, job.Format, job.ScheduleId);
     }
 
     public async Task CompleteAsync(Guid id, byte[] content, string contentType, string fileName, CancellationToken cancellationToken)

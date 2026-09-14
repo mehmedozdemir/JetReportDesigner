@@ -511,7 +511,7 @@ Sıra ile: Excel/XLSX (ClosedXML) ✅, alt raporlar ✅, chart ✅, barkod/QR �
 expression fonksiyon kütüphanesi ✅, **auth (JWT + Identity, rol: Designer/Viewer)** ✅,
 **multi-tenant (organizasyon oluşturma + davet kodu ile katılma + takım yönetimi)** ✅,
 **e-posta hesabı tanımlama (Exchange/Gmail/özel SMTP + test gönderimi, MailKit)** ✅ — kalanlar:
-i18n (TR/EN UI), **rapor zamanlama/dağıtım (devam ediyor — bkz. alt madde)**, şablon galerisi
+i18n (TR/EN UI), **rapor zamanlama/dağıtım** ✅, şablon galerisi
 (kullanıcının kendi raporunu organizasyon şablonu olarak kaydetmesi), canlı işbirliği, **ardından**
 (bkz. aşağıdaki detay) AI destekli rapor asistanı ve modern görselleştirme (3D/gauge/heatmap/
 sparkline/harita). Önce bu listedeki mevcut kalan maddeler bitirilecek, AI/görselleştirme işi ondan
@@ -531,9 +531,21 @@ sonra ele alınacak — iki liste tek backlog'ta birleştirildi.
   render pipeline'ının geri kalanı (görsel/alt rapor/SQL veri kaynağı çözümleme) hiç değişmeden
   çalışıyor. Görsel içeren bir raporla uçtan uca doğrulandı (arka planda render edilen PDF'te
   resim doğru göründü — bu tam da ambient-tenant düzeltmesinin sınadığı senaryo).
-- ⬜ `ReportSchedule` (günlük/haftalık/aylık + saat — basit form, cron değil): job kuyruğunu tetikler;
-  her çalıştığında dağıtım seçeneklerine göre (geçmişe kaydet / otomatik paylaşım linki oluştur /
-  yapılandırılmış e-posta hesabından gönder) sonucu dağıtır.
+- ✅ `ReportSchedule` (günlük/haftalık/aylık + UTC saat — basit form, cron değil; salt fonksiyon
+  `ScheduleRecurrence.NextRun` olarak yazıldı, ay-sonu kırpma dahil 12 birim testle doğrulandı).
+  30 saniyede bir tetiklenen ayrı bir `ReportScheduleTrigger`, süresi gelen her programı job
+  kuyruğuna atıyor (`ReportJob.ScheduleId` ile işaretli); "sonraki çalışma" her zaman **o anki
+  "şimdi"den** yeniden hesaplanıyor (programın kaçırdığı zamandan değil) — sunucu bir süre kapalı
+  kalırsa yığılıp birikmiş eski çalıştırmaları art arda ateşlemiyor. İş başarıyla bitince
+  `ReportJobProcessor` dağıtımı yapıyor: iste­nirse yeni bir paylaşım linki (mevcut Share
+  altyapısı), istenirse yapılandırılmış e-posta hesabından ek dosyalı e-posta (MailKit) —
+  dağıtım hatası (ör. yanlış SMTP şifresi) işin kendi "Succeeded" durumunu asla bozmuyor, sadece
+  loglanıyor. "Start ekranı → Schedules" sekmesinden yönetiliyor (aç/kapat, sil); oluşturma rapor
+  sağ-tık menüsünden ("Schedule…").
+  Gerçek Exchange Online'a karşı uçtan uca doğrulandı: program ateşlendi → iş render edildi →
+  paylaşım linki otomatik oluştu (API'den doğrulandı) → e-posta denemesi ger­çek sunucuya ulaşıp
+  "535 Authentication unsuccessful" ile temiz biçimde başarısız oldu (kasıtlı yanlış şifreyle) —
+  hem başarı hem hata yollarının gerçekten çalıştığının kanıtı.
 - ⬜ **Backlog'a eklendi (ayrı iş turu, şimdi değil):** harici depolama hedefleri — MinIO, S3,
   Google Drive, OneDrive — iş çıktısının yerel/DB-blob dışında bu hedeflere de yazılabilmesi.
 

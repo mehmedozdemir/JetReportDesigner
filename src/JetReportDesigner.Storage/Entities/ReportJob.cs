@@ -17,6 +17,11 @@ public sealed class ReportJob
 
     public Guid ReportId { get; set; }
 
+    /// <summary>Set when this job was created by a <c>ReportSchedule</c> firing rather than a
+    /// direct "run in background" request — the job worker distributes (share link/email)
+    /// per that schedule's settings once the job succeeds.</summary>
+    public Guid? ScheduleId { get; set; }
+
     /// <summary>Snapshot at enqueue time — still meaningful to show even if the report is
     /// later renamed or deleted.</summary>
     public string ReportName { get; set; } = string.Empty;

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  CalendarClock,
   ChevronDown,
   ChevronRight,
   Clock,
@@ -34,10 +35,12 @@ import { EmailSettingsPage } from "./EmailSettingsPage";
 import { JobsPage } from "./JobsPage";
 import { NewReportDialog } from "./NewReportDialog";
 import { ReportPreviewDialog } from "./ReportPreviewDialog";
+import { ScheduleDialog } from "./ScheduleDialog";
+import { SchedulesPage } from "./SchedulesPage";
 import { ShareDialog } from "./ShareDialog";
 import { TeamPage } from "./TeamPage";
 
-type View = "reports" | "team" | "email" | "jobs";
+type View = "reports" | "team" | "email" | "jobs" | "schedules";
 type DragPayload = { kind: "report" | "folder"; id: string };
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -70,6 +73,7 @@ export function StartScreen({
   const [newReportOpen, setNewReportOpen] = useState(false);
   const [previewReport, setPreviewReport] = useState<ReportSummary | null>(null);
   const [shareReport, setShareReport] = useState<ReportSummary | null>(null);
+  const [scheduleReport, setScheduleReport] = useState<ReportSummary | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
@@ -320,6 +324,7 @@ export function StartScreen({
           ? ([
               { label: "Move to", children: moveToSubmenu(r) },
               { label: "Share", icon: Share2, onClick: () => setShareReport(r) },
+              { label: "Schedule…", icon: CalendarClock, onClick: () => setScheduleReport(r) },
               { sep: true },
               { label: "Delete", icon: Trash2, danger: true, onClick: () => setConfirmId(r.id) },
             ] as MenuItem[])
@@ -376,6 +381,9 @@ export function StartScreen({
               </button>
               <button className={view === "email" ? "on" : ""} onClick={() => setView("email")}>
                 <Mail size={14} /> Email
+              </button>
+              <button className={view === "schedules" ? "on" : ""} onClick={() => setView("schedules")}>
+                <CalendarClock size={14} /> Schedules
               </button>
             </>
           )}
@@ -435,6 +443,8 @@ export function StartScreen({
           <EmailSettingsPage />
         ) : view === "jobs" ? (
           <JobsPage />
+        ) : view === "schedules" ? (
+          <SchedulesPage />
         ) : (
           <>
             <section className="start-section start-new-section">
@@ -795,6 +805,8 @@ export function StartScreen({
       )}
 
       {shareReport && <ShareDialog report={shareReport} onClose={() => setShareReport(null)} />}
+
+      {scheduleReport && <ScheduleDialog report={scheduleReport} onClose={() => setScheduleReport(null)} />}
     </div>
   );
 }

@@ -964,6 +964,7 @@ body {
 
 /* share dialog (OneDrive-style "get a link") */
 .share-dialog { width: 480px; }
+.schedule-dialog { width: 460px; }
 .share-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 .share-loading { display: flex; justify-content: center; padding: 12px; color: var(--text-secondary); }
 .share-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }

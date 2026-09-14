@@ -123,6 +123,7 @@ builder.Services.AddScoped<JetReportDesigner.Rendering.IRenderImageResolver>(sp 
 builder.Services.AddScoped<JetReportDesigner.Rendering.ISubreportResolver, JetReportDesigner.Api.Infrastructure.SubreportResolver>();
 builder.Services.AddScoped<ReportRenderService>();
 builder.Services.AddHostedService<JetReportDesigner.Api.Jobs.ReportJobProcessor>();
+builder.Services.AddHostedService<JetReportDesigner.Api.Jobs.ReportScheduleTrigger>();
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<JetReportDesigner.Storage.JetReportDbContext>("storage");

@@ -31,6 +31,8 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
 
     public DbSet<ReportJob> ReportJobs => Set<ReportJob>();
 
+    public DbSet<ReportSchedule> ReportSchedules => Set<ReportSchedule>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

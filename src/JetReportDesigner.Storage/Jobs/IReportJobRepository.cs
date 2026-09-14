@@ -23,12 +23,14 @@ public sealed record ReportJobResult(byte[] Content, string ContentType, string 
 
 /// <summary>A job handed to the background worker — no tenant context available there,
 /// so it carries the tenant id explicitly.</summary>
-public sealed record ClaimedReportJob(Guid Id, Guid TenantId, Guid ReportId, string Format);
+public sealed record ClaimedReportJob(Guid Id, Guid TenantId, Guid ReportId, string Format, Guid? ScheduleId);
 
 public interface IReportJobRepository
 {
-    /// <summary>Null if <paramref name="reportId"/> doesn't exist in this tenant.</summary>
-    Task<ReportJobInfo?> EnqueueAsync(Guid reportId, string format, Guid createdByUserId, CancellationToken cancellationToken);
+    /// <summary>Null if <paramref name="reportId"/> doesn't exist in this tenant.
+    /// <paramref name="scheduleId"/> is set only when a <c>ReportSchedule</c> firing created
+    /// this job — the worker distributes per that schedule's settings once it succeeds.</summary>
+    Task<ReportJobInfo?> EnqueueAsync(Guid reportId, string format, Guid createdByUserId, CancellationToken cancellationToken, Guid? scheduleId = null);
 
     /// <summary>Most recent jobs for the tenant (all reports), newest first.</summary>
     Task<IReadOnlyList<ReportJobInfo>> ListAsync(CancellationToken cancellationToken);

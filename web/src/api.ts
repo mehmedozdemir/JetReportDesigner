@@ -304,6 +304,32 @@ export const api = {
       if (!r.ok) throw new Error(problemMessage(await r.text()));
       return r.blob();
     }),
+
+  // --- report schedules ---
+  createSchedule: (reportId: string, fields: ReportScheduleInput): Promise<ReportSchedule> =>
+    fetchWithAuth(`/api/reports/${reportId}/schedules`, {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify(fields),
+    }).then(async (r) => {
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
+      return json<ReportSchedule>(r);
+    }),
+
+  listSchedules: (): Promise<ReportSchedule[]> => fetchWithAuth("/api/schedules").then(json<ReportSchedule[]>),
+
+  updateSchedule: (id: string, fields: ReportScheduleInput): Promise<ReportSchedule> =>
+    fetchWithAuth(`/api/schedules/${id}`, { method: "PUT", headers: jsonHeaders, body: JSON.stringify(fields) }).then(
+      async (r) => {
+        if (!r.ok) throw new Error(problemMessage(await r.text()));
+        return json<ReportSchedule>(r);
+      },
+    ),
+
+  deleteSchedule: (id: string): Promise<void> =>
+    fetchWithAuth(`/api/schedules/${id}`, { method: "DELETE" }).then((r) => {
+      if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
+    }),
 };
 
 export interface ShareInfo {
@@ -324,6 +350,37 @@ export interface ReportJob {
   createdAtUtc: string;
   startedAtUtc?: string | null;
   completedAtUtc?: string | null;
+}
+
+export type ScheduleFrequency = "Daily" | "Weekly" | "Monthly";
+
+export interface ReportScheduleInput {
+  format: "pdf" | "xlsx";
+  frequency: ScheduleFrequency;
+  minuteOfDayUtc: number;
+  dayOfWeek?: number | null;
+  dayOfMonth?: number | null;
+  enabled: boolean;
+  createShareLink: boolean;
+  emailRecipients?: string | null;
+}
+
+export interface ReportSchedule {
+  id: string;
+  reportId: string;
+  reportName: string;
+  format: "pdf" | "xlsx";
+  frequency: ScheduleFrequency;
+  minuteOfDayUtc: number;
+  dayOfWeek?: number | null;
+  dayOfMonth?: number | null;
+  enabled: boolean;
+  createShareLink: boolean;
+  emailRecipients?: string | null;
+  createdAtUtc: string;
+  nextRunAtUtc: string;
+  lastRunAtUtc?: string | null;
+  lastJobId?: string | null;
 }
 
 export type SmtpSecurity = "None" | "StartTls" | "SslOnConnect";
