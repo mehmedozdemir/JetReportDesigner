@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   CalendarClock,
   ChevronDown,
@@ -24,7 +25,6 @@ import {
   Share2,
   Trash2,
   Users,
-  X,
 } from "lucide-react";
 import { api } from "../api";
 import { isDesigner, useAuth, type TenantInfo } from "../auth";
@@ -47,7 +47,18 @@ type View = "reports" | "team" | "email" | "jobs" | "schedules";
 type DragPayload = { kind: "report" | "folder"; id: string };
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
+/** Paths each view lives at — StartScreen is mounted directly under one of these routes (see
+ * App.tsx), so switching tabs is a real navigation, not local state. */
+const VIEW_PATH: Record<View, string> = {
+  reports: "/reports",
+  jobs: "/jobs",
+  team: "/team",
+  email: "/email-settings",
+  schedules: "/schedules",
+};
+
 export function StartScreen({
+  view,
   reports,
   samples,
   busy,
@@ -57,8 +68,8 @@ export function StartScreen({
   onDelete,
   onMoveToFolder,
   onSettings,
-  onClose,
 }: {
+  view: View;
   reports: ReportSummary[];
   samples: { name: string; category: string; definition: ReportDefinition }[];
   busy: boolean;
@@ -68,11 +79,11 @@ export function StartScreen({
   onDelete: (id: string) => void;
   onMoveToFolder: (id: string, folderId: string | null) => void;
   onSettings: () => void;
-  onClose?: () => void;
 }) {
+  const navigate = useNavigate();
+  const setView = (v: View) => navigate(VIEW_PATH[v]);
   const [query, setQuery] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [view, setView] = useState<View>("reports");
   const [newReportOpen, setNewReportOpen] = useState(false);
   const [previewReport, setPreviewReport] = useState<ReportSummary | null>(null);
   const [shareReport, setShareReport] = useState<ReportSummary | null>(null);
@@ -144,13 +155,6 @@ export function StartScreen({
   };
   useEffect(refreshFolders, []);
 
-  useEffect(() => {
-    if (!onClose) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return [...reports]
@@ -194,6 +198,16 @@ export function StartScreen({
       cur = cur.parentFolderId ? folderById.get(cur.parentFolderId) : undefined;
     }
     return chain.join(" / ") || null;
+  };
+
+  // A real <a href> so Ctrl/Cmd/middle-click opens the report in a new tab (the browser's own
+  // default anchor behavior) — a plain left-click is intercepted for normal in-app navigation
+  // instead of a full page reload.
+  const reportHref = (id: string) => `/reports/${id}/design`;
+  const openOnClick = (e: React.MouseEvent, id: string) => {
+    if (busy || e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+    e.preventDefault();
+    onOpen(id);
   };
 
   const reportCountByFolder = useMemo(() => {
@@ -489,11 +503,6 @@ export function StartScreen({
             </>
           )}
 
-          {onClose && (
-            <button className="btn icon" onClick={onClose} title="Close" aria-label="Close start screen">
-              <X />
-            </button>
-          )}
         </div>
       </header>
 
@@ -734,11 +743,12 @@ export function StartScreen({
                             </div>
                           ) : (
                             <div key={r.id} className="drive-tile-cell">
-                              <button
+                              <a
                                 className="drive-tile"
-                                onClick={() => onOpen(r.id)}
+                                href={reportHref(r.id)}
+                                onClick={(e) => openOnClick(e, r.id)}
                                 onContextMenu={(e) => openReportMenu(e, r)}
-                                disabled={busy}
+                                aria-disabled={busy}
                                 draggable={canEdit}
                                 onDragStart={(e) => startDrag(e, { kind: "report", id: r.id })}
                               >
@@ -750,7 +760,7 @@ export function StartScreen({
                                 <span className="drive-tile-meta">
                                   <span className="chip">{r.layoutMode}</span> {timeAgo(r.updatedAtUtc)}
                                 </span>
-                              </button>
+                              </a>
                               <button
                                 className="mini ghost drive-tile-kebab"
                                 title="More actions"
@@ -860,13 +870,14 @@ export function StartScreen({
                             ) : (
                               <tr
                                 key={r.id}
-                                onClick={() => !busy && onOpen(r.id)}
                                 onContextMenu={(e) => openReportMenu(e, r)}
                                 draggable={canEdit}
                                 onDragStart={(e) => startDrag(e, { kind: "report", id: r.id })}
                               >
                                 <td className="drive-table-name">
-                                  <FileText /> {r.name}
+                                  <a className="drive-row-link" href={reportHref(r.id)} onClick={(e) => openOnClick(e, r.id)}>
+                                    <FileText /> {r.name}
+                                  </a>
                                   {isSearching && folderPath(r.folderId) && (
                                     <span className="drive-tile-count">{folderPath(r.folderId)}</span>
                                   )}

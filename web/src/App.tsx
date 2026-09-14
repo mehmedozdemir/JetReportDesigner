@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, Eye, PencilRuler, ZoomIn, ZoomOut } from "lucide-react";
+import { AlertTriangle, Eye, Loader2, PencilRuler, ZoomIn, ZoomOut } from "lucide-react";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
 import { isDesigner, useAuth } from "./auth";
 import { useDesigner } from "./store";
@@ -23,17 +24,24 @@ import { Toolbar } from "./components/Toolbar";
 import { PropertiesPanel } from "./components/PropertiesPanel";
 import { PreviewPane } from "./components/PreviewPane";
 
+/** Every "list" screen (Reports/Jobs/Team/Email/Schedules) and /settings resolve here too —
+ * they all render the same <App/>, which branches on the current route below. Simpler than
+ * splitting shared handlers (save, export, create, …) across several route components, and the
+ * zustand store already carries report state across any remount that causes. */
 export function App() {
   const token = useAuth((s) => s.token);
   const canEdit = isDesigner(useAuth((s) => s.user));
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id: routeReportId } = useParams<{ id: string }>();
+
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [samples, setSamples] = useState<{ name: string; category: string; definition: ReportDefinition }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<"design" | "preview">("design");
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
-  const [showStart, setShowStart] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [loadingReport, setLoadingReport] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const autoSaveSeconds = usePrefs((s) => s.autoSaveSeconds);
   const leftPanelWidth = usePrefs((s) => s.leftPanelWidth);
   const rightPanelWidth = usePrefs((s) => s.rightPanelWidth);
@@ -50,10 +58,9 @@ export function App() {
   const setZoom = useDesigner((s) => s.setZoom);
   const rightRef = useRef<HTMLDivElement>(null);
 
-  // A Viewer never gets the design surface — always land on (and stay on) Preview.
-  useEffect(() => {
-    if (!canEdit) setTab("preview");
-  }, [canEdit]);
+  const isDesignerRoute = routeReportId != null;
+  const isSettingsRoute = location.pathname === "/settings";
+  const tab = location.pathname.endsWith("/preview") ? "preview" : "design";
 
   useEffect(() => {
     if (!inspectorPulse) return;
@@ -63,6 +70,7 @@ export function App() {
     el.classList.remove("flash");
     void el.offsetWidth; // restart the animation
     el.classList.add("flash");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inspectorPulse]);
 
   const refresh = useCallback(async () => {
@@ -78,6 +86,38 @@ export function App() {
     void refresh();
     void api.listSamples().then(setSamples).catch(() => undefined);
   }, [refresh, token]);
+
+  // Deep-link loading: whenever the URL names a report the store doesn't already have loaded
+  // (a fresh tab, a bookmark, or "Open"/"New report" navigating here), fetch and load it. This
+  // is the one path both direct navigation and in-app "open" go through.
+  useEffect(() => {
+    if (!routeReportId || routeReportId === reportId) return;
+    let cancelled = false;
+    setLoadingReport(true);
+    setLoadError(null);
+    api
+      .getReport(routeReportId)
+      .then((r) => {
+        if (!cancelled) load(r);
+      })
+      .catch((e) => {
+        if (!cancelled) setLoadError(String(e));
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingReport(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeReportId, reportId]);
+
+  // A Viewer never gets the design surface — bounce straight to Preview for the same report.
+  useEffect(() => {
+    if (isDesignerRoute && !canEdit && tab === "design") {
+      navigate(`/reports/${routeReportId}/preview`, { replace: true });
+    }
+  }, [isDesignerRoute, canEdit, tab, routeReportId, navigate]);
 
   const createFromSample = async (
     name: string,
@@ -98,8 +138,7 @@ export function App() {
       if (folderId) await api.setReportFolder(created.id, folderId);
       load(created);
       await refresh();
-      setTab("design");
-      setShowStart(false);
+      navigate(`/reports/${created.id}/design`);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -107,16 +146,7 @@ export function App() {
     }
   };
 
-  const open = async (id: string) => {
-    setError(null);
-    try {
-      load(await api.getReport(id));
-      setTab(canEdit ? "design" : "preview");
-      setShowStart(false);
-    } catch (e) {
-      setError(String(e));
-    }
-  };
+  const open = (id: string) => navigate(`/reports/${id}/design`);
 
   const moveReportToFolder = async (id: string, folderId: string | null) => {
     setError(null);
@@ -144,6 +174,7 @@ export function App() {
           dirty: false,
           savedAtUtc: null,
         });
+        navigate("/reports");
       }
       await refresh();
     } catch (e) {
@@ -168,8 +199,7 @@ export function App() {
       if (folderId) await api.setReportFolder(created.id, folderId);
       load(created);
       await refresh();
-      setTab("design");
-      setShowStart(false);
+      navigate(`/reports/${created.id}/design`);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -249,6 +279,54 @@ export function App() {
     return <LoginScreen />;
   }
 
+  if (isSettingsRoute) {
+    if (!canEdit) return <Navigate to="/reports" replace />;
+    return (
+      <>
+        <SettingsDialog onClose={() => navigate(-1)} />
+        <JobNotifications />
+      </>
+    );
+  }
+
+  if (!isDesignerRoute) {
+    const view =
+      location.pathname === "/jobs"
+        ? "jobs"
+        : location.pathname === "/team"
+          ? "team"
+          : location.pathname === "/email-settings"
+            ? "email"
+            : location.pathname === "/schedules"
+              ? "schedules"
+              : "reports";
+    return (
+      <>
+        <StartScreen
+          view={view}
+          reports={reports}
+          samples={samples}
+          busy={busy}
+          onBlank={(mode, page, folderId) => void createReport(mode, page, folderId)}
+          onSample={(name, page, folderId) => void createFromSample(name, page, folderId)}
+          onOpen={open}
+          onDelete={(id) => void removeReport(id)}
+          onMoveToFolder={(id, folderId) => void moveReportToFolder(id, folderId)}
+          onSettings={() => navigate("/settings")}
+        />
+        <JobNotifications />
+        {error && (
+          <div className="toast" role="alert">
+            <div className="error">
+              <AlertTriangle />
+              <span>{error}</span>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
   const leftCol = leftPanelCollapsed ? COLLAPSED_WIDTH : leftPanelWidth;
   const rightCol = rightPanelCollapsed ? COLLAPSED_WIDTH : rightPanelWidth;
 
@@ -260,8 +338,8 @@ export function App() {
       <Toolbar
         busy={busy}
         onNew={() => void createReport()}
-        onShowStart={() => setShowStart(true)}
-        onSettings={() => setShowSettings(true)}
+        onShowStart={() => navigate("/reports")}
+        onSettings={() => navigate("/settings")}
         onSave={() => void save()}
         onExport={(format) => void exportAs(format)}
       />
@@ -279,59 +357,89 @@ export function App() {
       )}
 
       <div className="center">
-        {report && (report.parameters?.length ?? 0) > 0 && (
-          <div className="param-bar">
-            {report.parameters.map((p) => (
-              <label key={p.name}>
-                {p.label || p.name}
-                <input
-                  value={paramValues[p.name] ?? ""}
-                  placeholder={p.defaultValue == null ? "" : String(p.defaultValue)}
-                  onChange={(e) => setParamValues((v) => ({ ...v, [p.name]: e.target.value }))}
-                />
-              </label>
-            ))}
-          </div>
-        )}
-        {report && (
-          <>
-            {canEdit && (
-              <div style={{ flex: 1, minHeight: 0, display: tab === "design" ? "flex" : "none" }}>
-                <Canvas active={tab === "design"} />
+        {loadingReport || loadError ? (
+          <div className="start-empty" style={{ margin: "auto" }}>
+            {loadError ? (
+              <>
+                <AlertTriangle />
+                <div>{loadError}</div>
+                <p>
+                  <a href="#" onClick={(e) => { e.preventDefault(); navigate("/reports"); }}>
+                    Back to Reports
+                  </a>
+                </p>
+              </>
+            ) : (
+              <div className="share-loading">
+                <Loader2 size={20} className="spin" />
               </div>
             )}
-            <div style={{ flex: 1, minHeight: 0, display: tab === "preview" ? "flex" : "none" }}>
-              <PreviewPane parameters={paramValues} active={tab === "preview"} />
-            </div>
-          </>
-        )}
+          </div>
+        ) : (
+          <>
+            {report && (report.parameters?.length ?? 0) > 0 && (
+              <div className="param-bar">
+                {report.parameters.map((p) => (
+                  <label key={p.name}>
+                    {p.label || p.name}
+                    <input
+                      value={paramValues[p.name] ?? ""}
+                      placeholder={p.defaultValue == null ? "" : String(p.defaultValue)}
+                      onChange={(e) => setParamValues((v) => ({ ...v, [p.name]: e.target.value }))}
+                    />
+                  </label>
+                ))}
+              </div>
+            )}
+            {report && (
+              <>
+                {canEdit && (
+                  <div style={{ flex: 1, minHeight: 0, display: tab === "design" ? "flex" : "none" }}>
+                    <Canvas active={tab === "design"} />
+                  </div>
+                )}
+                <div style={{ flex: 1, minHeight: 0, display: tab === "preview" ? "flex" : "none" }}>
+                  <PreviewPane parameters={paramValues} active={tab === "preview"} />
+                </div>
+              </>
+            )}
 
-        {canEdit && report && (
-          <div className="canvas-hud canvas-hud-left">
-            <div className="segmented" role="group" aria-label="View">
-              <button className={tab === "design" ? "on" : ""} onClick={() => setTab("design")} title="Design view">
-                <PencilRuler /> Design
-              </button>
-              <button className={tab === "preview" ? "on" : ""} onClick={() => setTab("preview")} title="Preview">
-                <Eye /> Preview
-              </button>
-            </div>
-          </div>
-        )}
-        {canEdit && report && tab === "design" && (
-          <div className="canvas-hud canvas-hud-right">
-            <div className="group">
-              <button className="btn icon" onClick={() => setZoom(zoom - 0.1)} title="Zoom out" aria-label="Zoom out">
-                <ZoomOut />
-              </button>
-              <span className="zoom-label" onClick={() => setZoom(1)} title="Reset zoom to 100%" role="button">
-                {Math.round(zoom * 100)}%
-              </span>
-              <button className="btn icon" onClick={() => setZoom(zoom + 0.1)} title="Zoom in" aria-label="Zoom in">
-                <ZoomIn />
-              </button>
-            </div>
-          </div>
+            {canEdit && report && (
+              <div className="canvas-hud canvas-hud-left">
+                <div className="segmented" role="group" aria-label="View">
+                  <button
+                    className={tab === "design" ? "on" : ""}
+                    onClick={() => navigate(`/reports/${routeReportId}/design`)}
+                    title="Design view"
+                  >
+                    <PencilRuler /> Design
+                  </button>
+                  <button
+                    className={tab === "preview" ? "on" : ""}
+                    onClick={() => navigate(`/reports/${routeReportId}/preview`)}
+                    title="Preview"
+                  >
+                    <Eye /> Preview
+                  </button>
+                </div>
+              </div>
+            )}
+            {canEdit && report && tab === "design" && (
+              <div className="canvas-hud canvas-hud-right">
+                <div className="group">
+                  <button className="btn icon" onClick={() => setZoom(zoom - 0.1)} title="Zoom out" aria-label="Zoom out">
+                    <ZoomOut />
+                  </button>
+                  <span className="zoom-label" onClick={() => setZoom(1)} title="Reset zoom to 100%" role="button">
+                    {Math.round(zoom * 100)}%
+                  </span>
+                  <button className="btn icon" onClick={() => setZoom(zoom + 0.1)} title="Zoom in" aria-label="Zoom in">
+                    <ZoomIn />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -348,25 +456,6 @@ export function App() {
           </div>
         </ResizablePanel>
       )}
-
-      {(!report || showStart) && (
-        <div className="start-overlay">
-          <StartScreen
-            reports={reports}
-            samples={samples}
-            busy={busy}
-            onBlank={(mode, page, folderId) => void createReport(mode, page, folderId)}
-            onSample={(name, page, folderId) => void createFromSample(name, page, folderId)}
-            onOpen={(id) => void open(id)}
-            onDelete={(id) => void removeReport(id)}
-            onMoveToFolder={(id, folderId) => void moveReportToFolder(id, folderId)}
-            onSettings={() => setShowSettings(true)}
-            onClose={report ? () => setShowStart(false) : undefined}
-          />
-        </div>
-      )}
-
-      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
 
       <JobNotifications />
 
