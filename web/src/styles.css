@@ -907,6 +907,12 @@ body {
 .drive-table-editing { display: flex; align-items: center; gap: 8px; cursor: default; }
 .drive-table-editing input { font: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--bg-surface); color: var(--text-primary); }
 
+/* background job status badges */
+.job-status { display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); }
+.job-status-running { color: var(--accent); }
+.job-status-ok { color: var(--success); }
+.job-status-error { color: var(--error); cursor: help; }
+
 /* formula editor */
 .formula-dialog { width: 620px; }
 .formula-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; }

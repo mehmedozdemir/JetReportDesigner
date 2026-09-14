@@ -170,6 +170,69 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                     b.ToTable("ReportFolderEntries", (string)null);
                 });
 
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.ReportJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("NVARCHAR2(8)");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<string>("ReportName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)");
+
+                    b.Property<byte[]>("ResultContent")
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("ResultContentType")
+                        .HasMaxLength(128)
+                        .HasColumnType("NVARCHAR2(128)");
+
+                    b.Property<string>("ResultFileName")
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("NVARCHAR2(16)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("RAW(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("ReportJobs", (string)null);
+                });
+
             modelBuilder.Entity("JetReportDesigner.Storage.Entities.ReportShare", b =>
                 {
                     b.Property<Guid>("Id")

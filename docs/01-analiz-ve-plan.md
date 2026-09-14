@@ -521,11 +521,16 @@ sonra ele alınacak — iki liste tek backlog'ta birleştirildi.
 - ✅ E-posta hesabı tanımlama ekranı (Exchange/Gmail/özel sunucu presetleri, host/port/security/
   kullanıcı-şifre/gönderen adresi, "test e-postası gönder" — şifre `IConnectionSecretProtector` ile
   şifrelenmiş saklanıyor, tenant başına tek hesap).
-- ⬜ Arka plan iş kuyruğu (`ReportJob`: kuyruğa alınan bir render işini arka planda işler, sonucu
-  mevcut asset-storage'a — `StoredAsset`/`IAssetRepository`, DB-blob — kaydeder, kullanıcı
-  uygulama içinden durumu bir "İşler" ekranından takip eder). Bu motor hem "büyük veri çeken raporu
-  beklemeden arka plana at" ihtiyacını hem de zamanlamanın çalıştırma mekanizmasını tek bir
-  altyapıda birleştirir.
+- ✅ Arka plan iş kuyruğu (`ReportJob`: kuyruğa alınan bir render işini arka planda işler, sonucu
+  kendi satırında DB-blob olarak saklar, kullanıcı uygulama içinden "İşler" ekranından — 3 saniyede
+  bir otomatik yenilenen — durumu takip eder, bitince indirir). Broker yok — tek process kendi
+  DB'sine bakıyor, `IHostedService` polling (Hangfire'ın da altyapısı). Bu arada tenant-scope'lu
+  repository'lerin (asset/subreport/SQL bağlantı) arka plan işçisinde de doğru çalışması için
+  `ICurrentTenant`'a `AsyncLocal` tabanlı bir "ambient tenant" yolu eklendi (`CurrentTenant.Use`) —
+  HTTP isteği olmayan bir bağlamda da JWT claim'i varmış gibi tenant çözülebiliyor, böylece
+  render pipeline'ının geri kalanı (görsel/alt rapor/SQL veri kaynağı çözümleme) hiç değişmeden
+  çalışıyor. Görsel içeren bir raporla uçtan uca doğrulandı (arka planda render edilen PDF'te
+  resim doğru göründü — bu tam da ambient-tenant düzeltmesinin sınadığı senaryo).
 - ⬜ `ReportSchedule` (günlük/haftalık/aylık + saat — basit form, cron değil): job kuyruğunu tetikler;
   her çalıştığında dağıtım seçeneklerine göre (geçmişe kaydet / otomatik paylaşım linki oluştur /
   yapılandırılmış e-posta hesabından gönder) sonucu dağıtır.

@@ -3,6 +3,7 @@ using JetReportDesigner.Storage.Connections;
 using JetReportDesigner.Storage.Email;
 using JetReportDesigner.Storage.Entities;
 using JetReportDesigner.Storage.Folders;
+using JetReportDesigner.Storage.Jobs;
 using JetReportDesigner.Storage.Repositories;
 using JetReportDesigner.Storage.Sharing;
 using JetReportDesigner.Storage.Tenancy;
@@ -46,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<IFolderRepository, FolderRepository>();
         services.AddScoped<IReportShareRepository, ReportShareRepository>();
         services.AddScoped<ISmtpSettingsRepository, SmtpSettingsRepository>();
+        services.AddScoped<IReportJobRepository, ReportJobRepository>();
 
         if (options.ReportStore.Equals("filesystem", StringComparison.OrdinalIgnoreCase))
         {

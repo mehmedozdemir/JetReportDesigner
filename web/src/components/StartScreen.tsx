@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
+  Clock,
   Eye,
   FileBarChart2,
   FileSpreadsheet,
@@ -30,12 +31,13 @@ import { timeAgo } from "../time";
 import type { FolderSummary, Orientation, PageSize, ReportDefinition, ReportSummary } from "../types";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { EmailSettingsPage } from "./EmailSettingsPage";
+import { JobsPage } from "./JobsPage";
 import { NewReportDialog } from "./NewReportDialog";
 import { ReportPreviewDialog } from "./ReportPreviewDialog";
 import { ShareDialog } from "./ShareDialog";
 import { TeamPage } from "./TeamPage";
 
-type View = "reports" | "team" | "email";
+type View = "reports" | "team" | "email" | "jobs";
 type DragPayload = { kind: "report" | "folder"; id: string };
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -281,6 +283,16 @@ export function StartScreen({
     }
   };
 
+  const runInBackground = async (r: ReportSummary, format: "pdf" | "xlsx") => {
+    setActionError(null);
+    try {
+      await api.enqueueReportJob(r.id, format);
+      setView("jobs");
+    } catch (err) {
+      setActionError(msg(err));
+    }
+  };
+
   const openReportMenu = (e: React.MouseEvent, r: ReportSummary) => {
     e.preventDefault();
     setMenu({
@@ -294,6 +306,14 @@ export function StartScreen({
           children: [
             { label: "PDF", icon: FileText, onClick: () => void exportReport(r, "pdf") },
             { label: "Excel", icon: FileSpreadsheet, onClick: () => void exportReport(r, "xlsx") },
+          ],
+        },
+        {
+          label: "Run in background",
+          icon: Clock,
+          children: [
+            { label: "PDF", icon: FileText, onClick: () => void runInBackground(r, "pdf") },
+            { label: "Excel", icon: FileSpreadsheet, onClick: () => void runInBackground(r, "xlsx") },
           ],
         },
         ...(canEdit
@@ -342,19 +362,24 @@ export function StartScreen({
           {tenant && <span className="start-org">{tenant.name}</span>}
         </div>
 
-        {canEdit && (
-          <div className="segmented" role="group" aria-label="Start screen section">
-            <button className={view === "reports" ? "on" : ""} onClick={() => setView("reports")}>
-              <LayoutGrid size={14} /> Reports
-            </button>
-            <button className={view === "team" ? "on" : ""} onClick={() => setView("team")}>
-              <Users size={14} /> Team
-            </button>
-            <button className={view === "email" ? "on" : ""} onClick={() => setView("email")}>
-              <Mail size={14} /> Email
-            </button>
-          </div>
-        )}
+        <div className="segmented" role="group" aria-label="Start screen section">
+          <button className={view === "reports" ? "on" : ""} onClick={() => setView("reports")}>
+            <LayoutGrid size={14} /> Reports
+          </button>
+          <button className={view === "jobs" ? "on" : ""} onClick={() => setView("jobs")}>
+            <Clock size={14} /> Jobs
+          </button>
+          {canEdit && (
+            <>
+              <button className={view === "team" ? "on" : ""} onClick={() => setView("team")}>
+                <Users size={14} /> Team
+              </button>
+              <button className={view === "email" ? "on" : ""} onClick={() => setView("email")}>
+                <Mail size={14} /> Email
+              </button>
+            </>
+          )}
+        </div>
 
         <div className="row" style={{ marginLeft: "auto" }}>
           {canEdit && (
@@ -408,6 +433,8 @@ export function StartScreen({
           <TeamPage />
         ) : view === "email" ? (
           <EmailSettingsPage />
+        ) : view === "jobs" ? (
+          <JobsPage />
         ) : (
           <>
             <section className="start-section start-new-section">

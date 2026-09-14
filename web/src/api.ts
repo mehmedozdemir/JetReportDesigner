@@ -283,12 +283,47 @@ export const api = {
     fetchWithAuth(`/api/reports/${reportId}/shares/${token}`, { method: "DELETE" }).then((r) => {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
+
+  // --- background report jobs ("export this without making me wait") ---
+  enqueueReportJob: (reportId: string, format: "pdf" | "xlsx"): Promise<ReportJob> =>
+    fetchWithAuth(`/api/reports/${reportId}/jobs`, {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({ format }),
+    }).then(async (r) => {
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
+      return json<ReportJob>(r);
+    }),
+
+  listJobs: (): Promise<ReportJob[]> => fetchWithAuth("/api/jobs").then(json<ReportJob[]>),
+
+  getJob: (id: string): Promise<ReportJob> => fetchWithAuth(`/api/jobs/${id}`).then(json<ReportJob>),
+
+  downloadJobBlob: (id: string): Promise<Blob> =>
+    fetchWithAuth(`/api/jobs/${id}/download`).then(async (r) => {
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
+      return r.blob();
+    }),
 };
 
 export interface ShareInfo {
   token: string;
   createdAtUtc: string;
   createdByEmail?: string | null;
+}
+
+export type ReportJobStatus = "Queued" | "Running" | "Succeeded" | "Failed";
+
+export interface ReportJob {
+  id: string;
+  reportId: string;
+  reportName: string;
+  format: "pdf" | "xlsx";
+  status: ReportJobStatus;
+  errorMessage?: string | null;
+  createdAtUtc: string;
+  startedAtUtc?: string | null;
+  completedAtUtc?: string | null;
 }
 
 export type SmtpSecurity = "None" | "StartTls" | "SslOnConnect";

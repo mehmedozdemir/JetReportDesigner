@@ -29,6 +29,8 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
 
     public DbSet<SmtpSettings> SmtpSettings => Set<SmtpSettings>();
 
+    public DbSet<ReportJob> ReportJobs => Set<ReportJob>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -57,6 +59,7 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
             modelBuilder.Entity<Entities.StoredConnection>().Property(c => c.EncryptedConnectionString).HasColumnType("NCLOB");
             modelBuilder.Entity<Entities.StoredSqlQuery>().Property(q => q.CommandText).HasColumnType("NCLOB");
             modelBuilder.Entity<Entities.StoredAsset>().Property(a => a.Content).HasColumnType("BLOB");
+            modelBuilder.Entity<Entities.ReportJob>().Property(j => j.ResultContent).HasColumnType("BLOB");
         }
     }
 }
