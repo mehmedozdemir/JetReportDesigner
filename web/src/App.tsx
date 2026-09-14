@@ -135,6 +135,17 @@ export function App() {
     }
   }, [isDesignerRoute, canEdit, tab, routeReportId, navigate]);
 
+  /** A new report opens in its own tab, leaving the list where it was — but the id only exists
+   * after the POST, and a window.open() that late is a popup-blocker's definition of unsolicited.
+   * So the tab is opened empty while we're still inside the click's own task, then pointed at
+   * the report once it's created (and closed again if creating it failed). Returns null when
+   * the browser blocked it anyway, so the caller can fall back to navigating in place. */
+  const openBlankTab = () => window.open("", "_blank");
+  const settleTab = (tab: Window | null, id: string) => {
+    if (tab && !tab.closed) tab.location.href = `/reports/${id}/design`;
+    else navigate(`/reports/${id}/design`);
+  };
+
   const createFromSample = async (
     name: string,
     page?: { size: PageSize; orientation: Orientation },
@@ -142,6 +153,7 @@ export function App() {
   ) => {
     const sample = samples.find((s) => s.name === name);
     if (!sample) return;
+    const tab = openBlankTab();
     setBusy(true);
     setError(null);
     try {
@@ -152,10 +164,10 @@ export function App() {
         page: page ? { ...definition.page, ...page } : definition.page,
       });
       if (folderId) await api.setReportFolder(created.id, folderId);
-      load(created);
       await refresh();
-      navigate(`/reports/${created.id}/design`);
+      settleTab(tab, created.id);
     } catch (e) {
+      tab?.close();
       setError(String(e));
     } finally {
       setBusy(false);
@@ -204,6 +216,7 @@ export function App() {
     folderId?: string | null,
   ) => {
     const layout = mode;
+    const tab = openBlankTab();
     setBusy(true);
     setError(null);
     try {
@@ -213,10 +226,10 @@ export function App() {
         page ? { ...definition, page: { ...definition.page, ...page } } : definition,
       );
       if (folderId) await api.setReportFolder(created.id, folderId);
-      load(created);
       await refresh();
-      navigate(`/reports/${created.id}/design`);
+      settleTab(tab, created.id);
     } catch (e) {
+      tab?.close();
       setError(String(e));
     } finally {
       setBusy(false);
@@ -320,7 +333,6 @@ export function App() {
           onOpen={open}
           onDelete={(id) => void removeReport(id)}
           onMoveToFolder={(id, folderId) => void moveReportToFolder(id, folderId)}
-          onSettings={() => navigate("/settings")}
         />
         <JobNotifications />
         {error && (

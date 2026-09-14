@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Check, Copy, Link2, Loader2, Trash2, X } from "lucide-react";
 import { api, type ShareInfo } from "../api";
 import type { ReportSummary } from "../types";
+import { useEscapeKey } from "../useEscapeKey";
+import { ConfirmButton } from "./ConfirmButton";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const urlFor = (token: string) => `${window.location.origin}/share/${token}`;
@@ -13,6 +15,8 @@ export function ShareDialog({ report, onClose }: { report: ReportSummary; onClos
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  useEscapeKey(onClose);
 
   const refresh = () => api.listShares(report.id).then(setShares).catch((e) => setError(msg(e)));
   useEffect(() => {
@@ -98,14 +102,12 @@ export function ShareDialog({ report, onClose }: { report: ReportSummary; onClos
                       {copiedToken === s.token ? <Check size={13} /> : <Copy size={13} />}
                       {copiedToken === s.token ? "Copied" : "Copy"}
                     </button>
-                    <button
-                      className="mini danger"
+                    <ConfirmButton
+                      icon={Trash2}
                       title="Revoke this link"
-                      aria-label="Revoke this link"
-                      onClick={() => void revoke(s.token)}
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                      confirmLabel="Revoke"
+                      onConfirm={() => void revoke(s.token)}
+                    />
                   </li>
                 ))}
               </ul>

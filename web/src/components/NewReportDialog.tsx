@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, FileBarChart2, LayoutTemplate, Rows3, Search, SquareDashed, X } from "lucide-react";
 import { emptyBandedReport, emptyFreeReport, type Orientation, type PageSize, type ReportDefinition } from "../types";
+import { useEscapeKey } from "../useEscapeKey";
 import { PAGE_SIZES } from "./PropertiesPanel";
 import { ReportThumbnail } from "./ReportThumbnail";
 
@@ -28,6 +29,8 @@ export function NewReportDialog({
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("All");
   const [size, setSize] = useState<PageSize>("A4");
+
+  useEscapeKey(onClose);
   const [orientation, setOrientation] = useState<Orientation>("portrait");
 
   const categories = useMemo(() => ["All", ...new Set(samples.map((s) => s.category))], [samples]);

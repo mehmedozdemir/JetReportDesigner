@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, CalendarClock, X } from "lucide-react";
 import { api, type ReportSchedule, type ScheduleFrequency } from "../api";
 import { hhmm, localToUtc, utcToLocal } from "../scheduleTime";
+import { useEscapeKey } from "../useEscapeKey";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -46,6 +47,8 @@ export function ScheduleDialog({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEscapeKey(onClose);
 
   useEffect(() => {
     api.getEmailSettings().then((s) => setHasMailAccount(!!s)).catch(() => setHasMailAccount(false));

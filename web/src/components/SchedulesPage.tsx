@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, CalendarClock, CheckCircle2, Loader2, Pencil, Trash2 } from "lucide-react";
 import { api, type ReportSchedule } from "../api";
 import { hhmm, utcToLocal } from "../scheduleTime";
+import { ConfirmButton } from "./ConfirmButton";
 import { ScheduleDialog } from "./ScheduleDialog";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -129,9 +130,12 @@ export function SchedulesPage() {
                       <button className="mini" title="Edit schedule" aria-label="Edit schedule" onClick={() => setEditing(s)}>
                         <Pencil size={13} />
                       </button>
-                      <button className="mini danger" title="Delete schedule" aria-label="Delete schedule" onClick={() => void remove(s.id)}>
-                        <Trash2 size={13} />
-                      </button>
+                      <ConfirmButton
+                        icon={Trash2}
+                        title="Delete schedule"
+                        confirmLabel="Delete"
+                        onConfirm={() => void remove(s.id)}
+                      />
                     </div>
                   </td>
                 </tr>

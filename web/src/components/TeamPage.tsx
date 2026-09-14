@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Check, Copy, Loader2, Plus, Trash2 } from "lucide-react";
 import { api } from "../api";
 import { useAuth, type PendingInvite, type TeamMember, type TenantInfo } from "../auth";
+import { ConfirmButton } from "./ConfirmButton";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -155,9 +156,7 @@ export function TeamPage() {
               <span>
                 <code>{p.code}</code> · {p.role} · expires {new Date(p.expiresAtUtc).toLocaleDateString()}
               </span>
-              <button className="mini danger" onClick={() => void revoke(p.code)} title="Revoke invite" aria-label="Revoke invite">
-                <Trash2 size={13} />
-              </button>
+              <ConfirmButton icon={Trash2} title="Revoke invite" confirmLabel="Revoke" onConfirm={() => void revoke(p.code)} />
             </div>
           ))}
         </section>

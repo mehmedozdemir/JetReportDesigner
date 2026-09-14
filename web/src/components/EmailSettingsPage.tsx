@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Loader2, Mail, Send, Trash2 } from "lucide-react";
 import { api, type SmtpSecurity, type SmtpSettingsInfo } from "../api";
+import { ConfirmButton } from "./ConfirmButton";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -227,9 +228,13 @@ export function EmailSettingsPage() {
             </button>
             {saved && <CheckCircle2 size={16} style={{ color: "var(--success)" }} />}
             {existing && (
-              <button className="mini danger" onClick={() => void remove()}>
-                <Trash2 size={13} /> Remove
-              </button>
+              <ConfirmButton
+                icon={Trash2}
+                label="Remove"
+                title="Remove mail account"
+                confirmLabel="Remove account"
+                onConfirm={() => void remove()}
+              />
             )}
           </div>
         </div>

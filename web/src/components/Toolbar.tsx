@@ -104,9 +104,9 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
           <span>JetReportDesigner</span>
         </div>
         <div className="divider" />
-        <button className="btn" onClick={onShowStart} title="Start screen — open a report" aria-label="Start screen">
+        <button className="btn" onClick={onShowStart} title="Back to the report list" aria-label="Reports">
           <LayoutGrid />
-          <span>Start</span>
+          <span>Reports</span>
         </button>
         {report && (
           <>
@@ -161,9 +161,9 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
 
       <div className="toolbar-row">
         <div className="group">
-          <button className="btn" onClick={onShowStart} title="Start screen — open or create a report" aria-label="Start screen">
+          <button className="btn" onClick={onShowStart} title="Back to the report list" aria-label="Reports">
             <LayoutGrid />
-            <span>Start</span>
+            <span>Reports</span>
           </button>
           <button className="btn icon" onClick={onNew} disabled={busy} title="New blank report" aria-label="New blank report">
             <FilePlus2 />

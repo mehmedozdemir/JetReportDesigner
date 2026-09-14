@@ -25,6 +25,7 @@ import {
   Share2,
   Trash2,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import { api } from "../api";
 import { isDesigner, useAuth, type TenantInfo } from "../auth";
@@ -62,6 +63,42 @@ const VIEW_PATH: Record<View, string> = {
   settings: "/settings",
 };
 
+/** A nav entry is a real <a href> so it can be Ctrl/middle-clicked into a new tab like any
+ * link (the whole point of moving the app onto routes) — a plain left-click is intercepted for
+ * client-side navigation. aria-current tells a screen reader which one you're on. */
+function NavItem({
+  view,
+  current,
+  icon: Icon,
+  label,
+  badge,
+  onNavigate,
+}: {
+  view: View;
+  current: View;
+  icon: LucideIcon;
+  label: string;
+  badge?: number;
+  onNavigate: (v: View) => void;
+}) {
+  const active = view === current;
+  return (
+    <a
+      className={`start-nav-item${active ? " on" : ""}`}
+      href={VIEW_PATH[view]}
+      aria-current={active ? "page" : undefined}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+        e.preventDefault();
+        onNavigate(view);
+      }}
+    >
+      <Icon size={16} /> <span>{label}</span>
+      {badge != null && badge > 0 && <span className="nav-badge">{badge}</span>}
+    </a>
+  );
+}
+
 export function StartScreen({
   view,
   reports,
@@ -72,7 +109,6 @@ export function StartScreen({
   onOpen,
   onDelete,
   onMoveToFolder,
-  onSettings,
 }: {
   view: View;
   reports: ReportSummary[];
@@ -83,7 +119,6 @@ export function StartScreen({
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
   onMoveToFolder: (id: string, folderId: string | null) => void;
-  onSettings: () => void;
 }) {
   const navigate = useNavigate();
   const setView = (v: View) => navigate(VIEW_PATH[v]);
@@ -467,37 +502,23 @@ export function StartScreen({
         {tenant && <div className="start-nav-org">{tenant.name}</div>}
 
         <div className="start-nav-group">
-          <button className={`start-nav-item${view === "reports" ? " on" : ""}`} onClick={() => setView("reports")}>
-            <LayoutGrid size={16} /> <span>Reports</span>
-          </button>
-          <button className={`start-nav-item${view === "jobs" ? " on" : ""}`} onClick={() => setView("jobs")}>
-            <Clock size={16} /> <span>Jobs</span>
-            {runningJobs > 0 && <span className="nav-badge">{runningJobs}</span>}
-          </button>
+          <NavItem view="reports" current={view} icon={LayoutGrid} label="Reports" onNavigate={setView} />
+          <NavItem view="jobs" current={view} icon={Clock} label="Jobs" badge={runningJobs} onNavigate={setView} />
         </div>
 
         {canEdit && (
           <div className="start-nav-group">
             <div className="start-nav-label">Organization</div>
-            <button className={`start-nav-item${view === "team" ? " on" : ""}`} onClick={() => setView("team")}>
-              <Users size={16} /> <span>Team</span>
-              {pendingInvites > 0 && <span className="nav-badge">{pendingInvites}</span>}
-            </button>
-            <button className={`start-nav-item${view === "email" ? " on" : ""}`} onClick={() => setView("email")}>
-              <Mail size={16} /> <span>Email</span>
-            </button>
-            <button className={`start-nav-item${view === "schedules" ? " on" : ""}`} onClick={() => setView("schedules")}>
-              <CalendarClock size={16} /> <span>Schedules</span>
-            </button>
+            <NavItem view="team" current={view} icon={Users} label="Team" badge={pendingInvites} onNavigate={setView} />
+            <NavItem view="email" current={view} icon={Mail} label="Email" onNavigate={setView} />
+            <NavItem view="schedules" current={view} icon={CalendarClock} label="Schedules" onNavigate={setView} />
           </div>
         )}
 
         <div className="start-nav-footer">
           {/* Not gated on canEdit — everything in Settings is a personal preference (theme,
               units, panel behaviour), so a Viewer needs it just as much as a Designer. */}
-          <button className={`start-nav-item${view === "settings" ? " on" : ""}`} onClick={onSettings}>
-            <Settings size={16} /> <span>Settings</span>
-          </button>
+          <NavItem view="settings" current={view} icon={Settings} label="Settings" onNavigate={setView} />
 
           {user && (
             <>

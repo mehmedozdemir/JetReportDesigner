@@ -776,6 +776,8 @@ body {
   height: 32px; padding: 0 8px; border-radius: var(--radius-sm);
   border: 0; background: transparent; color: var(--text-secondary);
   font: inherit; font-size: 13px; cursor: pointer; text-align: left;
+  text-decoration: none; /* they're <a href> now, so they can be opened in a new tab */
+  box-sizing: border-box;
 }
 .start-nav-item svg { width: 16px; height: 16px; flex: 0 0 auto; }
 /* Direct child only — the user row nests spans (name over role) that must not inherit this. */

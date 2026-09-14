@@ -3,6 +3,7 @@ import { AlertTriangle, Download, Eye, Loader2, Share2, X } from "lucide-react";
 import { api } from "../api";
 import { downloadBlob } from "../download";
 import type { ReportSummary } from "../types";
+import { useEscapeKey } from "../useEscapeKey";
 
 /** Server-rendered read-only preview of a saved report, with export and a way into the
  * share dialog — all without opening the report in the designer. */
@@ -19,6 +20,8 @@ export function ReportPreviewDialog({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState<"pdf" | "xlsx" | null>(null);
+
+  useEscapeKey(onClose);
 
   useEffect(() => {
     let cancelled = false;
