@@ -10,6 +10,16 @@ public enum FolderDeleteResult
     NotEmpty,
 }
 
+public enum FolderMoveResult
+{
+    Moved,
+    NotFound,
+    /// <summary>The target parent doesn't exist in this tenant.</summary>
+    TargetNotFound,
+    /// <summary>The target is the folder itself, or one of its own descendants.</summary>
+    WouldCreateCycle,
+}
+
 public interface IFolderRepository
 {
     /// <summary>Every folder in the tenant — the caller builds the tree from ParentFolderId.</summary>
@@ -21,6 +31,9 @@ public interface IFolderRepository
     Task<FolderInfo?> RenameAsync(Guid id, string name, CancellationToken cancellationToken);
 
     Task<FolderDeleteResult> DeleteAsync(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>Re-parents an existing folder — drag-and-drop in the UI. Null files it at the root.</summary>
+    Task<FolderMoveResult> MoveAsync(Guid id, Guid? newParentFolderId, CancellationToken cancellationToken);
 
     /// <summary>reportId -> folderId for every report currently filed in a folder (a report with
     /// no entry is at the root).</summary>

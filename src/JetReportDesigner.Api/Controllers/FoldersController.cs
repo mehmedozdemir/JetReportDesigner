@@ -63,4 +63,22 @@ public sealed class FoldersController(IFolderRepository folders) : ControllerBas
             _ => throw new InvalidOperationException($"Unhandled {nameof(FolderDeleteResult)}: {result}"),
         };
     }
+
+    /// <summary>Re-parents a folder (drag-and-drop). Designer-only.</summary>
+    [HttpPut("{id:guid}/move")]
+    [Authorize(Policy = AuthPolicies.Designer)]
+    public async Task<IActionResult> Move(Guid id, [FromBody] MoveFolderRequest request, CancellationToken cancellationToken)
+    {
+        var result = await folders.MoveAsync(id, request.ParentFolderId, cancellationToken);
+        return result switch
+        {
+            FolderMoveResult.Moved => NoContent(),
+            FolderMoveResult.NotFound => NotFound(),
+            FolderMoveResult.TargetNotFound => ValidationProblem("parentFolderId does not exist."),
+            FolderMoveResult.WouldCreateCycle => Problem(
+                "Can't move a folder into itself or one of its own subfolders.",
+                statusCode: StatusCodes.Status409Conflict),
+            _ => throw new InvalidOperationException($"Unhandled {nameof(FolderMoveResult)}: {result}"),
+        };
+    }
 }

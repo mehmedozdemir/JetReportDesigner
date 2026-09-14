@@ -11,4 +11,6 @@ public sealed record CreateFolderRequest(string Name, Guid? ParentFolderId);
 
 public sealed record RenameFolderRequest(string Name);
 
+public sealed record MoveFolderRequest(Guid? ParentFolderId);
+
 public sealed record SetReportFolderRequest(Guid? FolderId);

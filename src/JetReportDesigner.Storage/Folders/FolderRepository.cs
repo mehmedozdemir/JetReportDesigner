@@ -69,6 +69,52 @@ internal sealed class FolderRepository(JetReportDbContext db, TimeProvider clock
         return FolderDeleteResult.Deleted;
     }
 
+    public async Task<FolderMoveResult> MoveAsync(Guid id, Guid? newParentFolderId, CancellationToken cancellationToken)
+    {
+        var folder = await db.Folders.FirstOrDefaultAsync(f => f.Id == id && f.TenantId == tenant.TenantId, cancellationToken);
+        if (folder is null)
+        {
+            return FolderMoveResult.NotFound;
+        }
+
+        if (newParentFolderId == id)
+        {
+            return FolderMoveResult.WouldCreateCycle;
+        }
+
+        if (newParentFolderId is { } parentId)
+        {
+            var parents = await db.Folders
+                .AsNoTracking()
+                .Where(f => f.TenantId == tenant.TenantId)
+                .Select(f => new { f.Id, f.ParentFolderId })
+                .ToListAsync(cancellationToken);
+            var byId = parents.ToDictionary(f => f.Id, f => f.ParentFolderId);
+
+            if (!byId.ContainsKey(parentId))
+            {
+                return FolderMoveResult.TargetNotFound;
+            }
+
+            // Walk up from the target parent — if we reach the folder being moved, the target
+            // is one of its own descendants and re-parenting there would create a cycle.
+            Guid? cur = parentId;
+            while (cur is not null)
+            {
+                if (cur == id)
+                {
+                    return FolderMoveResult.WouldCreateCycle;
+                }
+
+                cur = byId.GetValueOrDefault(cur.Value);
+            }
+        }
+
+        folder.ParentFolderId = newParentFolderId;
+        await db.SaveChangesAsync(cancellationToken);
+        return FolderMoveResult.Moved;
+    }
+
     public async Task<IReadOnlyDictionary<Guid, Guid>> GetReportFolderMapAsync(CancellationToken cancellationToken)
     {
         var rows = await db.ReportFolderEntries
