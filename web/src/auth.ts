@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { problemMessage } from "./httpError";
+import { useDesigner } from "./store";
 
 export interface AuthUser {
   id: string;
@@ -91,7 +92,22 @@ export const useAuth = create<AuthState>()(
           throw e;
         }
       },
-      logout: () => set({ token: null, user: null, error: null }),
+      logout: () => {
+        set({ token: null, user: null, error: null });
+        // Otherwise the next sign-in (even a different user, same tab) would land back in
+        // whatever report was open at logout instead of the Start screen.
+        useDesigner.setState({
+          report: null,
+          reportId: null,
+          concurrencyToken: null,
+          selectedIds: [],
+          selectedBand: null,
+          past: [],
+          future: [],
+          dirty: false,
+          savedAtUtc: null,
+        });
+      },
     }),
     { name: "jrd.auth", version: 1, partialize: (s) => ({ token: s.token, user: s.user }) },
   ),

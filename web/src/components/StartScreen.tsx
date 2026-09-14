@@ -11,16 +11,18 @@ import {
   FolderPlus,
   LayoutGrid,
   List,
+  LogOut,
   Pencil,
   Plus,
   Search,
+  Settings,
   Share2,
   Trash2,
   Users,
   X,
 } from "lucide-react";
 import { api } from "../api";
-import { isDesigner, useAuth } from "../auth";
+import { isDesigner, useAuth, type TenantInfo } from "../auth";
 import { downloadBlob } from "../download";
 import { usePrefs } from "../prefs";
 import { timeAgo } from "../time";
@@ -44,6 +46,7 @@ export function StartScreen({
   onOpen,
   onDelete,
   onMoveToFolder,
+  onSettings,
   onClose,
 }: {
   reports: ReportSummary[];
@@ -54,6 +57,7 @@ export function StartScreen({
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
   onMoveToFolder: (id: string, folderId: string | null) => void;
+  onSettings: () => void;
   onClose?: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -63,7 +67,15 @@ export function StartScreen({
   const [previewReport, setPreviewReport] = useState<ReportSummary | null>(null);
   const [shareReport, setShareReport] = useState<ReportSummary | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const canEdit = isDesigner(useAuth((s) => s.user));
+  const user = useAuth((s) => s.user);
+  const logout = useAuth((s) => s.logout);
+  const canEdit = isDesigner(user);
+  const [tenant, setTenant] = useState<TenantInfo | null>(null);
+  const [userMenu, setUserMenu] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    api.getTenant().then(setTenant).catch(() => undefined);
+  }, []);
 
   const [folders, setFolders] = useState<FolderSummary[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -325,6 +337,7 @@ export function StartScreen({
         <div className="brand">
           <FileBarChart2 size={18} />
           <span>JetReportDesigner</span>
+          {tenant && <span className="start-org">{tenant.name}</span>}
         </div>
 
         {canEdit && (
@@ -338,11 +351,51 @@ export function StartScreen({
           </div>
         )}
 
-        {onClose && (
-          <button className="btn icon" onClick={onClose} title="Close" aria-label="Close start screen">
-            <X />
-          </button>
-        )}
+        <div className="row" style={{ marginLeft: "auto" }}>
+          {canEdit && (
+            <button className="btn icon" onClick={onSettings} title="Settings" aria-label="Settings">
+              <Settings />
+            </button>
+          )}
+
+          {user && (
+            <>
+              <button
+                className="btn user-chip"
+                onClick={(e) =>
+                  setUserMenu({
+                    x: e.currentTarget.getBoundingClientRect().right,
+                    y: e.currentTarget.getBoundingClientRect().bottom + 4,
+                  })
+                }
+                title={user.email}
+              >
+                <span className="user-avatar">{user.email[0]?.toUpperCase()}</span>
+                <span className="user-email">{user.email}</span>
+                <ChevronDown size={12} />
+              </button>
+              {userMenu && (
+                <ContextMenu
+                  x={userMenu.x}
+                  y={userMenu.y}
+                  items={[
+                    { label: user.email, disabled: true },
+                    { label: canEdit ? "Designer" : "Viewer", disabled: true },
+                    { sep: true },
+                    { label: "Sign out", icon: LogOut, onClick: logout, danger: true },
+                  ]}
+                  onClose={() => setUserMenu(null)}
+                />
+              )}
+            </>
+          )}
+
+          {onClose && (
+            <button className="btn icon" onClick={onClose} title="Close" aria-label="Close start screen">
+              <X />
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="start-scroll">

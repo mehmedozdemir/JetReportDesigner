@@ -359,6 +359,7 @@ export function App() {
             onOpen={(id) => void open(id)}
             onDelete={(id) => void removeReport(id)}
             onMoveToFolder={(id, folderId) => void moveReportToFolder(id, folderId)}
+            onSettings={() => setShowSettings(true)}
             onClose={report ? () => setShowStart(false) : undefined}
           />
         </div>
