@@ -89,9 +89,13 @@ export function App() {
 
   // Deep-link loading: whenever the URL names a report the store doesn't already have loaded
   // (a fresh tab, a bookmark, or "Open"/"New report" navigating here), fetch and load it. This
-  // is the one path both direct navigation and in-app "open" go through.
+  // is the one path both direct navigation and in-app "open" go through. Reads the store
+  // imperatively (not via a reactive selector) and only depends on routeReportId — load()'s own
+  // store update re-renders this component with a new `reportId`, and subscribing to that here
+  // too raced the effect's cleanup against its own in-flight fetch, occasionally leaving
+  // loadingReport stuck true.
   useEffect(() => {
-    if (!routeReportId || routeReportId === reportId) return;
+    if (!routeReportId || useDesigner.getState().reportId === routeReportId) return;
     let cancelled = false;
     setLoadingReport(true);
     setLoadError(null);
@@ -109,8 +113,7 @@ export function App() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeReportId, reportId]);
+  }, [routeReportId, load]);
 
   // A Viewer never gets the design surface — bounce straight to Preview for the same report.
   useEffect(() => {
