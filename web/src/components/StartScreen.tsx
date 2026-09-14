@@ -9,9 +9,8 @@ import {
   FolderPlus,
   LayoutGrid,
   Pencil,
-  Rows3,
+  Plus,
   Search,
-  SquareDashed,
   Trash2,
   Users,
   X,
@@ -19,8 +18,9 @@ import {
 import { api } from "../api";
 import { isDesigner, useAuth } from "../auth";
 import { timeAgo } from "../time";
-import type { FolderSummary, ReportDefinition, ReportSummary } from "../types";
+import type { FolderSummary, Orientation, PageSize, ReportDefinition, ReportSummary } from "../types";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
+import { NewReportDialog } from "./NewReportDialog";
 import { TeamPage } from "./TeamPage";
 
 type View = "reports" | "team";
@@ -39,10 +39,10 @@ export function StartScreen({
   onClose,
 }: {
   reports: ReportSummary[];
-  samples: { name: string; definition: ReportDefinition }[];
+  samples: { name: string; category: string; definition: ReportDefinition }[];
   busy: boolean;
-  onBlank: (mode: "free" | "banded") => void;
-  onSample: (name: string) => void;
+  onBlank: (mode: "free" | "banded", page: { size: PageSize; orientation: Orientation }) => void;
+  onSample: (name: string, page: { size: PageSize; orientation: Orientation }) => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
   onMoveToFolder: (id: string, folderId: string | null) => void;
@@ -51,6 +51,7 @@ export function StartScreen({
   const [query, setQuery] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [view, setView] = useState<View>("reports");
+  const [newReportOpen, setNewReportOpen] = useState(false);
   const canEdit = isDesigner(useAuth((s) => s.user));
 
   const [folders, setFolders] = useState<FolderSummary[]>([]);
@@ -309,35 +310,31 @@ export function StartScreen({
           <TeamPage />
         ) : (
           <>
-            <section className="start-section">
-              <h3>New</h3>
-              {!canEdit && <p className="hint">Viewer role — sign in as a Designer to create reports.</p>}
-              <div className="start-cards">
-                <button className="start-card" onClick={() => onBlank("free")} disabled={busy || !canEdit}>
-                  <span className="start-card-icon"><SquareDashed /></span>
-                  <span className="start-card-title">Blank — Free layout</span>
-                  <span className="start-card-sub">Place elements anywhere on a fixed canvas</span>
+            <section className="start-section start-new-section">
+              {!canEdit ? (
+                <p className="hint">Viewer role — sign in as a Designer to create reports.</p>
+              ) : (
+                <button className="btn primary" onClick={() => setNewReportOpen(true)} disabled={busy}>
+                  <Plus /> New report
                 </button>
-                <button className="start-card" onClick={() => onBlank("banded")} disabled={busy || !canEdit}>
-                  <span className="start-card-icon"><Rows3 /></span>
-                  <span className="start-card-title">Blank — Banded report</span>
-                  <span className="start-card-sub">Header / detail / footer bands that repeat per row</span>
-                </button>
-                {samples.map((s) => (
-                  <button
-                    key={s.name}
-                    className="start-card tpl"
-                    onClick={() => onSample(s.name)}
-                    disabled={busy || !canEdit}
-                  >
-                    <span className="start-card-icon"><FileBarChart2 /></span>
-                    <span className="start-card-title">{s.name}</span>
-                    <span className="start-card-sub">Sample template</span>
-                    <span className="start-card-tag">Sample</span>
-                  </button>
-                ))}
-              </div>
+              )}
             </section>
+
+            {newReportOpen && (
+              <NewReportDialog
+                samples={samples}
+                busy={busy}
+                onCreateBlank={(mode, page) => {
+                  setNewReportOpen(false);
+                  onBlank(mode, page);
+                }}
+                onCreateFromSample={(name, page) => {
+                  setNewReportOpen(false);
+                  onSample(name, page);
+                }}
+                onClose={() => setNewReportOpen(false)}
+              />
+            )}
 
             <section className="start-section">
               <div className="start-list-head">

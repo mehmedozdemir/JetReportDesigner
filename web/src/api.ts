@@ -40,8 +40,8 @@ export type ParamValues = Record<string, unknown>;
 export const api = {
   listReports: (): Promise<ReportSummary[]> => fetchWithAuth("/api/reports").then(json<ReportSummary[]>),
 
-  listSamples: (): Promise<{ name: string; definition: ReportDefinition }[]> =>
-    fetchWithAuth("/api/meta/samples").then(json<{ name: string; definition: ReportDefinition }[]>),
+  listSamples: (): Promise<{ name: string; category: string; definition: ReportDefinition }[]> =>
+    fetchWithAuth("/api/meta/samples").then(json<{ name: string; category: string; definition: ReportDefinition }[]>),
 
   getReport: (id: string): Promise<ReportResponse> =>
     fetchWithAuth(`/api/reports/${id}`).then(json<ReportResponse>),

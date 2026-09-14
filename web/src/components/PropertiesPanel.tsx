@@ -59,7 +59,7 @@ import type {
 
 const EMPTY_RULES: FormatRule[] = [];
 
-const PAGE_SIZES: [PageSize, string][] = [
+export const PAGE_SIZES: [PageSize, string][] = [
   ["A4", "A4"],
   ["A5", "A5"],
   ["A6", "A6"],

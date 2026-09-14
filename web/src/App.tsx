@@ -4,7 +4,14 @@ import { api } from "./api";
 import { isDesigner, useAuth } from "./auth";
 import { useDesigner } from "./store";
 import { usePrefs } from "./prefs";
-import { emptyBandedReport, emptyFreeReport, type ReportDefinition, type ReportSummary } from "./types";
+import {
+  emptyBandedReport,
+  emptyFreeReport,
+  type Orientation,
+  type PageSize,
+  type ReportDefinition,
+  type ReportSummary,
+} from "./types";
 import { Canvas } from "./components/Canvas";
 import { LeftSidebar } from "./components/LeftSidebar";
 import { LoginScreen } from "./components/LoginScreen";
@@ -19,7 +26,7 @@ export function App() {
   const token = useAuth((s) => s.token);
   const canEdit = isDesigner(useAuth((s) => s.user));
   const [reports, setReports] = useState<ReportSummary[]>([]);
-  const [samples, setSamples] = useState<{ name: string; definition: ReportDefinition }[]>([]);
+  const [samples, setSamples] = useState<{ name: string; category: string; definition: ReportDefinition }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"design" | "preview">("design");
@@ -71,7 +78,7 @@ export function App() {
     void api.listSamples().then(setSamples).catch(() => undefined);
   }, [refresh, token]);
 
-  const createFromSample = async (name: string) => {
+  const createFromSample = async (name: string, page?: { size: PageSize; orientation: Orientation }) => {
     const sample = samples.find((s) => s.name === name);
     if (!sample) return;
     setBusy(true);
@@ -81,6 +88,7 @@ export function App() {
       const created = await api.createReport({
         ...definition,
         name: `${definition.name} ${new Date().toISOString().slice(11, 19)}`,
+        page: page ? { ...definition.page, ...page } : definition.page,
       });
       load(created);
       await refresh();
@@ -137,14 +145,18 @@ export function App() {
     }
   };
 
-  const createReport = async (mode: "free" | "banded" = "free") => {
+  const createReport = async (
+    mode: "free" | "banded" = "free",
+    page?: { size: PageSize; orientation: Orientation },
+  ) => {
     const layout = mode;
     setBusy(true);
     setError(null);
     try {
       const name = `Untitled ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
+      const definition = layout === "banded" ? emptyBandedReport(name) : emptyFreeReport(name);
       const created = await api.createReport(
-        layout === "banded" ? emptyBandedReport(name) : emptyFreeReport(name),
+        page ? { ...definition, page: { ...definition.page, ...page } } : definition,
       );
       load(created);
       await refresh();
@@ -335,8 +347,8 @@ export function App() {
             reports={reports}
             samples={samples}
             busy={busy}
-            onBlank={(mode) => void createReport(mode)}
-            onSample={(name) => void createFromSample(name)}
+            onBlank={(mode, page) => void createReport(mode, page)}
+            onSample={(name, page) => void createFromSample(name, page)}
             onOpen={(id) => void open(id)}
             onDelete={(id) => void removeReport(id)}
             onMoveToFolder={(id, folderId) => void moveReportToFolder(id, folderId)}
