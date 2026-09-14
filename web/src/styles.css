@@ -793,7 +793,9 @@ body {
    puts its label at flex:1, which stretches the label-to-control gap to whatever the section is
    wide, so a form needs a much narrower cap than a table does or the two end up on opposite
    sides of the screen. */
-.start-section-narrow { max-width: 640px; }
+/* Same specificity class (two selectors) as .start-scroll > .start-section above, which
+   otherwise wins on specificity regardless of source order and silently keeps this at 1080px. */
+.start-scroll > .start-section.start-section-narrow { max-width: 640px; }
 .start-section + .start-section { margin-top: 36px; }
 .start-section > h3 {
   margin: 0 0 12px;
