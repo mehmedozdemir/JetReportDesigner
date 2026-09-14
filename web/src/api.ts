@@ -91,6 +91,15 @@ export const api = {
       if (!r.ok) throw new Error(problemMessage(await r.text()));
     }),
 
+  moveFolder: (id: string, parentFolderId: string | null): Promise<void> =>
+    fetchWithAuth(`/api/folders/${id}/move`, {
+      method: "PUT",
+      headers: jsonHeaders,
+      body: JSON.stringify({ parentFolderId }),
+    }).then(async (r) => {
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
+    }),
+
   // --- data sources ---
   validate: (definition: ReportDefinition): Promise<ReportIssue[]> =>
     fetchWithAuth("/api/reports/validate", { method: "POST", headers: jsonHeaders, body: JSON.stringify(definition) })
