@@ -233,6 +233,32 @@ export function App() {
     }
   };
 
+  /** Bulk actions run sequentially against the existing single-item endpoints — there's no bulk
+   * API, and adding one for a handful of rows would be inventing a contract the UI doesn't need.
+   * The list refreshes once at the end rather than per item. */
+  const bulkMove = async (ids: string[], folderId: string | null) => {
+    setError(null);
+    try {
+      for (const id of ids) await api.setReportFolder(id, folderId);
+      await refresh();
+    } catch (e) {
+      setError(String(e));
+      await refresh();
+    }
+  };
+
+  const bulkDelete = async (ids: string[]) => {
+    setError(null);
+    try {
+      for (const id of ids) await api.deleteReport(id);
+      if (reportId && ids.includes(reportId)) navigate("/reports");
+      await refresh();
+    } catch (e) {
+      setError(String(e));
+      await refresh();
+    }
+  };
+
   const createReport = async (
     mode: "free" | "banded" = "free",
     page?: { size: PageSize; orientation: Orientation },
@@ -356,6 +382,8 @@ export function App() {
           onOpen={open}
           onDelete={(id) => void removeReport(id)}
           onMoveToFolder={(id, folderId) => void moveReportToFolder(id, folderId)}
+          onBulkMove={(ids, folderId) => void bulkMove(ids, folderId)}
+          onBulkDelete={(ids) => void bulkDelete(ids)}
         />
         <JobNotifications />
         {error && (

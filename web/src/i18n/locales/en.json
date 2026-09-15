@@ -62,6 +62,13 @@
     "layout": {
       "free": "Free",
       "banded": "Banded"
+    },
+    "bulk": {
+      "selected": "{{count}} selected",
+      "moveTo": "Move to",
+      "clear": "Clear selection",
+      "deleteMany": "Delete {{count}} reports?",
+      "select": "Select"
     }
   },
   "jobs": {

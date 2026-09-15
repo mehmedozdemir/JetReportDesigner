@@ -962,6 +962,26 @@ body {
    sit as a sibling rather than nest inside the tile <button> — buttons can't nest. */
 .drive-tile-cell { position: relative; }
 .drive-tile-cell .drive-tile { width: 100%; height: 100%; }
+/* Selection: the checkbox stays out of the way until you hover or something is selected, so
+   the list doesn't read as a form. */
+.select-box {
+  position: absolute; top: 8px; left: 8px; z-index: 1; margin: 0;
+  opacity: 0; transition: opacity 100ms ease-out;
+}
+.drive-tile-cell:hover .select-box,
+.drive-tile-cell.selected .select-box,
+.select-box:checked,
+.select-box:focus-visible { opacity: 1; }
+.drive-tile-cell.selected .drive-tile { border-color: var(--accent); background: var(--accent-muted); }
+.drive-table-name .select-box { position: static; opacity: 1; flex: 0 0 auto; }
+
+.bulk-bar {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  padding: 8px 12px; border: 1px solid var(--accent); border-radius: var(--radius-md);
+  background: var(--accent-muted);
+}
+.bulk-count { font-size: 12.5px; font-weight: 650; color: var(--accent); }
+
 .drive-tile-kebab {
   position: absolute; top: 6px; right: 6px; opacity: 0; transition: opacity 100ms ease-out;
   background: var(--bg-surface);

@@ -35,6 +35,7 @@ import { notificationPermission, requestNotificationPermission } from "../notifi
 import { usePrefs } from "../prefs";
 import { timeAgo } from "../time";
 import type { FolderSummary, Orientation, PageSize, ReportDefinition, ReportSummary } from "../types";
+import { ConfirmButton } from "./ConfirmButton";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { EmailSettingsPage } from "./EmailSettingsPage";
 import { JobsPage } from "./JobsPage";
@@ -99,6 +100,23 @@ function NavItem({
   );
 }
 
+/** The selection checkbox on a tile or row. Deliberately declared here rather than inside
+ * StartScreen: a component defined in another component's body is a new type on every render,
+ * so React tears down and rebuilds every checkbox each time the selection changes — which drops
+ * a click that arrives in the same tick as the one before it. */
+function SelectBox({ id, checked, label, onToggle }: { id: string; checked: boolean; label: string; onToggle: (id: string) => void }) {
+  return (
+    <input
+      type="checkbox"
+      className="select-box"
+      checked={checked}
+      aria-label={label}
+      onClick={(e) => e.stopPropagation()}
+      onChange={() => onToggle(id)}
+    />
+  );
+}
+
 export function StartScreen({
   view,
   reports,
@@ -109,6 +127,8 @@ export function StartScreen({
   onOpen,
   onDelete,
   onMoveToFolder,
+  onBulkMove,
+  onBulkDelete,
 }: {
   view: View;
   reports: ReportSummary[];
@@ -119,6 +139,8 @@ export function StartScreen({
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
   onMoveToFolder: (id: string, folderId: string | null) => void;
+  onBulkMove: (ids: string[], folderId: string | null) => void;
+  onBulkDelete: (ids: string[]) => void;
 }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -147,6 +169,17 @@ export function StartScreen({
   const setQuery = (q: string) => patchParams({ q: q || null }, true);
 
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  // Selecting reports to act on several at once. A plain click still opens a report — selection
+  // is the checkbox (or Ctrl/Cmd-click), so the common case doesn't change.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const toggleSelected = (id: string) =>
+    setSelectedIds((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const clearSelection = () => setSelectedIds(new Set());
   const [newReportOpen, setNewReportOpen] = useState(false);
   const [previewReport, setPreviewReport] = useState<ReportSummary | null>(null);
   const [shareReport, setShareReport] = useState<ReportSummary | null>(null);
@@ -274,10 +307,19 @@ export function StartScreen({
   // instead of a full page reload.
   const reportHref = (id: string) => `/reports/${id}/design`;
   const openOnClick = (e: React.MouseEvent, id: string) => {
-    if (busy || e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+    if (busy || e.button === 1) return;
+    // Ctrl/Cmd-click is "add to selection" here rather than the browser's "open in a new tab" —
+    // the kebab menu and a plain middle-click still cover opening elsewhere.
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      toggleSelected(id);
+      return;
+    }
+    if (e.shiftKey) return;
     e.preventDefault();
     onOpen(id);
   };
+
 
   const reportCountByFolder = useMemo(() => {
     const map = new Map<string, number>();
@@ -610,6 +652,37 @@ export function StartScreen({
                 }
               />
 
+              {selectedIds.size > 0 && (
+                <div className="bulk-bar">
+                  <span className="bulk-count">{t("reports.bulk.selected", { count: selectedIds.size })}</span>
+                  <select
+                    value=""
+                    aria-label={t("reports.bulk.moveTo")}
+                    onChange={(e) => {
+                      onBulkMove([...selectedIds], e.target.value || null);
+                      clearSelection();
+                    }}
+                  >
+                    <option value="" disabled>{t("reports.bulk.moveTo")}</option>
+                    <option value="">{t("reports.menu.root")}</option>
+                    {folderOptions.map((f) => (
+                      <option key={f.id} value={f.id}>{f.label}</option>
+                    ))}
+                  </select>
+                  <ConfirmButton
+                    icon={Trash2}
+                    label={t("common.delete")}
+                    title={t("reports.bulk.deleteMany", { count: selectedIds.size })}
+                    confirmLabel={t("common.delete")}
+                    onConfirm={() => {
+                      onBulkDelete([...selectedIds]);
+                      clearSelection();
+                    }}
+                  />
+                  <button className="mini ghost" onClick={clearSelection}>{t("reports.bulk.clear")}</button>
+                </div>
+              )}
+
               {(folderError || actionError) && (
                 <p className="hint" style={{ color: "var(--error)" }}>{folderError ?? actionError}</p>
               )}
@@ -811,7 +884,8 @@ export function StartScreen({
                               </div>
                             </div>
                           ) : (
-                            <div key={r.id} className="drive-tile-cell">
+                            <div key={r.id} className={`drive-tile-cell${selectedIds.has(r.id) ? " selected" : ""}`}>
+                              <SelectBox id={r.id} checked={selectedIds.has(r.id)} label={t("reports.bulk.select")} onToggle={toggleSelected} />
                               <a
                                 className="drive-tile"
                                 href={reportHref(r.id)}
@@ -944,6 +1018,7 @@ export function StartScreen({
                                 onDragStart={(e) => startDrag(e, { kind: "report", id: r.id })}
                               >
                                 <td className="drive-table-name">
+                                  <SelectBox id={r.id} checked={selectedIds.has(r.id)} label={t("reports.bulk.select")} onToggle={toggleSelected} />
                                   <a className="drive-row-link" href={reportHref(r.id)} onClick={(e) => openOnClick(e, r.id)}>
                                     <FileText /> {r.name}
                                   </a>

@@ -62,6 +62,13 @@
     "layout": {
       "free": "Serbest",
       "banded": "Bantlı"
+    },
+    "bulk": {
+      "selected": "{{count}} seçili",
+      "moveTo": "Taşı",
+      "clear": "Seçimi temizle",
+      "deleteMany": "{{count}} rapor silinsin mi?",
+      "select": "Seç"
     }
   },
   "jobs": {
