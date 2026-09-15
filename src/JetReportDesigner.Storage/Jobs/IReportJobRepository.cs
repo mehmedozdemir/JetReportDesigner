@@ -6,6 +6,16 @@ public static class ReportJobStatus
     public const string Running = "Running";
     public const string Succeeded = "Succeeded";
     public const string Failed = "Failed";
+    public const string Cancelled = "Cancelled";
+}
+
+/// <summary>What a cancel request found: nothing to cancel, a queued job that was cancelled
+/// outright, or a job already rendering — which the caller still has to stop in process.</summary>
+public enum CancelOutcome
+{
+    NotCancellable,
+    Cancelled,
+    Running,
 }
 
 public sealed record ReportJobInfo(
@@ -57,4 +67,12 @@ public interface IReportJobRepository
     /// <summary>Deletes finished jobs (and with them their stored results) completed before
     /// <paramref name="cutoffUtc"/>. Returns how many rows went.</summary>
     Task<int> DeleteFinishedBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken);
+
+    /// <summary>Marks a queued job cancelled. A job that's already rendering is reported back as
+    /// <see cref="CancelOutcome.Running"/> so the caller can stop the work itself; anything
+    /// already finished is <see cref="CancelOutcome.NotCancellable"/>. Tenant-scoped.</summary>
+    Task<CancelOutcome> RequestCancelAsync(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>Records that a running job was stopped. Worker-side, so not tenant-scoped.</summary>
+    Task MarkCancelledAsync(Guid id, CancellationToken cancellationToken);
 }

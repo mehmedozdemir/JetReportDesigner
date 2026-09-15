@@ -21,6 +21,7 @@ internal sealed class ReportJobProcessor(
     IServiceScopeFactory scopeFactory,
     IConfiguration configuration,
     TimeProvider clock,
+    RunningJobs runningJobs,
     ILogger<ReportJobProcessor> logger) : BackgroundService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(5);
@@ -119,12 +120,25 @@ internal sealed class ReportJobProcessor(
         // repositories (reports, assets for images, connections for SQL data sources, …)
         // exactly as an HTTP request would — CurrentTenant.Use makes them see this job's
         // tenant with no special-casing anywhere else in the render pipeline.
+        // A token of this job's own, so "cancel this job" can stop the render without taking
+        // the whole worker down with it; linked to the host's so shutdown still stops everything.
+        //
+        // How far cancellation actually reaches: ReportRenderService threads the token through
+        // its async phases — resolving data (the SQL/REST fetch that dominates a big report),
+        // images and subreports — so a job stuck pulling data stops promptly. The CPU-bound
+        // layout and PDF emit that follow don't check it, so a job already past the data stage
+        // runs to completion and reports Succeeded. That's why the API answers a cancel on a
+        // running job with 202 (asked to stop) rather than 204.
+        using var jobCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        using var tracked = runningJobs.Track(claimed.Id, jobCts);
+        var jobToken = jobCts.Token;
+
         using (CurrentTenant.Use(claimed.TenantId))
         {
             try
             {
                 var reports = scope.ServiceProvider.GetRequiredService<IReportRepository>();
-                var record = await reports.GetAsync(claimed.ReportId, cancellationToken);
+                var record = await reports.GetAsync(claimed.ReportId, jobToken);
                 if (record is null)
                 {
                     await jobs.FailAsync(claimed.Id, "The report no longer exists.", cancellationToken);
@@ -133,7 +147,7 @@ internal sealed class ReportJobProcessor(
 
                 var renderer = scope.ServiceProvider.GetRequiredService<ReportRenderService>();
                 var format = claimed.Format.Equals("xlsx", StringComparison.OrdinalIgnoreCase) ? RenderFormat.Xlsx : RenderFormat.Pdf;
-                var result = await renderer.RenderAsync(record.Definition, parameters: null, format, cancellationToken);
+                var result = await renderer.RenderAsync(record.Definition, parameters: null, format, jobToken);
 
                 await jobs.CompleteAsync(claimed.Id, result.Content, result.ContentType, result.FileName, cancellationToken);
 
@@ -141,6 +155,13 @@ internal sealed class ReportJobProcessor(
                 {
                     await DistributeAsync(scope, claimed, scheduleId, cancellationToken);
                 }
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                // Cancelled by a user, not by shutdown — record it as such. (On shutdown the job
+                // is deliberately left Running, and RecoverStuckAsync requeues it next start.)
+                logger.LogInformation("Report job {JobId} cancelled", claimed.Id);
+                await jobs.MarkCancelledAsync(claimed.Id, CancellationToken.None);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

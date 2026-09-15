@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Bell, CheckCircle2, Clock, Download, Loader2 } from "lucide-react";
+import { AlertTriangle, Bell, CheckCircle2, Clock, Download, Loader2, XCircle } from "lucide-react";
 import { api, type ReportJob } from "../api";
 import { downloadBlob } from "../download";
 import { notificationPermission, requestNotificationPermission } from "../notifications";
@@ -16,6 +16,7 @@ export function JobsPage() {
   const [jobs, setJobs] = useState<ReportJob[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
   const [notifyPermission, setNotifyPermission] = useState(notificationPermission());
 
   const refresh = () => api.listJobs().then(setJobs).catch((e) => setErr(msg(e)));
@@ -29,6 +30,19 @@ export function JobsPage() {
 
   const enableNotifications = async () => {
     setNotifyPermission(await requestNotificationPermission());
+  };
+
+  const cancel = async (job: ReportJob) => {
+    setCancelling(job.id);
+    setErr(null);
+    try {
+      await api.cancelJob(job.id);
+      await refresh();
+    } catch (e) {
+      setErr(msg(e));
+    } finally {
+      setCancelling(null);
+    }
   };
 
   const download = async (job: ReportJob) => {
@@ -129,12 +143,22 @@ export function JobsPage() {
                       <AlertTriangle size={13} /> Failed
                     </span>
                   )}
+                  {j.status === "Cancelled" && (
+                    <span className="job-status">
+                      <XCircle size={13} /> Cancelled
+                    </span>
+                  )}
                 </td>
                 <td>{timeAgo(j.createdAtUtc)}</td>
                 <td>
                   {j.status === "Succeeded" && (
                     <button className="mini" onClick={() => void download(j)} disabled={downloading === j.id}>
                       <Download size={13} /> {downloading === j.id ? "…" : "Download"}
+                    </button>
+                  )}
+                  {(j.status === "Queued" || j.status === "Running") && (
+                    <button className="mini" onClick={() => void cancel(j)} disabled={cancelling === j.id}>
+                      <XCircle size={13} /> {cancelling === j.id ? "…" : "Cancel"}
                     </button>
                   )}
                 </td>

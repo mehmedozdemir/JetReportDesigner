@@ -302,6 +302,11 @@ export const api = {
 
   getJob: (id: string): Promise<ReportJob> => fetchWithAuth(`/api/jobs/${id}`).then(json<ReportJob>),
 
+  cancelJob: (id: string): Promise<void> =>
+    fetchWithAuth(`/api/jobs/${id}/cancel`, { method: "POST" }).then(async (r) => {
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
+    }),
+
   downloadJobBlob: (id: string): Promise<Blob> =>
     fetchWithAuth(`/api/jobs/${id}/download`).then(async (r) => {
       if (!r.ok) throw new Error(problemMessage(await r.text()));
@@ -341,7 +346,7 @@ export interface ShareInfo {
   createdByEmail?: string | null;
 }
 
-export type ReportJobStatus = "Queued" | "Running" | "Succeeded" | "Failed";
+export type ReportJobStatus = "Queued" | "Running" | "Succeeded" | "Failed" | "Cancelled";
 
 export interface ReportJob {
   id: string;

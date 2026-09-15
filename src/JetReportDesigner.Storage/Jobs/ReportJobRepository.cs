@@ -133,6 +133,43 @@ internal sealed class ReportJobRepository(JetReportDbContext db, TimeProvider cl
             .Where(j => j.CompletedAtUtc != null && j.CompletedAtUtc < cutoffUtc)
             .ExecuteDeleteAsync(cancellationToken);
 
+    public async Task<CancelOutcome> RequestCancelAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var job = await db.ReportJobs.FirstOrDefaultAsync(j => j.Id == id && j.TenantId == tenant.TenantId, cancellationToken);
+        if (job is null)
+        {
+            return CancelOutcome.NotCancellable;
+        }
+
+        if (job.Status == ReportJobStatus.Running)
+        {
+            return CancelOutcome.Running;
+        }
+
+        if (job.Status != ReportJobStatus.Queued)
+        {
+            return CancelOutcome.NotCancellable;
+        }
+
+        job.Status = ReportJobStatus.Cancelled;
+        job.CompletedAtUtc = clock.GetUtcNow().UtcDateTime;
+        await db.SaveChangesAsync(cancellationToken);
+        return CancelOutcome.Cancelled;
+    }
+
+    public async Task MarkCancelledAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var job = await db.ReportJobs.FirstOrDefaultAsync(j => j.Id == id, cancellationToken);
+        if (job is null)
+        {
+            return;
+        }
+
+        job.Status = ReportJobStatus.Cancelled;
+        job.CompletedAtUtc = clock.GetUtcNow().UtcDateTime;
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
     public Task RecoverStuckAsync(CancellationToken cancellationToken) =>
         db.ReportJobs
             .Where(j => j.Status == ReportJobStatus.Running)

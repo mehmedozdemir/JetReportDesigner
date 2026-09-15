@@ -122,6 +122,7 @@ builder.Services.AddScoped<JetReportDesigner.Rendering.IRenderImageResolver>(sp 
 // A subreport element embeds another saved report by id.
 builder.Services.AddScoped<JetReportDesigner.Rendering.ISubreportResolver, JetReportDesigner.Api.Infrastructure.SubreportResolver>();
 builder.Services.AddScoped<ReportRenderService>();
+builder.Services.AddSingleton<JetReportDesigner.Api.Jobs.RunningJobs>();
 builder.Services.AddHostedService<JetReportDesigner.Api.Jobs.ReportJobProcessor>();
 builder.Services.AddHostedService<JetReportDesigner.Api.Jobs.ReportScheduleTrigger>();
 
