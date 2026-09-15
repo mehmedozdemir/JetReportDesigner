@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using JetReportDesigner.Api.Contracts;
+using JetReportDesigner.Api.Localization;
 using JetReportDesigner.Api.Infrastructure;
 using JetReportDesigner.Storage.Entities;
 using JetReportDesigner.Storage.Tenancy;
@@ -17,7 +18,8 @@ public sealed class AuthController(
     JwtTokenService tokens,
     ITenantRepository tenants,
     ITenantInviteRepository invites,
-    ICurrentTenant currentTenant) : ControllerBase
+    ICurrentTenant currentTenant,
+    IApiStrings strings) : ControllerBase
 {
     /// <summary>Creates an account. Exactly one of <c>organizationName</c> (creates a brand-new
     /// tenant; the registering user becomes its <see cref="AppRole.Designer"/>) or
@@ -30,7 +32,7 @@ public sealed class AuthController(
         var hasInvite = !string.IsNullOrWhiteSpace(request.InviteCode);
         if (hasOrgName == hasInvite)
         {
-            return ValidationProblem("Provide exactly one of organizationName (to create a new organization) or inviteCode (to join an existing one).");
+            return ValidationProblem(strings["auth.registerChoice"]);
         }
 
         Guid tenantId;
@@ -44,7 +46,7 @@ public sealed class AuthController(
             var consumed = await invites.ConsumeAsync(request.InviteCode!, newUserId, cancellationToken);
             if (consumed is null)
             {
-                return ValidationProblem("This invite code is invalid, expired, or already used.");
+                return ValidationProblem(strings["auth.inviteInvalid"]);
             }
 
             tenantId = consumed.TenantId;
@@ -80,7 +82,7 @@ public sealed class AuthController(
         var user = await users.FindByEmailAsync(request.Email);
         if (user is null || !await users.CheckPasswordAsync(user, request.Password))
         {
-            return Unauthorized(new { title = "Invalid email or password." });
+            return Unauthorized(new { title = strings["auth.invalidCredentials"] });
         }
 
         return Ok(await BuildAuthResponse(user));
@@ -121,7 +123,7 @@ public sealed class AuthController(
     {
         if (request.Role is not (AppRole.Designer or AppRole.Viewer))
         {
-            return ValidationProblem($"Role must be '{AppRole.Designer}' or '{AppRole.Viewer}'.");
+            return ValidationProblem(strings.Format("auth.roleInvalid", AppRole.Designer, AppRole.Viewer));
         }
 
         var user = await users.FindByIdAsync(id.ToString());
@@ -134,7 +136,7 @@ public sealed class AuthController(
             ?? User.FindFirstValue("sub");
         if (currentUserId == id.ToString() && request.Role == AppRole.Viewer)
         {
-            return ValidationProblem("You cannot demote your own account.");
+            return ValidationProblem(strings["auth.cannotDemoteSelf"]);
         }
 
         var currentRoles = await users.GetRolesAsync(user);
@@ -162,7 +164,7 @@ public sealed class AuthController(
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
         if (currentUserId == id.ToString())
         {
-            return ValidationProblem("You cannot remove your own account.");
+            return ValidationProblem(strings["auth.cannotRemoveSelf"]);
         }
 
         // No "don't remove the last Designer" check: the caller must be a Designer to be here and

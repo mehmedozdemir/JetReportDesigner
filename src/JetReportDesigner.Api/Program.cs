@@ -122,6 +122,7 @@ builder.Services.AddScoped<JetReportDesigner.Rendering.IRenderImageResolver>(sp 
 // A subreport element embeds another saved report by id.
 builder.Services.AddScoped<JetReportDesigner.Rendering.ISubreportResolver, JetReportDesigner.Api.Infrastructure.SubreportResolver>();
 builder.Services.AddScoped<ReportRenderService>();
+builder.Services.AddSingleton<JetReportDesigner.Api.Localization.IApiStrings, JetReportDesigner.Api.Localization.ApiStrings>();
 builder.Services.AddSingleton<JetReportDesigner.Api.Jobs.RunningJobs>();
 builder.Services.AddHostedService<JetReportDesigner.Api.Jobs.ReportJobProcessor>();
 builder.Services.AddHostedService<JetReportDesigner.Api.Jobs.ReportScheduleTrigger>();
@@ -153,6 +154,12 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+var supportedCultures = new[] { "en", "tr" };
+app.UseRequestLocalization(new RequestLocalizationOptions()
+    .SetDefaultCulture(JetReportDesigner.Api.Localization.ApiStrings.DefaultCulture)
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures));
 
 app.UseCors(SpaCorsPolicy);
 

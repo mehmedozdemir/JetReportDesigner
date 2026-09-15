@@ -12,6 +12,7 @@ import type {
 } from "./types";
 import { useAuth, type PendingInvite, type TeamMember, type TenantInfo } from "./auth";
 import { problemMessage } from "./httpError";
+import { usePrefs } from "./prefs";
 
 /** Every API call goes through this so the JWT is always attached; a 401 means the
  * token is missing/expired/revoked, so it signs the user out back to the login screen. */
@@ -19,6 +20,9 @@ function fetchWithAuth(input: string, init: RequestInit = {}): Promise<Response>
   const token = useAuth.getState().token;
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
+  // The API localizes its own messages from this header. It has to be the language chosen in
+  // Settings, not the browser's own preference — otherwise a Turkish UI still gets English errors.
+  headers.set("Accept-Language", usePrefs.getState().language);
   return fetch(input, { ...init, headers }).then((res) => {
     if (res.status === 401) useAuth.getState().logout();
     return res;

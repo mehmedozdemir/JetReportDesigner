@@ -1,4 +1,5 @@
 using JetReportDesigner.Api.Contracts;
+using JetReportDesigner.Api.Localization;
 using JetReportDesigner.Api.Jobs;
 using JetReportDesigner.Storage.Jobs;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ namespace JetReportDesigner.Api.Controllers;
 [ApiController]
 [Route("api/jobs")]
 [Produces("application/json")]
-public sealed class JobsController(IReportJobRepository jobs, RunningJobs runningJobs) : ControllerBase
+public sealed class JobsController(IReportJobRepository jobs, RunningJobs runningJobs, IApiStrings strings) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<ReportJobResponse>>> List(CancellationToken cancellationToken)
@@ -43,13 +44,13 @@ public sealed class JobsController(IReportJobRepository jobs, RunningJobs runnin
             // The worker marks the row Cancelled once the render actually unwinds.
             return runningJobs.Cancel(id)
                 ? Accepted()
-                : Problem(statusCode: StatusCodes.Status409Conflict, title: "This job just finished — there's nothing left to cancel.");
+                : Problem(statusCode: StatusCodes.Status409Conflict, title: strings["job.justFinished"]);
         }
 
         var job = await jobs.GetAsync(id, cancellationToken);
         return job is null
             ? NotFound()
-            : Problem(statusCode: StatusCodes.Status409Conflict, title: $"This job is already {job.Status.ToLowerInvariant()}.");
+            : Problem(statusCode: StatusCodes.Status409Conflict, title: strings.Format("job.alreadyFinished", strings[$"job.status.{job.Status.ToLowerInvariant()}"]));
     }
 
     [HttpGet("{id:guid}/download")]

@@ -28,4 +28,9 @@
     <ProjectReference Include="..\JetReportDesigner.Storage.Migrations.Oracle\JetReportDesigner.Storage.Migrations.Oracle.csproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <!-- The API's localized messages are read from disk at startup (see ApiStrings). -->
+    <Content Update="Localization\strings.*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

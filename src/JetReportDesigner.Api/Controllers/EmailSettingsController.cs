@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using JetReportDesigner.Api.Contracts;
+using JetReportDesigner.Api.Localization;
 using JetReportDesigner.Api.Infrastructure;
 using JetReportDesigner.Api.Infrastructure.Email;
 using JetReportDesigner.Storage.Email;
@@ -15,7 +16,7 @@ namespace JetReportDesigner.Api.Controllers;
 [Route("api/email-settings")]
 [Produces("application/json")]
 [Authorize(Policy = AuthPolicies.Designer)]
-public sealed class EmailSettingsController(ISmtpSettingsRepository settings, IEmailSender sender, ICurrentTenant tenant) : ControllerBase
+public sealed class EmailSettingsController(ISmtpSettingsRepository settings, IEmailSender sender, ICurrentTenant tenant, IApiStrings strings) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<SmtpSettingsResponse>> Get(CancellationToken cancellationToken)
@@ -29,12 +30,12 @@ public sealed class EmailSettingsController(ISmtpSettingsRepository settings, IE
     {
         if (string.IsNullOrWhiteSpace(request.Host) || string.IsNullOrWhiteSpace(request.FromEmail))
         {
-            return ValidationProblem("Host and fromEmail are required.");
+            return ValidationProblem(strings["email.hostAndFromRequired"]);
         }
 
         if (request.Port is < 1 or > 65535)
         {
-            return ValidationProblem("Port must be between 1 and 65535.");
+            return ValidationProblem(strings["email.portRange"]);
         }
 
         var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")!.Value);
@@ -74,7 +75,7 @@ public sealed class EmailSettingsController(ISmtpSettingsRepository settings, IE
 
             if (string.IsNullOrWhiteSpace(password))
             {
-                return ValidationProblem("Enter a password to test with (or save the account once first).");
+                return ValidationProblem(strings["email.passwordNeededForTest"]);
             }
 
             forSending = new SmtpSettingsForSending(
@@ -93,7 +94,7 @@ public sealed class EmailSettingsController(ISmtpSettingsRepository settings, IE
 
         if (forSending is null)
         {
-            return ValidationProblem("Save the mail account before sending a test.");
+            return ValidationProblem(strings["email.saveBeforeTest"]);
         }
 
         var email = new OutgoingEmail(
@@ -113,7 +114,7 @@ public sealed class EmailSettingsController(ISmtpSettingsRepository settings, IE
             // MailKit/the OS network stack throw a wide variety of exception types for these),
             // as an actionable message instead of a bare 500. The client's problemMessage()
             // helper prefers "title" over "detail", so the actionable text goes in title.
-            return Problem(statusCode: StatusCodes.Status502BadGateway, title: $"Couldn't send the test email: {ex.Message}");
+            return Problem(statusCode: StatusCodes.Status502BadGateway, title: strings.Format("email.testFailed", ex.Message));
         }
     }
 }
