@@ -144,6 +144,41 @@ public sealed class AuthController(
         return Ok(await ToUserResponse(user));
     }
 
+    /// <summary>Removes someone from the organization — the account goes, since a user belongs to
+    /// exactly one tenant here. Their reports, jobs and schedules stay: those carry a plain
+    /// denormalised author id/email, not a foreign key, so nothing the team still needs is lost.
+    /// Designer-only, and refuses to remove your own account — which is also what keeps an
+    /// organization from losing its last Designer.</summary>
+    [HttpDelete("users/{id:guid}")]
+    [Authorize(Policy = AuthPolicies.Designer)]
+    public async Task<IActionResult> RemoveUser(Guid id)
+    {
+        var user = await users.FindByIdAsync(id.ToString());
+        if (user is null || user.TenantId != currentTenant.TenantId)
+        {
+            return NotFound();
+        }
+
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        if (currentUserId == id.ToString())
+        {
+            return ValidationProblem("You cannot remove your own account.");
+        }
+
+        // No "don't remove the last Designer" check: the caller must be a Designer to be here and
+        // can't remove themselves, so removing a Designer always leaves at least the caller.
+
+        var result = await users.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status500InternalServerError,
+                title: string.Join(" ", result.Errors.Select(e => e.Description)));
+        }
+
+        return NoContent();
+    }
+
     private async Task<AuthResponse> BuildAuthResponse(AppUser user)
     {
         var roles = await users.GetRolesAsync(user);

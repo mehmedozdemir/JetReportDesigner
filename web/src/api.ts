@@ -182,6 +182,11 @@ export const api = {
       body: JSON.stringify({ role }),
     }).then(json<TeamMember>),
 
+  removeUser: (id: string): Promise<void> =>
+    fetchWithAuth(`/api/auth/users/${id}`, { method: "DELETE" }).then(async (r) => {
+      if (!r.ok) throw new Error(problemMessage(await r.text()));
+    }),
+
   createInvite: (role: string, expiresInHours?: number): Promise<PendingInvite> =>
     fetchWithAuth("/api/tenant/invites", {
       method: "POST",

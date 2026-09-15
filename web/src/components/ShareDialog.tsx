@@ -3,6 +3,7 @@ import { Check, Copy, Link2, Loader2, Trash2, X } from "lucide-react";
 import { api, type ShareInfo } from "../api";
 import type { ReportSummary } from "../types";
 import { useEscapeKey } from "../useEscapeKey";
+import { useFocusTrap } from "../useFocusTrap";
 import { ConfirmButton } from "./ConfirmButton";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -17,6 +18,7 @@ export function ShareDialog({ report, onClose }: { report: ReportSummary; onClos
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
   useEscapeKey(onClose);
+  const dialogRef = useFocusTrap<HTMLDivElement>();
 
   const refresh = () => api.listShares(report.id).then(setShares).catch((e) => setError(msg(e)));
   useEffect(() => {
@@ -60,6 +62,7 @@ export function ShareDialog({ report, onClose }: { report: ReportSummary; onClos
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
       <div
+        ref={dialogRef}
         className="modal share-dialog"
         role="dialog"
         aria-modal="true"

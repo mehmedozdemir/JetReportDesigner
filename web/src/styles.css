@@ -970,6 +970,15 @@ a.drive-tile { text-decoration: none; }
    (type, status, a date, an action). Shrinking them to their content and letting the name
    absorb the slack is what keeps a full-width table from stranding its controls at the far
    right of a wide screen. */
+/* A sortable header is a button so it's reachable by keyboard; it inherits the header's own
+   uppercase label styling rather than looking like a control dropped into the table. */
+.th-sort {
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 0; background: transparent; padding: 0; cursor: pointer;
+  font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit;
+}
+.th-sort:hover { color: var(--text-primary); }
+
 .drive-table th:not(:first-child),
 .drive-table td:not(:first-child) { width: 1%; white-space: nowrap; }
 .drive-table tbody tr:not(.drive-table-editing-row) { cursor: pointer; }

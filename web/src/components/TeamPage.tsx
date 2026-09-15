@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Check, Copy, Loader2, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, Copy, Loader2, Plus, Trash2, UserMinus } from "lucide-react";
 import { api } from "../api";
 import { useAuth, type PendingInvite, type TeamMember, type TenantInfo } from "../auth";
 import { ConfirmButton } from "./ConfirmButton";
@@ -55,6 +55,16 @@ export function TeamPage() {
     }
   };
 
+  const removeMember = async (id: string) => {
+    setErr(null);
+    try {
+      await api.removeUser(id);
+      await refresh();
+    } catch (e) {
+      setErr(msg(e));
+    }
+  };
+
   const generateInvite = async () => {
     setErr(null);
     setBusy(true);
@@ -98,6 +108,7 @@ export function TeamPage() {
             <tr>
               <th>Member</th>
               <th>Role</th>
+              <th />
             </tr>
           </thead>
           <tbody>
@@ -117,6 +128,16 @@ export function TeamPage() {
                     <option value="Designer">Designer</option>
                     <option value="Viewer">Viewer</option>
                   </select>
+                </td>
+                <td>
+                  {m.id !== currentUserId && (
+                    <ConfirmButton
+                      icon={UserMinus}
+                      title={`Remove ${m.email} from the organization`}
+                      confirmLabel="Remove"
+                      onConfirm={() => void removeMember(m.id)}
+                    />
+                  )}
                 </td>
               </tr>
             ))}

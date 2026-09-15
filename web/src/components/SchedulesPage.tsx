@@ -4,6 +4,7 @@ import { api, type ReportSchedule } from "../api";
 import { hhmm, utcToLocal } from "../scheduleTime";
 import { ConfirmButton } from "./ConfirmButton";
 import { PageHeader } from "./PageHeader";
+import { SortableTh, useSort } from "./SortableTh";
 import { ScheduleDialog } from "./ScheduleDialog";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -27,6 +28,10 @@ export function SchedulesPage() {
   const [schedules, setSchedules] = useState<ReportSchedule[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [editing, setEditing] = useState<ReportSchedule | null>(null);
+  const { sort, toggle: toggleSort, apply } = useSort<"reportName" | "nextRunAtUtc" | "lastRunAtUtc">({
+    key: "nextRunAtUtc",
+    dir: "asc",
+  });
 
   const refresh = () => api.listSchedules().then(setSchedules).catch((e) => setErr(msg(e)));
   useEffect(() => {
@@ -85,17 +90,17 @@ export function SchedulesPage() {
         <table className="drive-table">
           <thead>
             <tr>
-              <th>Report</th>
+              <SortableTh column="reportName" sort={sort} onToggle={toggleSort}>Report</SortableTh>
               <th>Recurrence</th>
               <th>Distribution</th>
-              <th>Next run</th>
-              <th>Last run</th>
+              <SortableTh column="nextRunAtUtc" sort={sort} onToggle={toggleSort}>Next run</SortableTh>
+              <SortableTh column="lastRunAtUtc" sort={sort} onToggle={toggleSort}>Last run</SortableTh>
               <th>Enabled</th>
               <th />
             </tr>
           </thead>
           <tbody>
-            {schedules.map((s) => {
+            {apply(schedules, (s, key) => s[key]).map((s) => {
               const distributionLabel =
                 [s.createShareLink && "link", s.emailRecipients && "email"].filter(Boolean).join(" + ") || "history only";
               return (

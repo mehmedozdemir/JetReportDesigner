@@ -39,6 +39,7 @@ import { EmailSettingsPage } from "./EmailSettingsPage";
 import { JobsPage } from "./JobsPage";
 import { NewReportDialog } from "./NewReportDialog";
 import { PageHeader } from "./PageHeader";
+import { SortableTh, useSort } from "./SortableTh";
 import { ReportPreviewDialog } from "./ReportPreviewDialog";
 import { ScheduleDialog } from "./ScheduleDialog";
 import { SchedulesPage } from "./SchedulesPage";
@@ -216,6 +217,13 @@ export function StartScreen({
       .finally(() => setFoldersLoaded(true));
   };
   useEffect(refreshFolders, []);
+
+  // Grid tiles have no headers to click, so they keep the newest-first order they always had;
+  // the detail table re-sorts this list by whichever column you pick.
+  const { sort, toggle: toggleSort, apply: applySort } = useSort<"name" | "layoutMode" | "updatedAtUtc" | "createdByEmail">({
+    key: "updatedAtUtc",
+    dir: "desc",
+  });
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -842,10 +850,10 @@ export function StartScreen({
                       <table className="drive-table">
                         <thead>
                           <tr>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Updated</th>
-                            <th>Created by</th>
+                            <SortableTh column="name" sort={sort} onToggle={toggleSort}>Name</SortableTh>
+                            <SortableTh column="layoutMode" sort={sort} onToggle={toggleSort}>Type</SortableTh>
+                            <SortableTh column="updatedAtUtc" sort={sort} onToggle={toggleSort}>Updated</SortableTh>
+                            <SortableTh column="createdByEmail" sort={sort} onToggle={toggleSort}>Created by</SortableTh>
                             <th />
                           </tr>
                         </thead>
@@ -911,7 +919,7 @@ export function StartScreen({
                               ),
                             )}
 
-                          {reportsShown.map((r) =>
+                          {applySort(reportsShown, (r, key) => r[key]).map((r) =>
                             confirmId === r.id ? (
                               <tr key={r.id}>
                                 <td colSpan={5} className="drive-table-editing">

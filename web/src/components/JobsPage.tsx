@@ -5,6 +5,7 @@ import { downloadBlob } from "../download";
 import { notificationPermission, requestNotificationPermission } from "../notifications";
 import { timeAgo } from "../time";
 import { PageHeader } from "./PageHeader";
+import { SortableTh, useSort } from "./SortableTh";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -17,6 +18,10 @@ export function JobsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const { sort, toggle, apply } = useSort<"reportName" | "format" | "status" | "createdAtUtc">({
+    key: "createdAtUtc",
+    dir: "desc",
+  });
   const [notifyPermission, setNotifyPermission] = useState(notificationPermission());
 
   const refresh = () => api.listJobs().then(setJobs).catch((e) => setErr(msg(e)));
@@ -110,15 +115,15 @@ export function JobsPage() {
         <table className="drive-table">
           <thead>
             <tr>
-              <th>Report</th>
-              <th>Format</th>
-              <th>Status</th>
-              <th>Created</th>
+              <SortableTh column="reportName" sort={sort} onToggle={toggle}>Report</SortableTh>
+              <SortableTh column="format" sort={sort} onToggle={toggle}>Format</SortableTh>
+              <SortableTh column="status" sort={sort} onToggle={toggle}>Status</SortableTh>
+              <SortableTh column="createdAtUtc" sort={sort} onToggle={toggle}>Created</SortableTh>
               <th />
             </tr>
           </thead>
           <tbody>
-            {jobs.map((j) => (
+            {apply(jobs, (j, key) => j[key]).map((j) => (
               <tr key={j.id}>
                 <td className="drive-table-name">{j.reportName}</td>
                 <td><span className="chip">{j.format}</span></td>

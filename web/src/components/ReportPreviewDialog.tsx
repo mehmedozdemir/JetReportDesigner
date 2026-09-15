@@ -4,6 +4,7 @@ import { api } from "../api";
 import { downloadBlob } from "../download";
 import type { ReportSummary } from "../types";
 import { useEscapeKey } from "../useEscapeKey";
+import { useFocusTrap } from "../useFocusTrap";
 
 /** Server-rendered read-only preview of a saved report, with export and a way into the
  * share dialog — all without opening the report in the designer. */
@@ -22,6 +23,7 @@ export function ReportPreviewDialog({
   const [exporting, setExporting] = useState<"pdf" | "xlsx" | null>(null);
 
   useEscapeKey(onClose);
+  const dialogRef = useFocusTrap<HTMLDivElement>();
 
   useEffect(() => {
     let cancelled = false;
@@ -51,6 +53,7 @@ export function ReportPreviewDialog({
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
       <div
+        ref={dialogRef}
         className="modal preview-dialog"
         role="dialog"
         aria-modal="true"

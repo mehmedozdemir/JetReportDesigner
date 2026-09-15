@@ -3,6 +3,7 @@ import { AlertTriangle, CalendarClock, X } from "lucide-react";
 import { api, type ReportSchedule, type ScheduleFrequency } from "../api";
 import { hhmm, localToUtc, utcToLocal } from "../scheduleTime";
 import { useEscapeKey } from "../useEscapeKey";
+import { useFocusTrap } from "../useFocusTrap";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -49,6 +50,7 @@ export function ScheduleDialog({
   const [error, setError] = useState<string | null>(null);
 
   useEscapeKey(onClose);
+  const dialogRef = useFocusTrap<HTMLDivElement>();
 
   useEffect(() => {
     api.getEmailSettings().then((s) => setHasMailAccount(!!s)).catch(() => setHasMailAccount(false));
@@ -90,6 +92,7 @@ export function ScheduleDialog({
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
       <div
+        ref={dialogRef}
         className="modal schedule-dialog"
         role="dialog"
         aria-modal="true"
