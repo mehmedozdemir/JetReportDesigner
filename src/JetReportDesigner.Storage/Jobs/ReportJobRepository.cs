@@ -52,7 +52,7 @@ internal sealed class ReportJobRepository(JetReportDbContext db, TimeProvider cl
             .Take(ListLimit)
             .Select(j => new ReportJobInfo(
                 j.Id, j.ReportId, j.ReportName, j.Format, j.Status, j.ErrorMessage,
-                j.CreatedAtUtc, j.StartedAtUtc, j.CompletedAtUtc))
+                j.CreatedAtUtc, j.StartedAtUtc, j.CompletedAtUtc, j.ScheduleId))
             .ToListAsync(cancellationToken);
 
         return rows;
@@ -64,7 +64,7 @@ internal sealed class ReportJobRepository(JetReportDbContext db, TimeProvider cl
             .Where(j => j.Id == id && j.TenantId == tenant.TenantId)
             .Select(j => new ReportJobInfo(
                 j.Id, j.ReportId, j.ReportName, j.Format, j.Status, j.ErrorMessage,
-                j.CreatedAtUtc, j.StartedAtUtc, j.CompletedAtUtc))
+                j.CreatedAtUtc, j.StartedAtUtc, j.CompletedAtUtc, j.ScheduleId))
             .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<ReportJobResult?> GetResultAsync(Guid id, CancellationToken cancellationToken)
@@ -176,5 +176,6 @@ internal sealed class ReportJobRepository(JetReportDbContext db, TimeProvider cl
             .ExecuteUpdateAsync(s => s.SetProperty(j => j.Status, ReportJobStatus.Queued), cancellationToken);
 
     private static ReportJobInfo ToInfo(ReportJob j) => new(
-        j.Id, j.ReportId, j.ReportName, j.Format, j.Status, j.ErrorMessage, j.CreatedAtUtc, j.StartedAtUtc, j.CompletedAtUtc);
+        j.Id, j.ReportId, j.ReportName, j.Format, j.Status, j.ErrorMessage, j.CreatedAtUtc, j.StartedAtUtc,
+        j.CompletedAtUtc, j.ScheduleId);
 }

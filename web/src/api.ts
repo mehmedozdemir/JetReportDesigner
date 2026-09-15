@@ -363,6 +363,8 @@ export interface ReportJob {
   createdAtUtc: string;
   startedAtUtc?: string | null;
   completedAtUtc?: string | null;
+  /** Set when a schedule created the job; null when someone ran it by hand. */
+  scheduleId?: string | null;
 }
 
 export type ScheduleFrequency = "Daily" | "Weekly" | "Monthly";

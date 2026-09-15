@@ -27,7 +27,10 @@ public sealed record ReportJobInfo(
     string? ErrorMessage,
     DateTime CreatedAtUtc,
     DateTime? StartedAtUtc,
-    DateTime? CompletedAtUtc);
+    DateTime? CompletedAtUtc,
+    /// <summary>Set when a schedule created this job, null when someone ran it by hand — the
+    /// Jobs list can't otherwise tell a 3am scheduled run from one you started yourself.</summary>
+    Guid? ScheduleId);
 
 public sealed record ReportJobResult(byte[] Content, string ContentType, string FileName);
 

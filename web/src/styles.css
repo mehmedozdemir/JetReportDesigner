@@ -959,6 +959,17 @@ a.drive-tile { text-decoration: none; }
 .drive-tile-editing input { font: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--bg-surface); color: var(--text-primary); }
 .drive-tile-count { font-size: 10.5px; color: var(--text-secondary); }
 
+/* The Reports drive sits in a bordered surface; plain tables elsewhere were bare, which made
+   the pages look like they came from different apps. Same treatment, minus the drive's own
+   two-pane flex layout. */
+.data-card {
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  overflow: hidden; background: var(--bg-surface);
+}
+.data-card > .drive-table th:first-child,
+.data-card > .drive-table td:first-child { padding-left: 14px; }
+.data-card > .drive-table tr:last-child td { border-bottom: 0; }
+
 /* detail (list) view */
 .drive-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .drive-table th {

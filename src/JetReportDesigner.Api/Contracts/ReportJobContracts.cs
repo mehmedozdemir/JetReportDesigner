@@ -11,10 +11,12 @@ public sealed record ReportJobResponse(
     string? ErrorMessage,
     DateTime CreatedAtUtc,
     DateTime? StartedAtUtc,
-    DateTime? CompletedAtUtc)
+    DateTime? CompletedAtUtc,
+    Guid? ScheduleId)
 {
     public static ReportJobResponse From(ReportJobInfo j) =>
-        new(j.Id, j.ReportId, j.ReportName, j.Format, j.Status, j.ErrorMessage, j.CreatedAtUtc, j.StartedAtUtc, j.CompletedAtUtc);
+        new(j.Id, j.ReportId, j.ReportName, j.Format, j.Status, j.ErrorMessage, j.CreatedAtUtc, j.StartedAtUtc,
+            j.CompletedAtUtc, j.ScheduleId);
 }
 
 public sealed record EnqueueReportJobRequest(string Format);

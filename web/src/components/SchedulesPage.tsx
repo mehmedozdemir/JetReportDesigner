@@ -87,6 +87,7 @@ export function SchedulesPage() {
           <div>No schedules yet.</div>
         </div>
       ) : (
+        <div className="data-card">
         <table className="drive-table">
           <thead>
             <tr>
@@ -149,6 +150,7 @@ export function SchedulesPage() {
             })}
           </tbody>
         </table>
+        </div>
       )}
 
       {editing && (

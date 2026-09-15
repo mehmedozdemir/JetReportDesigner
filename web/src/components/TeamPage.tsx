@@ -103,6 +103,7 @@ export function TeamPage() {
 
       <section className="start-section">
         <h3>Members</h3>
+        <div className="data-card">
         <table className="drive-table">
           <thead>
             <tr>
@@ -143,6 +144,7 @@ export function TeamPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </section>
 
       <section className="start-section start-section-narrow">

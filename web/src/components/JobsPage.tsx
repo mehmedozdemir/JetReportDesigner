@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Bell, CheckCircle2, Clock, Download, Loader2, XCircle } from "lucide-react";
+import { AlertTriangle, Bell, CalendarClock, CheckCircle2, Clock, Download, Loader2, User, XCircle } from "lucide-react";
 import { api, type ReportJob } from "../api";
 import { downloadBlob } from "../download";
 import { notificationPermission, requestNotificationPermission } from "../notifications";
@@ -86,8 +86,12 @@ export function JobsPage() {
               </button>
             )}
             {notifyPermission === "denied" && (
-              <span className="hint" style={{ margin: 0 }}>
-                Browser notifications blocked — allow them for this site to get notified.
+              <span
+                className="hint"
+                style={{ margin: 0 }}
+                title="Your browser is blocking notifications for this site. Open the padlock (or site info) icon in the address bar and set Notifications to Allow, then reload."
+              >
+                Notifications blocked — use the padlock icon in the address bar to allow them.
               </span>
             )}
             {notifyPermission === "granted" && (
@@ -112,12 +116,14 @@ export function JobsPage() {
           <p>Open a report's ⋮ menu (or right-click it) in Reports and choose "Run in background".</p>
         </div>
       ) : (
+        <div className="data-card">
         <table className="drive-table">
           <thead>
             <tr>
               <SortableTh column="reportName" sort={sort} onToggle={toggle}>Report</SortableTh>
               <SortableTh column="format" sort={sort} onToggle={toggle}>Format</SortableTh>
               <SortableTh column="status" sort={sort} onToggle={toggle}>Status</SortableTh>
+              <th>Source</th>
               <SortableTh column="createdAtUtc" sort={sort} onToggle={toggle}>Created</SortableTh>
               <th />
             </tr>
@@ -154,6 +160,12 @@ export function JobsPage() {
                     </span>
                   )}
                 </td>
+                <td>
+                  <span className="job-status" title={j.scheduleId ? "Started by a schedule" : "Started by hand"}>
+                    {j.scheduleId ? <CalendarClock size={13} /> : <User size={13} />}
+                    {j.scheduleId ? "Schedule" : "Manual"}
+                  </span>
+                </td>
                 <td>{timeAgo(j.createdAtUtc)}</td>
                 <td>
                   {j.status === "Succeeded" && (
@@ -171,6 +183,7 @@ export function JobsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {jobs.length >= 50 && (
