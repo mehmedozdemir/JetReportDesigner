@@ -616,6 +616,27 @@ rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük 
   menu'yü tek tek kullanmak gerekiyor.
 - ⬜ **Team'de üye çıkarma** yok, sadece rol değiştirme var.
 
+**Start ekranı UX turları (2026-09-14/15) — uygulananlar ve kalanlar:**
+Üç turda uygulandı: Settings gerçek sayfa oldu (ve Viewer'a açıldı), sayfalar tam genişliğe
+çıktı (tablolarda ad dışındaki sütunlar içeriğe daralıyor), sol menü kullanıcı satırı düzeltildi,
+`document.title` sayfayı/raporu adlandırıyor, klasör+arama URL'e taşındı, New report yeni sekmede
+açılıyor, nav öğeleri gerçek link (+`aria-current`), 4 yıkıcı aksiyona onay eklendi, tüm modallar
+Escape ile kapanıyor, her sayfaya ortak başlık (`PageHeader`) geldi, Reports tablosu sıralamayla
+tutarlı "Updated" gösteriyor, Email sağlayıcı preset'i kayıtlı host'tan türetiliyor.
+Bilinçli olarak ertelenenler:
+- ⬜ **Görsel tutarlılık**: Reports çerçeveli bir kutuda, Jobs/Team/Schedules tabloları çıplak.
+- ⬜ **Sıralanabilir sütun yok** (Reports/Jobs/Schedules).
+- ⬜ **Klasör ağacı** `min-height: 420px` yüzünden kısa listede uzun boş sütun bırakıyor.
+- ⬜ **Modallarda focus trap / açılışta odak yok** (Escape var).
+- ⬜ **Bildirim izni reddedilince** nasıl geri açılacağına dair yönlendirme yok.
+- ⬜ **Çalışan/kuyruktaki işi iptal etme yok** — yanlışlıkla başlatılan büyük bir rapor durdurulamıyor.
+- ⬜ **Jobs'ta işin kaynağı görünmüyor** — manuel mi, hangi zamanlamadan mı geldiği belli değil.
+- ⬜ **Designer'da raporun hangi klasörde olduğu** yazmıyor, breadcrumb yok.
+- ⬜ **Responsive davranış yok** — dar ekranda 228px nav + 220px klasör ağacı sıkışıyor, nav
+  daraltılamıyor.
+- ⬜ **Reports listesi tamamen istemci tarafında** — rapor sayısı büyüyünce sunucu tarafı
+  arama/sayfalama gerekecek.
+
 ---
 
 ### AI Destekli Raporlama ve Modern Görselleştirme (backlog'un devamı — mevcut sıradaki işler bitince)
