@@ -53,4 +53,8 @@ public interface IReportJobRepository
     /// <summary>Resets any job stuck "Running" (the process crashed mid-job) back to
     /// "Queued" — call once at worker startup.</summary>
     Task RecoverStuckAsync(CancellationToken cancellationToken);
+
+    /// <summary>Deletes finished jobs (and with them their stored results) completed before
+    /// <paramref name="cutoffUtc"/>. Returns how many rows went.</summary>
+    Task<int> DeleteFinishedBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken);
 }

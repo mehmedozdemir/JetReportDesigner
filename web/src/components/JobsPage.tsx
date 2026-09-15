@@ -143,6 +143,12 @@ export function JobsPage() {
           </tbody>
         </table>
       )}
+
+      {jobs.length >= 50 && (
+        <p className="hint">
+          Showing the 50 most recent. Older finished jobs are removed automatically after 30 days.
+        </p>
+      )}
     </section>
   );
 }

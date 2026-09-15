@@ -17,9 +17,21 @@ namespace JetReportDesigner.Api.Jobs;
 /// broker's guarantees (routing, competing consumers, replay) buy nothing here — see
 /// docs/01, "Rapor zamanlama/dağıtım" for the reasoning.
 /// </summary>
-internal sealed class ReportJobProcessor(IServiceScopeFactory scopeFactory, ILogger<ReportJobProcessor> logger) : BackgroundService
+internal sealed class ReportJobProcessor(
+    IServiceScopeFactory scopeFactory,
+    IConfiguration configuration,
+    TimeProvider clock,
+    ILogger<ReportJobProcessor> logger) : BackgroundService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan SweepInterval = TimeSpan.FromHours(6);
+
+    /// <summary>Days a finished job (and its stored result) is kept — `Jobs:RetentionDays`,
+    /// 0 or less to keep everything. Every job row holds a rendered report, so a daily schedule
+    /// left running would otherwise grow the database without limit.</summary>
+    private int RetentionDays => configuration.GetValue("Jobs:RetentionDays", 30);
+
+    private DateTimeOffset _lastSweep = DateTimeOffset.MinValue;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -27,6 +39,8 @@ internal sealed class ReportJobProcessor(IServiceScopeFactory scopeFactory, ILog
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            await SweepExpiredJobsAsync(stoppingToken);
+
             bool didWork;
             try
             {
@@ -51,6 +65,34 @@ internal sealed class ReportJobProcessor(IServiceScopeFactory scopeFactory, ILog
                     break;
                 }
             }
+        }
+    }
+
+    /// <summary>Runs at most every <see cref="SweepInterval"/>, and never lets a failure here
+    /// stop jobs from being processed — housekeeping is not worth taking the queue down for.</summary>
+    private async Task SweepExpiredJobsAsync(CancellationToken cancellationToken)
+    {
+        var retentionDays = RetentionDays;
+        if (retentionDays <= 0 || clock.GetUtcNow() - _lastSweep < SweepInterval)
+        {
+            return;
+        }
+
+        _lastSweep = clock.GetUtcNow();
+        try
+        {
+            using var scope = scopeFactory.CreateScope();
+            var jobs = scope.ServiceProvider.GetRequiredService<IReportJobRepository>();
+            var cutoff = clock.GetUtcNow().UtcDateTime.AddDays(-retentionDays);
+            var deleted = await jobs.DeleteFinishedBeforeAsync(cutoff, cancellationToken);
+            if (deleted > 0)
+            {
+                logger.LogInformation("Deleted {Count} report job(s) finished before {Cutoff:u}", deleted, cutoff);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Sweeping expired report jobs failed");
         }
     }
 

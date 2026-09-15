@@ -6,6 +6,9 @@ namespace JetReportDesigner.Storage.Jobs;
 
 internal sealed class ReportJobRepository(JetReportDbContext db, TimeProvider clock, ICurrentTenant tenant) : IReportJobRepository
 {
+    /// <summary>Also surfaced in the Jobs page's footnote, so the two can't drift apart.</summary>
+    public const int ListLimit = 50;
+
     public async Task<ReportJobInfo?> EnqueueAsync(Guid reportId, string format, Guid createdByUserId, CancellationToken cancellationToken, Guid? scheduleId = null)
     {
         var report = await db.Reports
@@ -35,23 +38,34 @@ internal sealed class ReportJobRepository(JetReportDbContext db, TimeProvider cl
         return ToInfo(job);
     }
 
+    /// <summary>The most recent <see cref="ListLimit"/> jobs. Projected in the query rather than
+    /// materialising entities: a job row carries its rendered result as a blob, and this list is
+    /// polled every few seconds by every open tab (the Jobs page, the nav badge, the
+    /// finished-job notifier), so selecting whole rows meant dragging up to fifty rendered PDFs
+    /// out of the database on every poll.</summary>
     public async Task<IReadOnlyList<ReportJobInfo>> ListAsync(CancellationToken cancellationToken)
     {
         var rows = await db.ReportJobs
             .AsNoTracking()
             .Where(j => j.TenantId == tenant.TenantId)
             .OrderByDescending(j => j.CreatedAtUtc)
-            .Take(50)
+            .Take(ListLimit)
+            .Select(j => new ReportJobInfo(
+                j.Id, j.ReportId, j.ReportName, j.Format, j.Status, j.ErrorMessage,
+                j.CreatedAtUtc, j.StartedAtUtc, j.CompletedAtUtc))
             .ToListAsync(cancellationToken);
 
-        return rows.Select(ToInfo).ToList();
+        return rows;
     }
 
-    public async Task<ReportJobInfo?> GetAsync(Guid id, CancellationToken cancellationToken)
-    {
-        var row = await db.ReportJobs.AsNoTracking().FirstOrDefaultAsync(j => j.Id == id && j.TenantId == tenant.TenantId, cancellationToken);
-        return row is null ? null : ToInfo(row);
-    }
+    public Task<ReportJobInfo?> GetAsync(Guid id, CancellationToken cancellationToken) =>
+        db.ReportJobs
+            .AsNoTracking()
+            .Where(j => j.Id == id && j.TenantId == tenant.TenantId)
+            .Select(j => new ReportJobInfo(
+                j.Id, j.ReportId, j.ReportName, j.Format, j.Status, j.ErrorMessage,
+                j.CreatedAtUtc, j.StartedAtUtc, j.CompletedAtUtc))
+            .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<ReportJobResult?> GetResultAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -110,6 +124,14 @@ internal sealed class ReportJobRepository(JetReportDbContext db, TimeProvider cl
         job.CompletedAtUtc = clock.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    /// <summary>Drops finished jobs past their retention window — every row holds a rendered
+    /// report, so a daily schedule left alone would grow the database without limit. Runs
+    /// tenant-agnostically from the background worker, which has no signed-in tenant.</summary>
+    public Task<int> DeleteFinishedBeforeAsync(DateTime cutoffUtc, CancellationToken cancellationToken) =>
+        db.ReportJobs
+            .Where(j => j.CompletedAtUtc != null && j.CompletedAtUtc < cutoffUtc)
+            .ExecuteDeleteAsync(cancellationToken);
 
     public Task RecoverStuckAsync(CancellationToken cancellationToken) =>
         db.ReportJobs
