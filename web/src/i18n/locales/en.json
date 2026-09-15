@@ -21,7 +21,8 @@
     "download": "Download",
     "moreActions": "More actions",
     "saving": "Saving…",
-    "sending": "Sending…"
+    "sending": "Sending…",
+    "loading": "Loading…"
   },
   "reports": {
     "title": "Reports",
@@ -57,6 +58,10 @@
       "schedule": "Schedule…",
       "rename": "Rename",
       "root": "— Root —"
+    },
+    "layout": {
+      "free": "Free",
+      "banded": "Banded"
     }
   },
   "jobs": {

@@ -51,9 +51,6 @@ import { TeamPage } from "./TeamPage";
 type View = "reports" | "team" | "email" | "jobs" | "schedules" | "settings";
 type DragPayload = { kind: "report" | "folder"; id: string };
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
-// layoutMode is "free"/"banded" on the wire — capitalized here only for display, to match
-// "Folder" in the same TYPE column instead of sitting next to it lowercase.
-const typeLabel = (mode: string) => mode.charAt(0).toUpperCase() + mode.slice(1);
 
 /** Paths each view lives at — StartScreen is mounted directly under one of these routes (see
  * App.tsx), so switching tabs is a real navigation, not local state. */
@@ -123,7 +120,7 @@ export function StartScreen({
   onDelete: (id: string) => void;
   onMoveToFolder: (id: string, folderId: string | null) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const setView = (v: View) => navigate(VIEW_PATH[v]);
 
@@ -830,7 +827,7 @@ export function StartScreen({
                                   <span className="drive-tile-path">{folderPath(r.folderId)}</span>
                                 )}
                                 <span className="drive-tile-meta">
-                                  <span className="chip">{typeLabel(r.layoutMode)}</span> {timeAgo(r.updatedAtUtc)}
+                                  <span className="chip">{t(`reports.layout.${r.layoutMode}`)}</span> {timeAgo(r.updatedAtUtc, i18n.language)}
                                 </span>
                               </a>
                               <button
@@ -954,8 +951,8 @@ export function StartScreen({
                                     <span className="drive-tile-count">{folderPath(r.folderId)}</span>
                                   )}
                                 </td>
-                                <td><span className="chip">{typeLabel(r.layoutMode)}</span></td>
-                                <td title={new Date(r.updatedAtUtc).toLocaleString()}>{timeAgo(r.updatedAtUtc)}</td>
+                                <td><span className="chip">{t(`reports.layout.${r.layoutMode}`)}</span></td>
+                                <td title={new Date(r.updatedAtUtc).toLocaleString()}>{timeAgo(r.updatedAtUtc, i18n.language)}</td>
                                 <td>{r.createdByEmail ?? "—"}</td>
                                 <td>
                                   <button

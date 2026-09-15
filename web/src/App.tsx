@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Eye, Loader2, PencilRuler, ZoomIn, ZoomOut } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { api } from "./api";
 import { isDesigner, useAuth } from "./auth";
 import { useDesigner } from "./store";
@@ -29,6 +30,7 @@ import { PreviewPane } from "./components/PreviewPane";
  * splitting shared handlers (save, export, create, …) across several route components, and the
  * zustand store already carries report state across any remount that causes. */
 export function App() {
+  const { t } = useTranslation();
   const token = useAuth((s) => s.token);
   const canEdit = isDesigner(useAuth((s) => s.user));
   const navigate = useNavigate();
@@ -136,16 +138,18 @@ export function App() {
   // several reports open at once (Ctrl-click, "New report" in a new tab). Name the tab after
   // whatever it's actually showing.
   useEffect(() => {
+    const section =
+      { "/jobs": "nav.jobs", "/team": "nav.team", "/email-settings": "nav.email", "/schedules": "nav.schedules", "/settings": "nav.settings" }[
+        location.pathname
+      ] ?? "nav.reports";
     const page =
       isDesignerRoute && report
-        ? `${report.name}${tab === "preview" ? " — Preview" : ""}`
+        ? `${report.name}${tab === "preview" ? ` — ${t("reports.menu.preview")}` : ""}`
         : isDesignerRoute
-          ? "Loading…"
-          : { "/jobs": "Jobs", "/team": "Team", "/email-settings": "Email", "/schedules": "Schedules", "/settings": "Settings" }[
-              location.pathname
-            ] ?? "Reports";
+          ? t("common.loading")
+          : t(section);
     document.title = `${page} · JetReportDesigner`;
-  }, [isDesignerRoute, report, tab, location.pathname]);
+  }, [isDesignerRoute, report, tab, location.pathname, t]);
 
   // A Viewer never gets the design surface — bounce straight to Preview for the same report.
   useEffect(() => {

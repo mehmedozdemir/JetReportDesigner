@@ -15,7 +15,7 @@ const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
  * (The actual notify-when-done logic lives in JobNotifications, mounted app-wide — this
  * page just offers the permission opt-in and the full history/status table.) */
 export function JobsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [jobs, setJobs] = useState<ReportJob[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
@@ -168,7 +168,7 @@ export function JobsPage() {
                     {j.scheduleId ? t("jobs.fromSchedule") : t("jobs.manual")}
                   </span>
                 </td>
-                <td>{timeAgo(j.createdAtUtc)}</td>
+                <td>{timeAgo(j.createdAtUtc, i18n.language)}</td>
                 <td>
                   {j.status === "Succeeded" && (
                     <button className="mini" onClick={() => void download(j)} disabled={downloading === j.id}>

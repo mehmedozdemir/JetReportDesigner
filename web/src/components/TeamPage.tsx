@@ -105,7 +105,7 @@ export function TeamPage() {
 
       <section className="start-section">
         <h3>{t("team.members")}</h3>
-        <div className="data-card">
+        <div className="data-card data-card-narrow">
         <table className="drive-table">
           <thead>
             <tr>

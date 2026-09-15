@@ -833,6 +833,12 @@ body {
 /* Same specificity class (two selectors) as .start-scroll > .start-section above, which
    otherwise wins on specificity regardless of source order and silently keeps this at 1080px. */
 .start-scroll > .start-section.start-section-narrow { max-width: 640px; }
+/* Inside a form page the label takes a fixed column rather than growing to fill the width —
+   a label that stretches puts a canyon between itself and the input it belongs to. */
+.start-section-narrow .settings-row > span:first-child { flex: 0 0 170px; }
+.start-section-narrow .settings-control { flex: 1; }
+.start-section-narrow .settings-control > input:not([type="number"]):not([type="checkbox"]),
+.start-section-narrow .settings-control > select:only-child { flex: 1; min-width: 0; }
 .start-section + .start-section { margin-top: 36px; }
 
 /* Page title — one per screen, visually above the small uppercase section labels below it. */
@@ -987,6 +993,8 @@ a.drive-tile { text-decoration: none; }
   border: 1px solid var(--border); border-radius: var(--radius-md);
   overflow: hidden; background: var(--bg-surface);
 }
+/* A short table (Team is Member | Role) stretched to a wide monitor is mostly empty line. */
+.data-card-narrow { max-width: 720px; }
 .data-card > .drive-table th:first-child,
 .data-card > .drive-table td:first-child { padding-left: 14px; }
 .data-card > .drive-table tr:last-child td { border-bottom: 0; }

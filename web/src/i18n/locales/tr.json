@@ -21,7 +21,8 @@
     "download": "İndir",
     "moreActions": "Diğer işlemler",
     "saving": "Kaydediliyor…",
-    "sending": "Gönderiliyor…"
+    "sending": "Gönderiliyor…",
+    "loading": "Yükleniyor…"
   },
   "reports": {
     "title": "Raporlar",
@@ -57,6 +58,10 @@
       "schedule": "Zamanla…",
       "rename": "Yeniden adlandır",
       "root": "— Kök —"
+    },
+    "layout": {
+      "free": "Serbest",
+      "banded": "Bantlı"
     }
   },
   "jobs": {
