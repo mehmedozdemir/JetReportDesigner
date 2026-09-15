@@ -511,7 +511,7 @@ Sıra ile: Excel/XLSX (ClosedXML) ✅, alt raporlar ✅, chart ✅, barkod/QR �
 expression fonksiyon kütüphanesi ✅, **auth (JWT + Identity, rol: Designer/Viewer)** ✅,
 **multi-tenant (organizasyon oluşturma + davet kodu ile katılma + takım yönetimi)** ✅,
 **e-posta hesabı tanımlama (Exchange/Gmail/özel SMTP + test gönderimi, MailKit)** ✅ — kalanlar:
-i18n (TR/EN UI), **rapor zamanlama/dağıtım** ✅, **URL/routing tabanlı sayfa geçişleri** ✅,
+**i18n (TR/EN UI)** ✅, **rapor zamanlama/dağıtım** ✅, **URL/routing tabanlı sayfa geçişleri** ✅,
 şablon galerisi
 (kullanıcının kendi raporunu organizasyon şablonu olarak kaydetmesi), canlı işbirliği, **ardından**
 (bkz. aşağıdaki detay) AI destekli rapor asistanı ve modern görselleştirme (3D/gauge/heatmap/
@@ -624,6 +624,21 @@ rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük 
   siliniyor (bu üründe kullanıcı tek tenant'a ait); raporlar/işler/zamanlamalar duruyor, çünkü
   yazar bilgisi FK değil denormalize alan. Kendini silme reddediliyor, başka tenant'ın
   kullanıcısı 404.
+
+**i18n (TR/EN) — ✅ tamamlandı (2026-09-15):**
+Kütüphane: **react-i18next**, çeviriler JSON dosyalarında (`web/src/i18n/locales/{en,tr}.json`) —
+yazılımcı olmayan biri düzenleyebilsin diye seçildi. İngilizce kaynak dil ve geri düşüş.
+- Dil tercihi `usePrefs`'te (localStorage), i18next canlı değeri tutuyor; ilk açılışta tarayıcının
+  dilinden başlıyor, Ayarlar'dan değiştirilebiliyor.
+- **305 anahtar**, en/tr birebir; bir betikle "kodda kullanılan her anahtar sözlükte var + ölü
+  anahtar yok" kontrolü yapıldı.
+- Çevrilmeyenler (bilinçli): ürün adı, "PDF"/"Excel" biçim adları, "STARTTLS",
+  Designer/Viewer rol adları (API'nin kendi değerleri).
+- **Backend de lokalize** (`src/JetReportDesigner.Api/Localization/strings.{en,tr}.json`):
+  `Accept-Language` üzerinden kültür çözümleniyor (kalite değerleri dahil), web uygulaması
+  Ayarlar'da seçilen dili gönderiyor — tarayıcının kendi tercihini değil. Desteklenmeyen dil
+  İngilizceye düşüyor. Canlı doğrulandı.
+- Gün adları sabit liste yerine tarayıcının yerel verisinden geliyor.
 
 **Start ekranı UX turları (2026-09-14/15) — uygulananlar ve kalanlar:**
 Üç turda uygulandı: Settings gerçek sayfa oldu (ve Viewer'a açıldı), sayfalar tam genişliğe
