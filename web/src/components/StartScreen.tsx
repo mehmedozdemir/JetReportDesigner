@@ -899,7 +899,7 @@ export function StartScreen({
                                     </span>
                                   </td>
                                   <td>{t("reports.folder")}</td>
-                                  <td>{new Date(f.createdAtUtc).toLocaleDateString()}</td>
+                                  <td>{new Date(f.createdAtUtc).toLocaleDateString(i18n.language)}</td>
                                   <td>—</td>
                                   <td>
                                     <button
@@ -952,7 +952,7 @@ export function StartScreen({
                                   )}
                                 </td>
                                 <td><span className="chip">{t(`reports.layout.${r.layoutMode}`)}</span></td>
-                                <td title={new Date(r.updatedAtUtc).toLocaleString()}>{timeAgo(r.updatedAtUtc, i18n.language)}</td>
+                                <td title={new Date(r.updatedAtUtc).toLocaleString(i18n.language)}>{timeAgo(r.updatedAtUtc, i18n.language)}</td>
                                 <td>{r.createdByEmail ?? "—"}</td>
                                 <td>
                                   <button

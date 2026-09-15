@@ -2,13 +2,11 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, CalendarClock, X } from "lucide-react";
 import { api, type ReportSchedule, type ScheduleFrequency } from "../api";
-import { hhmm, localToUtc, utcToLocal } from "../scheduleTime";
+import { hhmm, localToUtc, utcToLocal, weekdayNames } from "../scheduleTime";
 import { useEscapeKey } from "../useEscapeKey";
 import { useFocusTrap } from "../useFocusTrap";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
-
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const fromHHmm = (hm: string): number => {
   const [h, m] = hm.split(":").map(Number);
@@ -49,7 +47,7 @@ export function ScheduleDialog({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   useEscapeKey(onClose);
   const dialogRef = useFocusTrap<HTMLDivElement>();
@@ -139,7 +137,7 @@ export function ScheduleDialog({
                   <span>{t("schedule.on")}</span>
                   <div className="settings-control">
                     <select value={dayOfWeek} onChange={(e) => setDayOfWeek(Number(e.target.value))}>
-                      {WEEKDAYS.map((d, i) => (
+                      {weekdayNames(i18n.language).map((d, i) => (
                         <option key={d} value={i}>{d}</option>
                       ))}
                     </select>

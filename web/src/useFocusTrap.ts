@@ -22,9 +22,13 @@ export function useFocusTrap<T extends HTMLElement>() {
         ),
       ).filter((el) => el.offsetParent !== null);
 
-    // An autoFocus inside the dialog wins; otherwise start at the first control.
+    // An autoFocus inside the dialog wins. Otherwise start at the first control that isn't the
+    // close button — every dialog here opens with a header "×", and focusing it puts the ring
+    // on "leave" before the reader has seen what the dialog is for.
     if (!container.contains(document.activeElement)) {
-      focusable()[0]?.focus();
+      const items = focusable();
+      const isClose = (el: HTMLElement) => /close|kapat/i.test(el.getAttribute("aria-label") ?? "");
+      (items.find((el) => !isClose(el)) ?? items[0])?.focus();
     }
 
     const onKeyDown = (e: KeyboardEvent) => {

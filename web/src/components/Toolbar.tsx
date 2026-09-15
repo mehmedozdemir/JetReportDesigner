@@ -220,7 +220,7 @@ function SaveStatus({ dirty, savedAtUtc }: { dirty: boolean; savedAtUtc: string 
   }
   if (savedAtUtc) {
     return (
-      <span className="save-status" title={new Date(savedAtUtc).toLocaleString()}>
+      <span className="save-status" title={new Date(savedAtUtc).toLocaleString(i18n.language)}>
         {t("designer.savedAgo", { when: timeAgo(savedAtUtc, i18n.language) })}
       </span>
     );

@@ -12,7 +12,7 @@ const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
  * design surface: who's on the team, their role, and inviting new people belongs with the rest
  * of "which report am I working on", not buried inside a report you happen to have open. */
 export function TeamPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentUserId = useAuth((s) => s.user?.id);
   const [tenant, setTenant] = useState<TenantInfo | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -165,7 +165,7 @@ export function TeamPage() {
         </div>
         {newInvite && (
           <div className="settings-row">
-            <span>{t("team.shareCode", { date: new Date(newInvite.expiresAtUtc).toLocaleString() })}</span>
+            <span>{t("team.shareCode", { date: new Date(newInvite.expiresAtUtc).toLocaleString(i18n.language) })}</span>
             <div className="settings-control">
               <code style={{ fontSize: 14, letterSpacing: "0.08em" }}>{newInvite.code}</code>
               <button className="mini" onClick={() => copyCode(newInvite.code)} title={t("team.copyCode")} aria-label={t("team.copyCode")}>
@@ -182,7 +182,7 @@ export function TeamPage() {
           {pending.map((p) => (
             <div className="settings-row" key={p.code}>
               <span>
-                <code>{p.code}</code> · {p.role} · {t("team.expires", { date: new Date(p.expiresAtUtc).toLocaleDateString() })}
+                <code>{p.code}</code> · {p.role} · {t("team.expires", { date: new Date(p.expiresAtUtc).toLocaleDateString(i18n.language) })}
               </span>
               <ConfirmButton icon={Trash2} title={t("team.revokeInvite")} confirmLabel={t("common.remove")} onConfirm={() => void revoke(p.code)} />
             </div>

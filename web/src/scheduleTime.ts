@@ -56,3 +56,11 @@ export function hhmm(minuteOfDay: number): string {
   const m = (minuteOfDay % 60).toString().padStart(2, "0");
   return `${h}:${m}`;
 }
+
+/** Weekday names in the given language, from the platform's own locale data rather than a list
+ * we would have to translate per language. 2026-09-13 was a Sunday, so index 0 lands there. */
+export function weekdayNames(language: string, style: "long" | "short" = "long"): string[] {
+  return Array.from({ length: 7 }, (_, i) =>
+    new Date(Date.UTC(2026, 8, 13 + i)).toLocaleDateString(language, { weekday: style, timeZone: "UTC" }),
+  );
+}

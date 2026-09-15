@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { AlertTriangle, CalendarClock, CheckCircle2, Loader2, Pencil, Trash2 } from "lucide-react";
 import { api, type ReportSchedule } from "../api";
-import { hhmm, utcToLocal } from "../scheduleTime";
+import { hhmm, utcToLocal, weekdayNames } from "../scheduleTime";
 import { ConfirmButton } from "./ConfirmButton";
 import { PageHeader } from "./PageHeader";
 import { SortableTh, useSort } from "./SortableTh";
@@ -11,20 +11,13 @@ import { ScheduleDialog } from "./ScheduleDialog";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-/** Weekday names come from the browser's own locale data rather than a hard-coded list, so they
- * follow whichever language is selected without us translating seven more strings per language. */
-function weekdayName(dayOfWeek: number, language: string): string {
-  // 2026-09-13 was a Sunday, so adding the index lands on the right day.
-  return new Date(Date.UTC(2026, 8, 13 + dayOfWeek)).toLocaleDateString(language, { weekday: "short", timeZone: "UTC" });
-}
-
 /** Recurrence description in the viewer's own timezone — the API stores everything in UTC
  * (see scheduleTime.ts), so day-of-week/day-of-month can shift by one relative to what's
  * stored, not just the time. */
 function describe(s: ReportSchedule, t: TFunction, language: string): string {
   const local = utcToLocal({ minuteOfDayUtc: s.minuteOfDayUtc, dayOfWeek: s.dayOfWeek ?? null, dayOfMonth: s.dayOfMonth ?? null });
   const time = hhmm(local.minuteOfDay);
-  if (s.frequency === "Weekly") return t("schedules.weekly", { day: weekdayName(local.dayOfWeek ?? 0, language), time });
+  if (s.frequency === "Weekly") return t("schedules.weekly", { day: weekdayNames(language, "short")[local.dayOfWeek ?? 0], time });
   if (s.frequency === "Monthly") return t("schedules.monthly", { day: local.dayOfMonth ?? 1, time });
   return t("schedules.daily", { time });
 }
@@ -134,8 +127,8 @@ export function SchedulesPage() {
                         ))}
                     </span>
                   </td>
-                  <td>{new Date(s.nextRunAtUtc).toLocaleString()}</td>
-                  <td>{s.lastRunAtUtc ? new Date(s.lastRunAtUtc).toLocaleString() : "—"}</td>
+                  <td>{new Date(s.nextRunAtUtc).toLocaleString(i18n.language)}</td>
+                  <td>{s.lastRunAtUtc ? new Date(s.lastRunAtUtc).toLocaleString(i18n.language) : "—"}</td>
                   <td>
                     <label className="settings-check">
                       <input type="checkbox" checked={s.enabled} onChange={() => void toggle(s)} />
