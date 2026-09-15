@@ -618,8 +618,9 @@ rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük 
   blob sütunları hiç seçilmiyor. Ayrıca `ReportJobProcessor` en fazla 6 saatte bir,
   `Jobs:RetentionDays` (varsayılan 30, 0 = kapalı) süresini aşmış bitmiş işleri siliyor.
   Kalan: sayfalama/filtre UI'si (şu an "en son 50" dipnotu var).
-- ⬜ **Çoklu seçim / toplu işlem** yok — birden fazla raporu tek seferde taşı/sil için context
-  menu'yü tek tek kullanmak gerekiyor.
+- ✅ **Çoklu seçim / toplu işlem** (2026-09-15): tile/satırda hover'da beliren onay kutusu ya da
+  Ctrl/Cmd-tık ile seçim; seçim çubuğundan klasöre taşı veya sil. Düz tık hâlâ raporu açıyor.
+  Toplu işlemler mevcut tekil uç noktaları sırayla kullanıp listeyi sonda bir kez yeniliyor.
 - ✅ **Team'de üye çıkarma** (2026-09-15): `DELETE /api/auth/users/{id}`, Designer-only. Hesap
   siliniyor (bu üründe kullanıcı tek tenant'a ait); raporlar/işler/zamanlamalar duruyor, çünkü
   yazar bilgisi FK değil denormalize alan. Kendini silme reddediliyor, başka tenant'ın
