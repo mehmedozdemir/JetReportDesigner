@@ -801,6 +801,27 @@ body {
 .start-nav-user-role { font-size: 10.5px; color: var(--text-secondary); }
 
 .start-scroll { flex: 1; overflow-y: auto; padding: 32px; }
+
+/* Narrow windows only — nothing here changes a desktop-width layout. Below ~1100px the rail
+   drops to icons (its labels are the first thing that can go), and below ~820px the Reports
+   folder tree stacks above its contents instead of stealing another 220px of width. */
+@media (max-width: 1100px) {
+  .start-nav { width: 56px; padding: 16px 8px; }
+  .start-nav-item { justify-content: center; padding: 0; }
+  .start-nav-item > span:not(.nav-badge),
+  .start-nav-brand span,
+  .start-nav-org,
+  .start-nav-label,
+  .start-nav-user-text { display: none; }
+  .start-nav-item .nav-badge { position: absolute; margin-left: 22px; margin-top: -14px; }
+  .start-nav-item { position: relative; }
+  .start-scroll { padding: 24px 20px; }
+}
+
+@media (max-width: 820px) {
+  .drive { flex-direction: column; min-height: 0; }
+  .drive-sidebar { width: auto; flex: 0 0 auto; max-height: 180px; border-right: 0; border-bottom: 1px solid var(--border); }
+}
 /* Data pages (Reports/Jobs/Schedules/Team) use the whole width — capping them at ~1080px and
    centring left a dead band down both sides of a wide monitor. Forms stay narrow via
    .start-section-narrow below, since a stretched form separates a label from its own input. */
@@ -1322,6 +1343,14 @@ a.drive-tile { text-decoration: none; }
   display: flex; align-items: center; gap: 6px;
   color: var(--error, #c4374a); font-size: 12px; margin: 0;
 }
+
+.report-folder {
+  display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto;
+  border: 0; background: transparent; padding: 2px 6px; border-radius: var(--radius-sm);
+  font: inherit; font-size: 11.5px; color: var(--text-secondary); cursor: pointer;
+  max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.report-folder:hover { background: var(--bg-elevated); color: var(--text-primary); }
 
 /* --- user menu chip (toolbar) --- */
 .user-chip { gap: 6px; padding: 0 8px 0 4px; color: var(--text-primary); }

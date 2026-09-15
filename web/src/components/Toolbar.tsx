@@ -6,6 +6,7 @@ import {
   FilePlus2,
   FileSpreadsheet,
   FileText,
+  Folder,
   LayoutGrid,
   LogOut,
   Redo2,
@@ -27,9 +28,11 @@ interface ToolbarProps {
   onSettings: () => void;
   onSave: () => void;
   onExport: (format: "pdf" | "xlsx") => void;
+  /** Where the open report lives, and a way back to that folder. */
+  folder?: { path: string; onOpen: () => void };
 }
 
-export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport }: ToolbarProps) {
+export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport, folder }: ToolbarProps) {
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
   const canEdit = isDesigner(user);
@@ -135,6 +138,11 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
         {report && (
           <>
             <div className="divider" />
+            {folder && (
+              <button className="report-folder" onClick={folder.onOpen} title={`In ${folder.path} — open that folder`}>
+                <Folder size={13} /> {folder.path}
+              </button>
+            )}
             <input
               className="report-title"
               value={report.name}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Eye, Loader2, PencilRuler, ZoomIn, ZoomOut } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { api } from "./api";
@@ -8,6 +8,7 @@ import { usePrefs } from "./prefs";
 import {
   emptyBandedReport,
   emptyFreeReport,
+  type FolderSummary,
   type Orientation,
   type PageSize,
   type ReportDefinition,
@@ -36,6 +37,7 @@ export function App() {
 
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [samples, setSamples] = useState<{ name: string; category: string; definition: ReportDefinition }[]>([]);
+  const [folders, setFolders] = useState<FolderSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
@@ -83,6 +85,7 @@ export function App() {
     if (!token) return;
     void refresh();
     void api.listSamples().then(setSamples).catch(() => undefined);
+    void api.listFolders().then(setFolders).catch(() => undefined);
   }, [refresh, token]);
 
   // Deep-link loading: whenever the URL names a report the store doesn't already have loaded
@@ -112,6 +115,22 @@ export function App() {
       cancelled = true;
     };
   }, [routeReportId, load]);
+
+  // Which folder the open report lives in — the designer otherwise gives no clue where it sits,
+  // and no way back to the folder you found it in. Built from the reports list (which carries
+  // folderId) plus the folder tree.
+  const openReportFolder = useMemo(() => {
+    const folderId = reports.find((r) => r.id === reportId)?.folderId;
+    if (!folderId) return null;
+    const byId = new Map(folders.map((f) => [f.id, f]));
+    const chain: string[] = [];
+    let cur = byId.get(folderId);
+    while (cur) {
+      chain.unshift(cur.name);
+      cur = cur.parentFolderId ? byId.get(cur.parentFolderId) : undefined;
+    }
+    return chain.length > 0 ? { id: folderId, path: chain.join(" / ") } : null;
+  }, [reports, reportId, folders]);
 
   // Every tab otherwise reads "JetReportDesigner", which is useless once you're working with
   // several reports open at once (Ctrl-click, "New report" in a new tab). Name the tab after
@@ -359,6 +378,11 @@ export function App() {
         busy={busy}
         onNew={() => void createReport()}
         onShowStart={() => navigate("/reports")}
+        folder={
+          openReportFolder
+            ? { path: openReportFolder.path, onOpen: () => navigate(`/reports?folder=${openReportFolder.id}`) }
+            : undefined
+        }
         onSettings={() => navigate("/settings")}
         onSave={() => void save()}
         onExport={(format) => void exportAs(format)}
