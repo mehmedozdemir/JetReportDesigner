@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ChevronDown,
   FileBarChart2,
@@ -33,6 +34,7 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport, folder }: ToolbarProps) {
+  const { t } = useTranslation();
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
   const canEdit = isDesigner(user);
@@ -51,10 +53,10 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
         className="btn outline"
         onClick={(e) => setExportMenu({ x: e.currentTarget.getBoundingClientRect().left, y: e.currentTarget.getBoundingClientRect().bottom + 4 })}
         disabled={busy || !report}
-        title="Export"
+        title={t("toolbar.export")}
       >
         <FileDown />
-        <span>Export</span>
+        <span>{t("toolbar.export")}</span>
         <ChevronDown size={13} />
       </button>
       {exportMenu && (
@@ -107,14 +109,14 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
           <span>JetReportDesigner</span>
         </div>
         <div className="divider" />
-        <button className="btn" onClick={onShowStart} title="Back to the report list" aria-label="Reports">
+        <button className="btn" onClick={onShowStart} title={t("toolbar.backToList")} aria-label={t("nav.reports")}>
           <LayoutGrid />
-          <span>Reports</span>
+          <span>{t("nav.reports")}</span>
         </button>
         {report && (
           <>
             <div className="divider" />
-            <span className="report-title" title="Report name">
+            <span className="report-title" title={t("toolbar.reportName")}>
               {report.name}
             </span>
           </>
@@ -139,19 +141,19 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
           <>
             <div className="divider" />
             {folder && (
-              <button className="report-folder" onClick={folder.onOpen} title={`In ${folder.path} — open that folder`}>
+              <button className="report-folder" onClick={folder.onOpen} title={t("toolbar.inFolder", { path: folder.path })}>
                 <Folder size={13} /> {folder.path}
               </button>
             )}
             <input
               className="report-title"
               value={report.name}
-              title="Report name"
-              aria-label="Report name"
-              placeholder="Untitled report"
+              title={t("toolbar.reportName")}
+              aria-label={t("toolbar.reportName")}
+              placeholder={t("toolbar.untitled")}
               onChange={(e) => mutate((r) => (r.name = e.target.value), false)}
               onBlur={(e) => {
-                if (!e.target.value.trim()) mutate((r) => (r.name = "Untitled report"), false);
+                if (!e.target.value.trim()) mutate((r) => (r.name = t("toolbar.untitled")), false);
               }}
             />
             <SaveStatus dirty={dirty} savedAtUtc={savedAtUtc} />
@@ -160,7 +162,7 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
 
         <div className="spacer" />
 
-        <button className="btn icon" onClick={onSettings} title="Settings" aria-label="Settings">
+        <button className="btn icon" onClick={onSettings} title={t("nav.settings")} aria-label={t("nav.settings")}>
           <Settings />
         </button>
         <div className="divider" />
@@ -169,11 +171,11 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
 
       <div className="toolbar-row">
         <div className="group">
-          <button className="btn" onClick={onShowStart} title="Back to the report list" aria-label="Reports">
+          <button className="btn" onClick={onShowStart} title={t("toolbar.backToList")} aria-label={t("nav.reports")}>
             <LayoutGrid />
-            <span>Reports</span>
+            <span>{t("nav.reports")}</span>
           </button>
-          <button className="btn icon" onClick={onNew} disabled={busy} title="New blank report" aria-label="New blank report">
+          <button className="btn icon" onClick={onNew} disabled={busy} title={t("toolbar.newBlank")} aria-label={t("toolbar.newBlank")}>
             <FilePlus2 />
           </button>
         </div>
@@ -184,11 +186,11 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
           className="btn primary"
           onClick={onSave}
           disabled={busy || !report || !reportId}
-          title="Save (Ctrl+S)"
+          title={t("toolbar.saveHint")}
         >
           <Save />
-          <span>Save</span>
-          {dirty && <span className="dot" aria-label="unsaved changes" />}
+          <span>{t("common.save")}</span>
+          {dirty && <span className="dot" aria-label={t("toolbar.unsaved")} />}
         </button>
 
         <div className="divider" />
@@ -208,9 +210,10 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
 }
 
 function SaveStatus({ dirty, savedAtUtc }: { dirty: boolean; savedAtUtc: string | null }) {
+  const { t } = useTranslation();
   if (dirty) {
     return (
-      <span className="save-status" title="Changes not saved yet">
+      <span className="save-status" title={t("toolbar.notSavedYet")}>
         Unsaved changes
       </span>
     );
@@ -226,16 +229,17 @@ function SaveStatus({ dirty, savedAtUtc }: { dirty: boolean; savedAtUtc: string 
 }
 
 function UndoRedoGroup() {
+  const { t } = useTranslation();
   const undo = useDesigner((s) => s.undo);
   const redo = useDesigner((s) => s.redo);
   const canUndo = useDesigner((s) => s.past.length > 0);
   const canRedo = useDesigner((s) => s.future.length > 0);
   return (
     <>
-      <button className="btn icon" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)" aria-label="Undo">
+      <button className="btn icon" onClick={undo} disabled={!canUndo} title={t("toolbar.undoHint")} aria-label={t("toolbar.undo")}>
         <Undo2 />
       </button>
-      <button className="btn icon" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo">
+      <button className="btn icon" onClick={redo} disabled={!canRedo} title={t("toolbar.redoHint")} aria-label={t("toolbar.redo")}>
         <Redo2 />
       </button>
     </>
@@ -249,6 +253,7 @@ function UndoRedoGroup() {
  * "Common" section, so the two stay in sync automatically.
  */
 function TextFormatGroup() {
+  const { t } = useTranslation();
   const report = useDesigner((s) => s.report);
   const selectedIds = useDesigner((s) => s.selectedIds);
   const mutateSelected = useDesigner((s) => s.mutateSelected);
@@ -278,7 +283,7 @@ function TextFormatGroup() {
       <div className="group format-group">
         <select
           className="mini-select"
-          title="Font"
+          title={t("toolbar.font")}
           value={fontFamily ?? ""}
           onChange={(e) => mutateSelected((el) => setFont(el, "family", e.target.value || null))}
         >
@@ -290,7 +295,7 @@ function TextFormatGroup() {
         <input
           className="mini-num"
           type="number"
-          title="Font size (pt)"
+          title={t("toolbar.fontSize")}
           value={fontSize ?? ""}
           placeholder="pt"
           onChange={(e) => e.target.value && mutateSelected((el) => setFont(el, "size", Number(e.target.value)))}
@@ -310,14 +315,14 @@ function TextFormatGroup() {
         <input
           className="mini-color"
           type="color"
-          title="Text color"
+          title={t("toolbar.textColor")}
           value={color ?? "#111827"}
           onChange={(e) => mutateSelected((el) => setStyle(el, "color", e.target.value))}
         />
         <input
           className="mini-color"
           type="color"
-          title="Background color"
+          title={t("toolbar.backgroundColor")}
           value={background ?? "#ffffff"}
           onChange={(e) => mutateSelected((el) => setStyle(el, "background", e.target.value))}
         />

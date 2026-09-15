@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Check, Copy, Link2, Loader2, Trash2, X } from "lucide-react";
 import { api, type ShareInfo } from "../api";
 import type { ReportSummary } from "../types";
@@ -16,6 +17,7 @@ export function ShareDialog({ report, onClose }: { report: ReportSummary; onClos
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEscapeKey(onClose);
   const dialogRef = useFocusTrap<HTMLDivElement>();
@@ -55,7 +57,7 @@ export function ShareDialog({ report, onClose }: { report: ReportSummary; onClos
       setCopiedToken(token);
       setTimeout(() => setCopiedToken((cur) => (cur === token ? null : cur)), 1500);
     } catch {
-      setError("Couldn't copy automatically — copy the link manually.");
+      setError(t("share.copyFailed"));
     }
   };
 
@@ -70,15 +72,15 @@ export function ShareDialog({ report, onClose }: { report: ReportSummary; onClos
         onMouseDown={(e) => e.stopPropagation()}
       >
         <header>
-          <h2><Link2 /> Share “{report.name}”</h2>
-          <button className="mini ghost" onClick={onClose} aria-label="Close">
+          <h2><Link2 /> {t("share.title", { name: report.name })}</h2>
+          <button className="mini ghost" onClick={onClose} aria-label={t("common.close")}>
             <X />
           </button>
         </header>
 
         <div className="share-body">
           <p className="hint">
-            Anyone with a link below can view and export this report — no sign-in required. They can't open it in the designer.
+            {t("share.description")}
           </p>
           {error && <p className="hint" style={{ color: "var(--error)" }}>{error}</p>}
 
@@ -88,7 +90,7 @@ export function ShareDialog({ report, onClose }: { report: ReportSummary; onClos
             </div>
           ) : shares.length === 0 ? (
             <button className="btn primary" onClick={() => void create()} disabled={creating}>
-              {creating ? "Creating…" : "Create link"}
+              {creating ? t("share.creating") : t("share.createLink")}
             </button>
           ) : (
             <>
@@ -103,19 +105,19 @@ export function ShareDialog({ report, onClose }: { report: ReportSummary; onClos
                     />
                     <button className="mini" onClick={() => void copy(s.token)}>
                       {copiedToken === s.token ? <Check size={13} /> : <Copy size={13} />}
-                      {copiedToken === s.token ? "Copied" : "Copy"}
+                      {copiedToken === s.token ? t("share.copied") : t("share.copy")}
                     </button>
                     <ConfirmButton
                       icon={Trash2}
-                      title="Revoke this link"
-                      confirmLabel="Revoke"
+                      title={t("share.revoke")}
+                      confirmLabel={t("common.remove")}
                       onConfirm={() => void revoke(s.token)}
                     />
                   </li>
                 ))}
               </ul>
               <button className="mini" onClick={() => void create()} disabled={creating}>
-                {creating ? "Creating…" : "Create another link"}
+                {creating ? t("share.creating") : t("share.createAnother")}
               </button>
             </>
           )}

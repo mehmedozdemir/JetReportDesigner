@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, CalendarClock, X } from "lucide-react";
 import { api, type ReportSchedule, type ScheduleFrequency } from "../api";
 import { hhmm, localToUtc, utcToLocal } from "../scheduleTime";
@@ -48,6 +49,7 @@ export function ScheduleDialog({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEscapeKey(onClose);
   const dialogRef = useFocusTrap<HTMLDivElement>();
@@ -96,19 +98,19 @@ export function ScheduleDialog({
         className="modal schedule-dialog"
         role="dialog"
         aria-modal="true"
-        aria-label={`${editing ? "Edit schedule" : "Schedule"} ${reportName}`}
+        aria-label={editing ? t("schedule.editTitle", { name: reportName }) : t("schedule.createTitle", { name: reportName })}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <header>
-          <h2><CalendarClock /> {editing ? "Edit schedule" : "Schedule"} “{reportName}”</h2>
-          <button className="mini ghost" onClick={onClose} aria-label="Close">
+          <h2><CalendarClock /> {editing ? t("schedule.editTitle", { name: reportName }) : t("schedule.createTitle", { name: reportName })}</h2>
+          <button className="mini ghost" onClick={onClose} aria-label={t("common.close")}>
             <X />
           </button>
         </header>
 
         {saved ? (
           <div className="share-body">
-            <p className="hint">{editing ? "Updated." : "Scheduled."} Manage it from the Schedules tab.</p>
+            <p className="hint">{editing ? t("schedule.updated") : t("schedule.created")} {t("schedule.manageHint")}</p>
           </div>
         ) : (
           <>
@@ -116,25 +118,25 @@ export function ScheduleDialog({
               {error && <p className="hint" style={{ color: "var(--error)" }}>{error}</p>}
 
               <div className="settings-row">
-                <span>Format</span>
-                <div className="segmented" role="group" aria-label="Format">
+                <span>{t("schedule.format")}</span>
+                <div className="segmented" role="group" aria-label={t("schedule.format")}>
                   <button className={format === "pdf" ? "on" : ""} onClick={() => setFormat("pdf")}>PDF</button>
                   <button className={format === "xlsx" ? "on" : ""} onClick={() => setFormat("xlsx")}>Excel</button>
                 </div>
               </div>
 
               <div className="settings-row">
-                <span>Repeats</span>
-                <div className="segmented" role="group" aria-label="Frequency">
-                  <button className={frequency === "Daily" ? "on" : ""} onClick={() => setFrequency("Daily")}>Daily</button>
-                  <button className={frequency === "Weekly" ? "on" : ""} onClick={() => setFrequency("Weekly")}>Weekly</button>
-                  <button className={frequency === "Monthly" ? "on" : ""} onClick={() => setFrequency("Monthly")}>Monthly</button>
+                <span>{t("schedule.repeats")}</span>
+                <div className="segmented" role="group" aria-label={t("schedule.frequency")}>
+                  <button className={frequency === "Daily" ? "on" : ""} onClick={() => setFrequency("Daily")}>{t("schedule.daily")}</button>
+                  <button className={frequency === "Weekly" ? "on" : ""} onClick={() => setFrequency("Weekly")}>{t("schedule.weekly")}</button>
+                  <button className={frequency === "Monthly" ? "on" : ""} onClick={() => setFrequency("Monthly")}>{t("schedule.monthly")}</button>
                 </div>
               </div>
 
               {frequency === "Weekly" && (
                 <div className="settings-row">
-                  <span>On</span>
+                  <span>{t("schedule.on")}</span>
                   <div className="settings-control">
                     <select value={dayOfWeek} onChange={(e) => setDayOfWeek(Number(e.target.value))}>
                       {WEEKDAYS.map((d, i) => (
@@ -147,7 +149,7 @@ export function ScheduleDialog({
 
               {frequency === "Monthly" && (
                 <div className="settings-row">
-                  <span>On day</span>
+                  <span>{t("schedule.onDay")}</span>
                   <div className="settings-control">
                     <input
                       type="number"
@@ -158,37 +160,37 @@ export function ScheduleDialog({
                       value={dayOfMonth}
                       onChange={(e) => setDayOfMonth(Number(e.target.value))}
                     />
-                    <span className="hint" style={{ margin: 0 }}>Clamped to the last day in shorter months.</span>
+                    <span className="hint" style={{ margin: 0 }}>{t("schedule.clampHint")}</span>
                   </div>
                 </div>
               )}
 
               <div className="settings-row">
-                <span>At</span>
+                <span>{t("schedule.at")}</span>
                 <div className="settings-control">
                   <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
                   <span className="hint" style={{ margin: 0 }}>
-                    Your time ({Intl.DateTimeFormat().resolvedOptions().timeZone})
+                    {t("schedule.yourTime", { zone: Intl.DateTimeFormat().resolvedOptions().timeZone })}
                   </span>
                 </div>
               </div>
 
               <div className="settings-row">
-                <span>Distribution</span>
+                <span>{t("schedule.distribution")}</span>
                 <div className="settings-control">
                   <label className="settings-check">
                     <input type="checkbox" checked={createShareLink} onChange={(e) => setCreateShareLink(e.target.checked)} />
-                    Create a share link each run
+                    {t("schedule.shareEachRun")}
                   </label>
                 </div>
               </div>
 
               <div className="settings-row">
-                <span>Email to</span>
+                <span>{t("schedule.emailTo")}</span>
                 <div className="settings-control">
                   <input
                     value={emailRecipients}
-                    placeholder="a@example.com, b@example.com"
+                    placeholder={t("schedule.recipientsPlaceholder")}
                     onChange={(e) => setEmailRecipients(e.target.value)}
                   />
                 </div>
@@ -196,15 +198,14 @@ export function ScheduleDialog({
 
               {emailRecipients.trim() && hasMailAccount === false && (
                 <p className="hint" style={{ color: "var(--warning)" }}>
-                  <AlertTriangle size={12} style={{ verticalAlign: "-2px" }} /> No mail account is configured yet (Email tab)
-                  — emailing will silently be skipped until you set one up.
+                  <AlertTriangle size={12} style={{ verticalAlign: "-2px" }} /> {t("schedule.noMailAccount")}
                 </p>
               )}
             </div>
 
             <footer>
               <button className="btn primary" onClick={() => void save()} disabled={saving}>
-                {saving ? "Saving…" : editing ? "Save changes" : "Create schedule"}
+                {saving ? t("common.saving") : editing ? t("schedule.saveChanges") : t("schedule.create")}
               </button>
             </footer>
           </>

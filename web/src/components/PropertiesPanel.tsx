@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
 import {
   AlignCenter,
@@ -160,10 +161,11 @@ function FontFamilySelect({
   value: string | null | undefined;
   onChange: (v: string | null) => void;
 }) {
+  const { t } = useTranslation();
   const known = value && FONT_FAMILIES.includes(value);
   return (
     <label className="field">
-      <span>Font</span>
+      <span>{t("props.font")}</span>
       <select value={known ? (value as string) : ""} onChange={(e) => onChange(e.target.value || null)}>
         <option value="">— inherit{value && !known ? ` (${value})` : ""} —</option>
         {FONT_FAMILIES.map((f) => (
@@ -182,6 +184,7 @@ export function common<T>(elements: ReportElement[], getter: (el: ReportElement)
 }
 
 function MultiProperties() {
+  const { t } = useTranslation();
   const report = useDesigner((s) => s.report);
   const selectedIds = useDesigner((s) => s.selectedIds);
   const mutateSelected = useDesigner((s) => s.mutateSelected);
@@ -225,7 +228,7 @@ function MultiProperties() {
               />
             </label>
             <div className="field">
-              <span>Style</span>
+              <span>{t("props.style")}</span>
               <div className="row">
                 <Toggle label="B" active={!!bold} onClick={() => mutateSelected((e) => setFont(e, "bold", !bold))} />
                 <Toggle label="I" active={!!italic} onClick={() => mutateSelected((e) => setFont(e, "italic", !italic))} />
@@ -255,6 +258,7 @@ function MultiProperties() {
 }
 
 function BandProperties({ index }: { index: number }) {
+  const { t } = useTranslation();
   const band = useDesigner((s) => s.report!.bands[index]) as Band;
   const sources = useDesigner((s) => s.report!.dataSources);
   const patchBand = useDesigner((s) => s.patchBand);
@@ -274,19 +278,19 @@ function BandProperties({ index }: { index: number }) {
         {isGroup && groupLevelCount > 1 && <span className="count-badge">level {band.groupLevel ?? 0}</span>}
       </h2>
       <div className="row" style={{ marginBottom: 8 }}>
-        <button className="mini" onClick={() => moveBand(index, -1)} disabled={index === 0} title="Move band up" aria-label="Move band up">
+        <button className="mini" onClick={() => moveBand(index, -1)} disabled={index === 0} title={t("props.moveBandUp")} aria-label={t("props.moveBandUp")}>
           <ArrowUp />
         </button>
-        <button className="mini" onClick={() => moveBand(index, 1)} disabled={index === bandCount - 1} title="Move band down" aria-label="Move band down">
+        <button className="mini" onClick={() => moveBand(index, 1)} disabled={index === bandCount - 1} title={t("props.moveBandDown")} aria-label={t("props.moveBandDown")}>
           <ArrowDown />
         </button>
-        <button className="mini danger" onClick={() => removeBand(index)} title="Delete band">
+        <button className="mini danger" onClick={() => removeBand(index)} title={t("props.deleteBand")}>
           <Trash2 /> Delete
         </button>
       </div>
 
       <label className="field">
-        <span>Height</span>
+        <span>{t("props.height")}</span>
         <input
           type="number"
           value={Math.round(band.height)}
@@ -296,7 +300,7 @@ function BandProperties({ index }: { index: number }) {
 
       {band.type === "detail" && (
         <label className="field">
-          <span>Data source</span>
+          <span>{t("props.dataSource")}</span>
           <select
             value={band.dataSource ?? ""}
             onChange={(e) => patchBand(index, (b) => (b.dataSource = e.target.value || undefined))}
@@ -312,7 +316,7 @@ function BandProperties({ index }: { index: number }) {
       {isGroup && (
         <>
           <label className="field">
-            <span>Group by</span>
+            <span>{t("props.groupBy")}</span>
             <input
               value={band.group?.expression ?? ""}
               placeholder="{orders.customer}"
@@ -325,7 +329,7 @@ function BandProperties({ index }: { index: number }) {
             />
           </label>
           <label className="field">
-            <span>Sort</span>
+            <span>{t("props.sort")}</span>
             <select
               value={band.group?.sort ?? "asc"}
               onChange={(e) =>
@@ -335,8 +339,8 @@ function BandProperties({ index }: { index: number }) {
                 })
               }
             >
-              <option value="asc">Ascending</option>
-              <option value="desc">Descending</option>
+              <option value="asc">{t("props.ascending")}</option>
+              <option value="desc">{t("props.descending")}</option>
             </select>
           </label>
           <button className="mini" style={{ width: "100%", marginBottom: 6 }} onClick={() => addGroupLevel()}>
@@ -352,12 +356,12 @@ function BandProperties({ index }: { index: number }) {
             checked={band.repeatOnEveryPage}
             onChange={(e) => patchBand(index, (b) => (b.repeatOnEveryPage = e.target.checked))}
           />
-          <span>Repeat on every page</span>
+          <span>{t("props.repeatEveryPage")}</span>
         </label>
       )}
 
       <ImagePicker
-        label="Background image"
+        label={t("props.backgroundImage")}
         value={band.backgroundImage}
         onChange={(v) => patchBand(index, (b) => (b.backgroundImage = v))}
       />
@@ -379,6 +383,7 @@ function ElementProperties({
   element: ReportElement;
   onPatch: (fn: (el: ReportElement) => void) => void;
 }) {
+  const { t } = useTranslation();
   const sources = useDesigner((st) => st.report!.dataSources);
   const culture = useDesigner((st) => st.report?.culture) || undefined;
   const fieldNames = sources.flatMap((src) => src.fields.map((f) => f.name));
@@ -393,19 +398,19 @@ function ElementProperties({
       <h2><Icon /> {titleCase(element.type)}</h2>
 
       <div className="row" style={{ marginBottom: 8 }}>
-        <button className="mini" title="Send to back (Ctrl+Shift+[)" aria-label="Send to back" onClick={() => reorder("back")}>
+        <button className="mini" title={t("props.sendToBackHint")} aria-label={t("props.sendToBack")} onClick={() => reorder("back")}>
           <ArrowDownToLine />
         </button>
-        <button className="mini" title="Send backward (Ctrl+[)" aria-label="Send backward" onClick={() => reorder("backward")}>
+        <button className="mini" title={t("props.sendBackwardHint")} aria-label={t("props.sendBackward")} onClick={() => reorder("backward")}>
           <ArrowDown />
         </button>
-        <button className="mini" title="Bring forward (Ctrl+])" aria-label="Bring forward" onClick={() => reorder("forward")}>
+        <button className="mini" title={t("props.bringForwardHint")} aria-label={t("props.bringForward")} onClick={() => reorder("forward")}>
           <ArrowUp />
         </button>
-        <button className="mini" title="Bring to front (Ctrl+Shift+])" aria-label="Bring to front" onClick={() => reorder("front")}>
+        <button className="mini" title={t("props.bringToFrontHint")} aria-label={t("props.bringToFront")} onClick={() => reorder("front")}>
           <ArrowUpToLine />
         </button>
-        <span style={{ marginLeft: "auto", color: "var(--text-secondary)", display: "flex", alignItems: "center" }} title="Z-order">
+        <span style={{ marginLeft: "auto", color: "var(--text-secondary)", display: "flex", alignItems: "center" }} title={t("props.zOrder")}>
           <Layers size={13} />
         </span>
       </div>
@@ -419,7 +424,7 @@ function ElementProperties({
 
       {element.type === "label" && (
         <FormulaField
-          label="Text"
+          label={t("props.text")}
           value={element.text ?? ""}
           fields={fieldNames}
           onChange={(v) => onPatch((e) => (e.text = v))}
@@ -428,7 +433,7 @@ function ElementProperties({
       {(element.type === "field" || element.type === "pageInfo") && (
         <>
           <FormulaField
-            label="Value / binding"
+            label={t("props.valueBinding")}
             value={element.value ?? ""}
             fields={fieldNames}
             onChange={(v) => onPatch((e) => (e.value = v))}
@@ -443,7 +448,7 @@ function ElementProperties({
 
       {element.type === "image" && (
         <ImagePicker
-          label="Image"
+          label={t("props.image")}
           value={element.image?.source ? { source: element.image.source, fit: (element.image.fit as BackgroundFit) ?? "contain" } : null}
           fitOptions={["contain", "cover", "fill"]}
           onChange={(v) => onPatch((e) => (e.image = v ? { source: v.source, fit: v.fit } : null))}
@@ -453,20 +458,20 @@ function ElementProperties({
       {element.type === "chart" && element.chart && (
         <div className="table-props">
           <label className="field">
-            <span>Chart type</span>
+            <span>{t("props.chartType")}</span>
             <select
               value={element.chart.type}
               onChange={(v) => onPatch((e) => (e.chart!.type = v.target.value as ChartType))}
             >
-              <option value="column">Column</option>
-              <option value="bar">Bar</option>
-              <option value="line">Line</option>
-              <option value="area">Area</option>
-              <option value="pie">Pie</option>
+              <option value="column">{t("props.column")}</option>
+              <option value="bar">{t("props.bar")}</option>
+              <option value="line">{t("props.line")}</option>
+              <option value="area">{t("props.area")}</option>
+              <option value="pie">{t("props.pie")}</option>
             </select>
           </label>
           <label className="field">
-            <span>Data source</span>
+            <span>{t("props.dataSource")}</span>
             <select
               value={element.chart.dataSource}
               onChange={(v) => onPatch((e) => (e.chart!.dataSource = v.target.value))}
@@ -478,13 +483,13 @@ function ElementProperties({
             </select>
           </label>
           <FormulaField
-            label="Category"
+            label={t("props.category")}
             value={element.chart.category}
             fields={fieldNames}
             onChange={(val) => onPatch((e) => (e.chart!.category = val))}
           />
           <label className="field">
-            <span>Title</span>
+            <span>{t("props.title")}</span>
             <input
               value={element.chart.title ?? ""}
               placeholder="(none)"
@@ -497,7 +502,7 @@ function ElementProperties({
               checked={element.chart.showLegend}
               onChange={(v) => onPatch((e) => (e.chart!.showLegend = v.target.checked))}
             />
-            <span>Legend</span>
+            <span>{t("props.legend")}</span>
           </label>
           {element.chart.type !== "pie" && (
             <label className="row" style={{ marginBottom: 6 }}>
@@ -506,7 +511,7 @@ function ElementProperties({
                 checked={element.chart.showGrid}
                 onChange={(v) => onPatch((e) => (e.chart!.showGrid = v.target.checked))}
               />
-              <span>Gridlines</span>
+              <span>{t("props.gridlines")}</span>
             </label>
           )}
 
@@ -515,7 +520,7 @@ function ElementProperties({
             <div key={i} className="col-row">
               <input
                 value={s.name}
-                placeholder="Name"
+                placeholder={t("props.name")}
                 onChange={(v) => onPatch((e) => (e.chart!.series[i].name = v.target.value))}
               />
               <input
@@ -532,7 +537,7 @@ function ElementProperties({
                 />
                 <button
                   className="mini"
-                  title="Use palette colour"
+                  title={t("props.usePalette")}
                   onClick={() => onPatch((e) => (e.chart!.series[i].color = null))}
                 >
                   <Ban />
@@ -541,7 +546,7 @@ function ElementProperties({
                   className="mini danger"
                   disabled={element.chart!.series.length <= 1}
                   onClick={() => onPatch((e) => e.chart!.series.splice(i, 1))}
-                  aria-label="Remove series"
+                  aria-label={t("props.removeSeries")}
                 >
                   <Trash2 />
                 </button>
@@ -576,27 +581,27 @@ function ElementProperties({
       {element.type === "barcode" && element.barcode && (
         <div className="table-props">
           <label className="field">
-            <span>Symbology</span>
+            <span>{t("props.symbology")}</span>
             <select
               value={element.barcode.symbology}
               onChange={(v) => onPatch((e) => (e.barcode!.symbology = v.target.value as BarcodeSymbology))}
             >
-              <option value="qr">QR code</option>
-              <option value="dataMatrix">Data Matrix</option>
+              <option value="qr">{t("props.qrCode")}</option>
+              <option value="dataMatrix">{t("props.dataMatrix")}</option>
               <option value="code128">Code 128</option>
               <option value="ean13">EAN-13</option>
               <option value="code39">Code 39</option>
             </select>
           </label>
           <FormulaField
-            label="Value"
+            label={t("props.value")}
             value={element.barcode.value}
             fields={fieldNames}
             onChange={(v) => onPatch((e) => (e.barcode!.value = v))}
           />
           <div className="grid2">
-            <Color label="Bars" value={element.barcode.foreColor} onChange={(v) => onPatch((e) => (e.barcode!.foreColor = v))} />
-            <Color label="Background" value={element.barcode.backColor} onChange={(v) => onPatch((e) => (e.barcode!.backColor = v))} />
+            <Color label={t("props.bars")} value={element.barcode.foreColor} onChange={(v) => onPatch((e) => (e.barcode!.foreColor = v))} />
+            <Color label={t("props.background")} value={element.barcode.backColor} onChange={(v) => onPatch((e) => (e.barcode!.backColor = v))} />
           </div>
           {element.barcode.symbology !== "qr" && element.barcode.symbology !== "dataMatrix" && (
             <label className="row" style={{ marginBottom: 6 }}>
@@ -605,7 +610,7 @@ function ElementProperties({
                 checked={element.barcode.showText}
                 onChange={(v) => onPatch((e) => (e.barcode!.showText = v.target.checked))}
               />
-              <span>Show value below bars</span>
+              <span>{t("props.showValueBelowBars")}</span>
             </label>
           )}
         </div>
@@ -614,7 +619,7 @@ function ElementProperties({
       {element.type === "matrix" && element.matrix && (
         <div className="table-props">
           <label className="field">
-            <span>Data source</span>
+            <span>{t("props.dataSource")}</span>
             <select
               value={element.matrix.dataSource}
               onChange={(v) => onPatch((e) => (e.matrix!.dataSource = v.target.value))}
@@ -626,13 +631,13 @@ function ElementProperties({
             </select>
           </label>
           <FormulaField
-            label="Row field"
+            label={t("props.rowField")}
             value={element.matrix.rowField}
             fields={fieldNames}
             onChange={(v) => onPatch((e) => (e.matrix!.rowField = v))}
           />
           <label className="field">
-            <span>Row header</span>
+            <span>{t("props.rowHeader")}</span>
             <input
               value={element.matrix.rowHeader ?? ""}
               placeholder="(field name)"
@@ -640,35 +645,35 @@ function ElementProperties({
             />
           </label>
           <FormulaField
-            label="Column field"
+            label={t("props.columnField")}
             value={element.matrix.columnField}
             fields={fieldNames}
             onChange={(v) => onPatch((e) => (e.matrix!.columnField = v))}
           />
           <FormulaField
-            label="Value field"
+            label={t("props.valueField")}
             value={element.matrix.valueField}
             fields={fieldNames}
             onChange={(v) => onPatch((e) => (e.matrix!.valueField = v))}
           />
           <div className="grid2">
             <label className="field">
-              <span>Aggregate</span>
+              <span>{t("props.aggregate")}</span>
               <select
                 value={element.matrix.aggregate}
                 onChange={(v) => onPatch((e) => (e.matrix!.aggregate = v.target.value as AggregateFunction))}
               >
-                <option value="sum">Sum</option>
-                <option value="count">Count</option>
-                <option value="average">Average</option>
-                <option value="min">Min</option>
-                <option value="max">Max</option>
-                <option value="first">First</option>
-                <option value="last">Last</option>
+                <option value="sum">{t("props.sum")}</option>
+                <option value="count">{t("props.count")}</option>
+                <option value="average">{t("props.average")}</option>
+                <option value="min">{t("props.min")}</option>
+                <option value="max">{t("props.max")}</option>
+                <option value="first">{t("props.first")}</option>
+                <option value="last">{t("props.last")}</option>
               </select>
             </label>
             <label className="field">
-              <span>Format</span>
+              <span>{t("props.format")}</span>
               <input
                 value={element.matrix.format ?? ""}
                 placeholder="n2, c, ..."
@@ -682,7 +687,7 @@ function ElementProperties({
               checked={element.matrix.showRowTotals}
               onChange={(v) => onPatch((e) => (e.matrix!.showRowTotals = v.target.checked))}
             />
-            <span>Row totals</span>
+            <span>{t("props.rowTotals")}</span>
           </label>
           <label className="row" style={{ marginBottom: 6 }}>
             <input
@@ -690,7 +695,7 @@ function ElementProperties({
               checked={element.matrix.showColumnTotals}
               onChange={(v) => onPatch((e) => (e.matrix!.showColumnTotals = v.target.checked))}
             />
-            <span>Column totals</span>
+            <span>{t("props.columnTotals")}</span>
           </label>
         </div>
       )}
@@ -698,7 +703,7 @@ function ElementProperties({
       {element.type === "table" && element.table && (
         <div className="table-props">
           <label className="field">
-            <span>Data source</span>
+            <span>{t("props.dataSource")}</span>
             <select
               value={element.table.dataSource}
               onChange={(v) => onPatch((e) => (e.table!.dataSource = v.target.value))}
@@ -715,15 +720,15 @@ function ElementProperties({
               checked={element.table.showHeader}
               onChange={(v) => onPatch((e) => (e.table!.showHeader = v.target.checked))}
             />
-            <span>Header row</span>
+            <span>{t("props.headerRow")}</span>
           </label>
 
-          <h3>Columns</h3>
+          <h3>{t("props.columns")}</h3>
           {element.table.columns.map((col, i) => (
             <div key={i} className="col-row">
               <input
                 value={col.header}
-                placeholder="Header"
+                placeholder={t("props.header")}
                 onChange={(v) => onPatch((e) => (e.table!.columns[i].header = v.target.value))}
               />
               <input
@@ -752,7 +757,7 @@ function ElementProperties({
                   placeholder="fmt"
                   onChange={(v) => onPatch((e) => (e.table!.columns[i].format = v.target.value || null))}
                 />
-                <button className="mini danger" onClick={() => onPatch((e) => e.table!.columns.splice(i, 1))} aria-label="Remove column">
+                <button className="mini danger" onClick={() => onPatch((e) => e.table!.columns.splice(i, 1))} aria-label={t("props.removeColumn")}>
                   <Trash2 />
                 </button>
               </div>
@@ -775,7 +780,7 @@ function ElementProperties({
         <>
           <div className="grid2">
             <FontFamilySelect value={s.font?.family} onChange={(v) => onPatch((e) => setFont(e, "family", v))} />
-            <Num label="Size (pt)" value={s.font?.size ?? 10} onChange={(v) => onPatch((e) => setFont(e, "size", v))} />
+            <Num label={t("props.sizePt")} value={s.font?.size ?? 10} onChange={(v) => onPatch((e) => setFont(e, "size", v))} />
           </div>
           <div className="row" style={{ flexWrap: "wrap" }}>
             <Toggle label="B" active={!!s.font?.bold} onClick={() => onPatch((e) => setFont(e, "bold", !e.style?.font?.bold))} />
@@ -796,13 +801,13 @@ function ElementProperties({
       )}
 
       <div className="grid2">
-        <Color label="Color" value={s.color ?? "#111827"} onChange={(v) => onPatch((e) => setStyle(e, "color", v))} />
-        <Color label="Background" value={s.background ?? "#ffffff"} onChange={(v) => onPatch((e) => setStyle(e, "background", v))} allowClear cleared={!s.background} onClear={() => onPatch((e) => setStyle(e, "background", null))} />
+        <Color label={t("props.color")} value={s.color ?? "#111827"} onChange={(v) => onPatch((e) => setStyle(e, "color", v))} />
+        <Color label={t("props.background")} value={s.background ?? "#ffffff"} onChange={(v) => onPatch((e) => setStyle(e, "background", v))} allowClear cleared={!s.background} onClear={() => onPatch((e) => setStyle(e, "background", null))} />
       </div>
 
       {element.type !== "image" && element.type !== "line" && (
         <ImagePicker
-          label="Background image"
+          label={t("props.backgroundImage")}
           value={s.backgroundImage}
           onChange={(v) => onPatch((e) => setStyle(e, "backgroundImage", v))}
         />
@@ -821,6 +826,7 @@ function ElementProperties({
 }
 
 function PageProperties() {
+  const { t } = useTranslation();
   const report = useDesigner((s) => s.report)!;
   const mutate = useDesigner((s) => s.mutate);
   const p = report.page;
@@ -830,7 +836,7 @@ function PageProperties() {
     <div className="panel">
       <h2><FileText /> Page</h2>
       <label className="field">
-        <span>Size</span>
+        <span>{t("props.size")}</span>
         <select value={p.size} onChange={(e) => set((page) => (page.size = e.target.value as PageSize))}>
           {PAGE_SIZES.map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
@@ -838,22 +844,22 @@ function PageProperties() {
         </select>
       </label>
       <label className="field">
-        <span>Orientation</span>
+        <span>{t("props.orientation")}</span>
         <select value={p.orientation} onChange={(e) => set((page) => (page.orientation = e.target.value as "portrait" | "landscape"))}>
-          <option value="portrait">Portrait</option>
-          <option value="landscape">Landscape</option>
+          <option value="portrait">{t("props.portrait")}</option>
+          <option value="landscape">{t("props.landscape")}</option>
         </select>
       </label>
       <div className="grid2">
-        <Num label="Margin T" value={p.margins.top} onChange={(v) => set((page) => (page.margins.top = v))} />
-        <Num label="Margin R" value={p.margins.right} onChange={(v) => set((page) => (page.margins.right = v))} />
-        <Num label="Margin B" value={p.margins.bottom} onChange={(v) => set((page) => (page.margins.bottom = v))} />
-        <Num label="Margin L" value={p.margins.left} onChange={(v) => set((page) => (page.margins.left = v))} />
+        <Num label={t("props.marginT")} value={p.margins.top} onChange={(v) => set((page) => (page.margins.top = v))} />
+        <Num label={t("props.marginR")} value={p.margins.right} onChange={(v) => set((page) => (page.margins.right = v))} />
+        <Num label={t("props.marginB")} value={p.margins.bottom} onChange={(v) => set((page) => (page.margins.bottom = v))} />
+        <Num label={t("props.marginL")} value={p.margins.left} onChange={(v) => set((page) => (page.margins.left = v))} />
       </div>
 
       <div className="grid2">
         <label className="field">
-          <span>Detail columns</span>
+          <span>{t("props.detailColumns")}</span>
           <select
             value={p.columns}
             onChange={(e) => set((page) => (page.columns = Number(e.target.value)))}
@@ -864,7 +870,7 @@ function PageProperties() {
           </select>
         </label>
         {p.columns > 1 && (
-          <Num label="Column gap" value={p.columnSpacing ?? 16} onChange={(v) => set((page) => (page.columnSpacing = v))} />
+          <Num label={t("props.columnGap")} value={p.columnSpacing ?? 16} onChange={(v) => set((page) => (page.columnSpacing = v))} />
         )}
       </div>
       {p.columns > 1 && (
@@ -875,13 +881,13 @@ function PageProperties() {
       )}
 
       <ImagePicker
-        label="Background image"
+        label={t("props.backgroundImage")}
         value={p.backgroundImage}
         onChange={(v) => set((page) => (page.backgroundImage = v))}
       />
 
       <label className="field">
-        <span>Culture</span>
+        <span>{t("props.culture")}</span>
         <select
           value={report.culture ?? ""}
           onChange={(e) => mutate((r) => (r.culture = e.target.value || null))}
@@ -943,13 +949,14 @@ function Color({
   cleared?: boolean;
   onClear?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <label className="field">
       <span>{label}</span>
       <span className="row">
         <input type="color" value={cleared ? "#ffffff" : value} onChange={(e) => onChange(e.target.value)} />
         {allowClear && (
-          <button className={`mini ${cleared ? "on" : ""}`} onClick={onClear} title="No fill" aria-label="No fill" type="button">
+          <button className={`mini ${cleared ? "on" : ""}`} onClick={onClear} title={t("props.noFill")} aria-label={t("props.noFill")} type="button">
             <Ban />
           </button>
         )}
@@ -1027,6 +1034,7 @@ function BorderPicker({
   onChange: (next: BorderSpec | null) => void;
   mixed?: boolean;
 }) {
+  const { t } = useTranslation();
   const b = border ?? null;
   const width = b ? Math.max(b.top, b.right, b.bottom, b.left) : 0;
   const on: Sides = {
@@ -1065,7 +1073,7 @@ function BorderPicker({
           min={0}
           value={width || ""}
           placeholder="0"
-          title="Border width (pt)"
+          title={t("props.borderWidth")}
           onChange={(e) => onChange(compose(anySide ? on : ALL_SIDES, Number(e.target.value) || 0, color))}
         />
         <span className="border-sides">
@@ -1086,7 +1094,7 @@ function BorderPicker({
         <input
           type="color"
           value={color}
-          title="Border colour"
+          title={t("props.borderColour")}
           onChange={(e) => onChange(compose(anySide ? on : ALL_SIDES, width, e.target.value))}
         />
       </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, Download, Eye, Loader2, Share2, X } from "lucide-react";
 import { api } from "../api";
 import { downloadBlob } from "../download";
@@ -21,6 +22,7 @@ export function ReportPreviewDialog({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState<"pdf" | "xlsx" | null>(null);
+  const { t } = useTranslation();
 
   useEscapeKey(onClose);
   const dialogRef = useFocusTrap<HTMLDivElement>();
@@ -62,7 +64,7 @@ export function ReportPreviewDialog({
       >
         <header>
           <h2><Eye /> {report.name}</h2>
-          <button className="mini ghost" onClick={onClose} aria-label="Close">
+          <button className="mini ghost" onClick={onClose} aria-label={t("common.close")}>
             <X />
           </button>
         </header>
@@ -75,7 +77,7 @@ export function ReportPreviewDialog({
             </div>
           ) : loading ? (
             <div className="preview-dialog-loading">
-              <Loader2 size={16} className="spin" /> Rendering…
+              <Loader2 size={16} className="spin" /> {t("preview.rendering")}
             </div>
           ) : (
             <iframe title="preview" className="preview-frame" srcDoc={html} />
@@ -84,13 +86,13 @@ export function ReportPreviewDialog({
 
         <footer>
           <button className="mini" onClick={() => void exportAs("pdf")} disabled={exporting !== null}>
-            <Download size={13} /> {exporting === "pdf" ? "Exporting…" : "Export PDF"}
+            <Download size={13} /> {exporting === "pdf" ? t("preview.exporting") : t("preview.exportPdf")}
           </button>
           <button className="mini" onClick={() => void exportAs("xlsx")} disabled={exporting !== null}>
-            <Download size={13} /> {exporting === "xlsx" ? "Exporting…" : "Export Excel"}
+            <Download size={13} /> {exporting === "xlsx" ? t("preview.exporting") : t("preview.exportExcel")}
           </button>
           <button className="mini" style={{ marginLeft: "auto" }} onClick={onShare}>
-            <Share2 size={13} /> Share
+            <Share2 size={13} /> {t("preview.share")}
           </button>
         </footer>
       </div>

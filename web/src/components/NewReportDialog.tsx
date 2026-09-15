@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronLeft, FileBarChart2, LayoutTemplate, Rows3, Search, SquareDashed, X } from "lucide-react";
 import { emptyBandedReport, emptyFreeReport, type Orientation, type PageSize, type ReportDefinition } from "../types";
 import { useEscapeKey } from "../useEscapeKey";
@@ -10,6 +11,8 @@ export interface PageChoice {
   size: PageSize;
   orientation: Orientation;
 }
+
+const ALL = "__all__";
 
 type Picked = { kind: "blank"; mode: "free" | "banded" } | { kind: "sample"; name: string };
 
@@ -26,20 +29,21 @@ export function NewReportDialog({
   onCreateFromSample: (name: string, page: PageChoice) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [picked, setPicked] = useState<Picked | null>(null);
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<string>("All");
+  const [category, setCategory] = useState<string>(ALL);
   const [size, setSize] = useState<PageSize>("A4");
 
   useEscapeKey(onClose);
   const dialogRef = useFocusTrap<HTMLDivElement>();
   const [orientation, setOrientation] = useState<Orientation>("portrait");
 
-  const categories = useMemo(() => ["All", ...new Set(samples.map((s) => s.category))], [samples]);
+  const categories = useMemo(() => [ALL, ...new Set(samples.map((s) => s.category))], [samples]);
   const filteredSamples = useMemo(() => {
     const q = query.trim().toLowerCase();
     return samples.filter(
-      (s) => (category === "All" || s.category === category) && (!q || s.name.toLowerCase().includes(q)),
+      (s) => (category === ALL || s.category === category) && (!q || s.name.toLowerCase().includes(q)),
     );
   }, [samples, query, category]);
 
@@ -64,12 +68,12 @@ export function NewReportDialog({
         className="modal new-report-dialog"
         role="dialog"
         aria-modal="true"
-        aria-label="New report"
+        aria-label={t("newReport.title")}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <header>
-          <h2><LayoutTemplate /> New report</h2>
-          <button className="mini ghost" onClick={onClose} aria-label="Close">
+          <h2><LayoutTemplate /> {t("newReport.title")}</h2>
+          <button className="mini ghost" onClick={onClose} aria-label={t("common.close")}>
             <X />
           </button>
         </header>
@@ -79,36 +83,36 @@ export function NewReportDialog({
             <div className="nrd-blanks">
               <button className="start-card" onClick={() => setPicked({ kind: "blank", mode: "free" })}>
                 <span className="start-card-icon"><SquareDashed /></span>
-                <span className="start-card-title">Blank — Free layout</span>
-                <span className="start-card-sub">Place elements anywhere on a fixed canvas</span>
+                <span className="start-card-title">{t("newReport.blankFree")}</span>
+                <span className="start-card-sub">{t("newReport.blankFreeHint")}</span>
               </button>
               <button className="start-card" onClick={() => setPicked({ kind: "blank", mode: "banded" })}>
                 <span className="start-card-icon"><Rows3 /></span>
-                <span className="start-card-title">Blank — Banded report</span>
-                <span className="start-card-sub">Header / detail / footer bands that repeat per row</span>
+                <span className="start-card-title">{t("newReport.blankBanded")}</span>
+                <span className="start-card-sub">{t("newReport.blankBandedHint")}</span>
               </button>
             </div>
 
             {samples.length > 0 && (
               <>
-                <div className="nrd-divider"><span>or start from a template</span></div>
+                <div className="nrd-divider"><span>{t("newReport.orTemplate")}</span></div>
 
                 <div className="nrd-gallery-head">
                   <label className="start-search">
                     <Search size={14} />
-                    <input value={query} placeholder="Search templates" onChange={(e) => setQuery(e.target.value)} />
+                    <input value={query} placeholder={t("newReport.searchTemplates")} onChange={(e) => setQuery(e.target.value)} />
                   </label>
                   <div className="nrd-cats">
                     {categories.map((c) => (
                       <button key={c} className={`mini${c === category ? " on" : ""}`} onClick={() => setCategory(c)}>
-                        {c}
+                        {c === ALL ? t("newReport.all") : c}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {filteredSamples.length === 0 ? (
-                  <p className="hint">No templates match.</p>
+                  <p className="hint">{t("newReport.noTemplates")}</p>
                 ) : (
                   <div className="nrd-gallery">
                     {filteredSamples.map((s) => (
@@ -125,13 +129,13 @@ export function NewReportDialog({
         ) : (
           <div className="nrd-body">
             <button className="mini ghost nrd-back" onClick={() => setPicked(null)}>
-              <ChevronLeft size={14} /> Choose a different start
+              <ChevronLeft size={14} /> {t("newReport.back")}
             </button>
 
             <div className="nrd-format">
               <div className="nrd-format-fields">
                 <label className="field">
-                  <span>Page size</span>
+                  <span>{t("newReport.pageSize")}</span>
                   <select value={size} onChange={(e) => setSize(e.target.value as PageSize)}>
                     {PAGE_SIZES.map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
@@ -139,17 +143,17 @@ export function NewReportDialog({
                   </select>
                 </label>
                 <label className="field">
-                  <span>Orientation</span>
-                  <div className="segmented" role="group" aria-label="Orientation">
+                  <span>{t("newReport.orientation")}</span>
+                  <div className="segmented" role="group" aria-label={t("newReport.orientation")}>
                     <button className={orientation === "portrait" ? "on" : ""} onClick={() => setOrientation("portrait")}>
-                      Portrait
+                      {t("newReport.portrait")}
                     </button>
                     <button className={orientation === "landscape" ? "on" : ""} onClick={() => setOrientation("landscape")}>
-                      Landscape
+                      {t("newReport.landscape")}
                     </button>
                   </div>
                 </label>
-                <p className="hint">Margins and columns can be fine-tuned later from the Page panel.</p>
+                <p className="hint">{t("newReport.tuneHint")}</p>
               </div>
 
               {previewDefinition && (
@@ -164,7 +168,7 @@ export function NewReportDialog({
         {picked && (
           <footer>
             <button className="btn primary" onClick={create} disabled={busy}>
-              <FileBarChart2 /> Create report
+              <FileBarChart2 /> {t("newReport.create")}
             </button>
           </footer>
         )}
