@@ -620,7 +620,10 @@ rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük 
   Kalan: sayfalama/filtre UI'si (şu an "en son 50" dipnotu var).
 - ⬜ **Çoklu seçim / toplu işlem** yok — birden fazla raporu tek seferde taşı/sil için context
   menu'yü tek tek kullanmak gerekiyor.
-- ⬜ **Team'de üye çıkarma** yok, sadece rol değiştirme var.
+- ✅ **Team'de üye çıkarma** (2026-09-15): `DELETE /api/auth/users/{id}`, Designer-only. Hesap
+  siliniyor (bu üründe kullanıcı tek tenant'a ait); raporlar/işler/zamanlamalar duruyor, çünkü
+  yazar bilgisi FK değil denormalize alan. Kendini silme reddediliyor, başka tenant'ın
+  kullanıcısı 404.
 
 **Start ekranı UX turları (2026-09-14/15) — uygulananlar ve kalanlar:**
 Üç turda uygulandı: Settings gerçek sayfa oldu (ve Viewer'a açıldı), sayfalar tam genişliğe
@@ -631,11 +634,16 @@ Escape ile kapanıyor, her sayfaya ortak başlık (`PageHeader`) geldi, Reports 
 tutarlı "Updated" gösteriyor, Email sağlayıcı preset'i kayıtlı host'tan türetiliyor.
 Bilinçli olarak ertelenenler:
 - ⬜ **Görsel tutarlılık**: Reports çerçeveli bir kutuda, Jobs/Team/Schedules tabloları çıplak.
-- ⬜ **Sıralanabilir sütun yok** (Reports/Jobs/Schedules).
+- ✅ **Sıralanabilir sütunlar** (2026-09-15): ortak `SortableTh`/`useSort`; başlıklar buton
+  (klavyeyle erişilebilir) ve `aria-sort` taşıyor, boş değerler her iki yönde de sona gidiyor.
 - ⬜ **Klasör ağacı** `min-height: 420px` yüzünden kısa listede uzun boş sütun bırakıyor.
-- ⬜ **Modallarda focus trap / açılışta odak yok** (Escape var).
+- ✅ **Modallarda focus trap** (2026-09-15): `useFocusTrap` — Tab diyalogun içinde kalıyor,
+  kapanınca odak geldiği yere dönüyor.
 - ⬜ **Bildirim izni reddedilince** nasıl geri açılacağına dair yönlendirme yok.
-- ⬜ **Çalışan/kuyruktaki işi iptal etme yok** — yanlışlıkla başlatılan büyük bir rapor durdurulamıyor.
+- ✅ **İş iptali** (2026-09-15): kuyruktaki iş doğrudan iptal (204), render edilen iş süreç-içi
+  token kaydı (`RunningJobs`) ile durduruluyor (202), bitmiş iş 409. Sınır: token render'ın
+  asenkron aşamalarına (veri/görsel/alt rapor) geçiyor; sonraki CPU-bağlı sayfalama/PDF üretimi
+  kontrol etmiyor, o aşamaya geçmiş iş tamamlanır.
 - ⬜ **Jobs'ta işin kaynağı görünmüyor** — manuel mi, hangi zamanlamadan mı geldiği belli değil.
 - ⬜ **Designer'da raporun hangi klasörde olduğu** yazmıyor, breadcrumb yok.
 - ⬜ **Responsive davranış yok** — dar ekranda 228px nav + 220px klasör ağacı sıkışıyor, nav
