@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertCircle, AlertTriangle, CheckCircle2, ShieldCheck } from "lucide-react";
 import { api } from "../api";
 import { useDesigner } from "../store";
 import type { ReportIssue } from "../types";
 
 export function ProblemsPanel() {
+  const { t } = useTranslation();
   const report = useDesigner((s) => s.report);
   const select = useDesigner((s) => s.select);
   const [issues, setIssues] = useState<ReportIssue[]>([]);
@@ -32,12 +34,12 @@ export function ProblemsPanel() {
   return (
     <div className="panel">
       <h2>
-        <ShieldCheck /> Problems
+        <ShieldCheck /> {t("problems.title")}
         {issues.length > 0 && <span className={badgeClass}>{issues.length}</span>}
       </h2>
       {issues.length === 0 ? (
         <p className="hint" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <CheckCircle2 size={14} color="var(--success)" /> No problems.
+          <CheckCircle2 size={14} color="var(--success)" /> {t("problems.none")}
         </p>
       ) : (
         <ul className="problems">
@@ -46,7 +48,7 @@ export function ProblemsPanel() {
               key={i}
               className={issue.severity}
               onClick={() => issue.elementId && select([issue.elementId])}
-              title={issue.elementId ? "Select the affected element" : undefined}
+              title={issue.elementId ? t("problems.selectAffected") : undefined}
             >
               {issue.severity === "error" ? <AlertCircle /> : <AlertTriangle />}
               <span>{issue.message}</span>

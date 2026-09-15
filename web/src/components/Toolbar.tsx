@@ -210,18 +210,18 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
 }
 
 function SaveStatus({ dirty, savedAtUtc }: { dirty: boolean; savedAtUtc: string | null }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   if (dirty) {
     return (
       <span className="save-status" title={t("toolbar.notSavedYet")}>
-        Unsaved changes
+        {t("designer.unsavedChanges")}
       </span>
     );
   }
   if (savedAtUtc) {
     return (
       <span className="save-status" title={new Date(savedAtUtc).toLocaleString()}>
-        Saved {timeAgo(savedAtUtc)}
+        {t("designer.savedAgo", { when: timeAgo(savedAtUtc, i18n.language) })}
       </span>
     );
   }

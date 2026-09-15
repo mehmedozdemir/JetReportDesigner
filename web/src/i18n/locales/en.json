@@ -340,5 +340,49 @@
     "bringToFrontHint": "Bring to front (Ctrl+Shift+])",
     "sendBackwardHint": "Send backward (Ctrl+[)",
     "sendToBackHint": "Send to back (Ctrl+Shift+[)"
+  },
+  "toolbox": {
+    "tab": "Toolbox",
+    "data": "Data",
+    "params": "Params",
+    "panels": "Design panels",
+    "label": "Label",
+    "field": "Field",
+    "table": "Table",
+    "chart": "Chart",
+    "subreport": "Subreport",
+    "barcode": "Barcode",
+    "matrix": "Matrix",
+    "rectangle": "Rectangle",
+    "line": "Line",
+    "image": "Image",
+    "pageInfo": "Page info"
+  },
+  "problems": {
+    "title": "Problems",
+    "none": "No problems.",
+    "selectAffected": "Select the affected element"
+  },
+  "designer": {
+    "page": "Page",
+    "design": "Design",
+    "preview": "Preview",
+    "designView": "Design view",
+    "previewView": "Preview",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "resetZoom": "Reset zoom to 100%",
+    "selectElement": "Select an element to edit its properties.",
+    "multiSelect": "Edits apply to all selected elements.",
+    "choose": "Choose…",
+    "systemCulture": "System (server default)",
+    "numberDateFormatting": "Number & date formatting",
+    "unsavedChanges": "Unsaved changes",
+    "savedAgo": "Saved {{when}}",
+    "editDataSource": "Edit data source",
+    "removeParameter": "Remove parameter",
+    "selected": "{{count}} selected",
+    "chooseImage": "Choose image",
+    "changeImage": "Change image"
   }
 }

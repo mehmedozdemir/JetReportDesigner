@@ -1,23 +1,25 @@
+import { useTranslation } from "react-i18next";
 import { BarChart3, FileStack, Grid3x3, Hash, Image, Minus, QrCode, Square, Table, Type, Variable, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ElementType } from "../types";
 import { useDesigner } from "../store";
 
-const TOOLS: { type: ElementType; label: string; Icon: LucideIcon }[] = [
-  { type: "label", label: "Label", Icon: Type },
-  { type: "field", label: "Field", Icon: Variable },
-  { type: "table", label: "Table", Icon: Table },
-  { type: "chart", label: "Chart", Icon: BarChart3 },
-  { type: "subreport", label: "Subreport", Icon: FileStack },
-  { type: "barcode", label: "Barcode", Icon: QrCode },
-  { type: "matrix", label: "Matrix", Icon: Grid3x3 },
-  { type: "rectangle", label: "Rectangle", Icon: Square },
-  { type: "line", label: "Line", Icon: Minus },
-  { type: "image", label: "Image", Icon: Image },
-  { type: "pageInfo", label: "Page info", Icon: Hash },
+const TOOLS: { type: ElementType; labelKey: string; Icon: LucideIcon }[] = [
+  { type: "label", labelKey: "toolbox.label", Icon: Type },
+  { type: "field", labelKey: "toolbox.field", Icon: Variable },
+  { type: "table", labelKey: "toolbox.table", Icon: Table },
+  { type: "chart", labelKey: "toolbox.chart", Icon: BarChart3 },
+  { type: "subreport", labelKey: "toolbox.subreport", Icon: FileStack },
+  { type: "barcode", labelKey: "toolbox.barcode", Icon: QrCode },
+  { type: "matrix", labelKey: "toolbox.matrix", Icon: Grid3x3 },
+  { type: "rectangle", labelKey: "toolbox.rectangle", Icon: Square },
+  { type: "line", labelKey: "toolbox.line", Icon: Minus },
+  { type: "image", labelKey: "toolbox.image", Icon: Image },
+  { type: "pageInfo", labelKey: "toolbox.pageInfo", Icon: Hash },
 ];
 
 export function Toolbox() {
+  const { t } = useTranslation();
   const addElement = useDesigner((s) => s.addElement);
   const report = useDesigner((s) => s.report);
   const selectedBand = useDesigner((s) => s.selectedBand);
@@ -41,10 +43,10 @@ export function Toolbox() {
   return (
     <div className="panel">
       <h2>
-        <Wrench /> Toolbox
+        <Wrench /> {t("toolbox.tab")}
       </h2>
       <div className="tool-grid">
-        {TOOLS.map(({ type, label, Icon }) => (
+        {TOOLS.map(({ type, labelKey, Icon }) => (
           <button
             key={type}
             className="tool"
@@ -52,11 +54,11 @@ export function Toolbox() {
             draggable={hasReport}
             onDragStart={(e) => e.dataTransfer.setData("application/x-tool", type)}
             onClick={() => add(type)}
-            title={`${label} — ${hint}`}
-            aria-label={`Add ${label}`}
+            title={`${t(labelKey)} — ${hint}`}
+            aria-label={t(labelKey)}
           >
             <Icon size={15} />
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>

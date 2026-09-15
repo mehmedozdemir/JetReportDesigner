@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Database, SlidersHorizontal, Wrench } from "lucide-react";
 import { useDesigner } from "../store";
 import { Toolbox } from "./Toolbox";
@@ -16,6 +17,7 @@ type Tab = "toolbox" | "data" | "parameters";
  */
 export function LeftSidebar({ reportId }: { reportId: string | null }) {
   const [tab, setTab] = useState<Tab>("toolbox");
+  const { t } = useTranslation();
   const hasReport = useDesigner((s) => !!s.report);
   const paramCount = useDesigner((s) => s.report?.parameters?.length ?? 0);
   const dataConfigured = useDesigner((s) => {
@@ -35,19 +37,19 @@ export function LeftSidebar({ reportId }: { reportId: string | null }) {
 
   return (
     <div className="left left-tabs">
-      <div className="sidebar-tabbar" role="tablist" aria-label="Design panels">
+      <div className="sidebar-tabbar" role="tablist" aria-label={t("toolbox.panels")}>
         <button role="tab" aria-selected={tab === "toolbox"} className={tab === "toolbox" ? "on" : ""} onClick={() => setTab("toolbox")}>
           <Wrench size={15} />
-          <span>Toolbox</span>
+          <span>{t("toolbox.tab")}</span>
         </button>
         <button role="tab" aria-selected={tab === "data"} className={tab === "data" ? "on" : ""} onClick={() => setTab("data")}>
           <Database size={15} />
-          <span>Data</span>
+          <span>{t("toolbox.data")}</span>
           {dataConfigured && <span className="tab-dot" aria-label="configured" />}
         </button>
         <button role="tab" aria-selected={tab === "parameters"} className={tab === "parameters" ? "on" : ""} onClick={() => setTab("parameters")}>
           <SlidersHorizontal size={15} />
-          <span>Params</span>
+          <span>{t("toolbox.params")}</span>
           {paramCount > 0 && <span className="count-badge">{paramCount}</span>}
         </button>
       </div>

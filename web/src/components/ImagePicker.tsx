@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
 import { ImageOff, ImagePlus, Link2, Trash2, Upload, X } from "lucide-react";
 import { api } from "../api";
@@ -19,6 +20,7 @@ export function ImagePicker({
   onChange: (v: BackgroundImageSpec | null) => void;
   fitOptions?: BackgroundFit[];
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const src = imageSrc(value?.source);
 
@@ -29,14 +31,14 @@ export function ImagePicker({
         <button
           type="button"
           className="imgpick-preview"
-          title={value?.source ? "Change image" : "Choose image"}
+          title={value?.source ? t("designer.changeImage") : t("designer.chooseImage")}
           onClick={() => setOpen(true)}
         >
           {src ? (
             <img src={src} alt="" />
           ) : (
             <span className="imgpick-empty">
-              <ImagePlus size={16} /> Choose…
+              <ImagePlus size={16} /> {t("designer.choose")}
             </span>
           )}
         </button>
@@ -86,6 +88,7 @@ function ImageDialog({
   onPick: (source: string) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [assets, setAssets] = useState<AssetResponse[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -126,7 +129,7 @@ function ImageDialog({
         className="modal imgpick-dialog"
         role="dialog"
         aria-modal="true"
-        aria-label="Choose image"
+        aria-label={t("designer.chooseImage")}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <header>

@@ -458,16 +458,16 @@ export function App() {
                   <button
                     className={tab === "design" ? "on" : ""}
                     onClick={() => navigate(`/reports/${routeReportId}/design`)}
-                    title="Design view"
+                    title={t("designer.designView")}
                   >
-                    <PencilRuler /> Design
+                    <PencilRuler /> {t("designer.design")}
                   </button>
                   <button
                     className={tab === "preview" ? "on" : ""}
                     onClick={() => navigate(`/reports/${routeReportId}/preview`)}
-                    title="Preview"
+                    title={t("designer.previewView")}
                   >
-                    <Eye /> Preview
+                    <Eye /> {t("designer.preview")}
                   </button>
                 </div>
               </div>
@@ -475,13 +475,13 @@ export function App() {
             {canEdit && report && tab === "design" && (
               <div className="canvas-hud canvas-hud-right">
                 <div className="group">
-                  <button className="btn icon" onClick={() => setZoom(zoom - 0.1)} title="Zoom out" aria-label="Zoom out">
+                  <button className="btn icon" onClick={() => setZoom(zoom - 0.1)} title={t("designer.zoomOut")} aria-label={t("designer.zoomOut")}>
                     <ZoomOut />
                   </button>
-                  <span className="zoom-label" onClick={() => setZoom(1)} title="Reset zoom to 100%" role="button">
+                  <span className="zoom-label" onClick={() => setZoom(1)} title={t("designer.resetZoom")} role="button">
                     {Math.round(zoom * 100)}%
                   </span>
-                  <button className="btn icon" onClick={() => setZoom(zoom + 0.1)} title="Zoom in" aria-label="Zoom in">
+                  <button className="btn icon" onClick={() => setZoom(zoom + 0.1)} title={t("designer.zoomIn")} aria-label={t("designer.zoomIn")}>
                     <ZoomIn />
                   </button>
                 </div>

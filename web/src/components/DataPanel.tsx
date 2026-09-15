@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Database, Pencil, Plus, Tag } from "lucide-react";
 import { useDesigner } from "../store";
 import { DataSourceDialog, KIND_META } from "./DataSourceDialog";
 
 export function DataPanel() {
+  const { t } = useTranslation();
   const report = useDesigner((s) => s.report);
   const [open, setOpen] = useState(false);
 
@@ -21,7 +23,7 @@ export function DataPanel() {
       </h2>
 
       {configured ? (
-        <button className="ds-card" onClick={() => setOpen(true)} title="Edit data source">
+        <button className="ds-card" onClick={() => setOpen(true)} title={t("designer.editDataSource")}>
           <span className="ds-card-main">
             {Meta && <Meta.Icon size={15} />}
             <span className="ds-card-name">{source!.name}</span>

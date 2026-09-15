@@ -208,8 +208,8 @@ function MultiProperties() {
 
   return (
     <div className="panel">
-      <h2><BoxSelect /> {selectedIds.length} selected</h2>
-      <p className="hint">Edits apply to all selected elements.</p>
+      <h2><BoxSelect /> {t("designer.selected", { count: selectedIds.length })}</h2>
+      <p className="hint">{t("designer.multiSelect")}</p>
 
       {textCount > 0 && (
         <>
@@ -834,7 +834,7 @@ function PageProperties() {
 
   return (
     <div className="panel">
-      <h2><FileText /> Page</h2>
+      <h2><FileText /> {t("designer.page")}</h2>
       <label className="field">
         <span>{t("props.size")}</span>
         <select value={p.size} onChange={(e) => set((page) => (page.size = e.target.value as PageSize))}>
@@ -893,19 +893,19 @@ function PageProperties() {
           onChange={(e) => mutate((r) => (r.culture = e.target.value || null))}
         >
           {CULTURES.map((c) => (
-            <option key={c.value} value={c.value}>{c.label}</option>
+            <option key={c.value} value={c.value}>{c.label || t("designer.systemCulture")}</option>
           ))}
         </select>
-        <span className="hint" style={{ fontWeight: 400 }}>Number &amp; date formatting</span>
+        <span className="hint" style={{ fontWeight: 400 }}>{t("designer.numberDateFormatting")}</span>
       </label>
 
-      <p className="hint">Select an element to edit its properties.</p>
+      <p className="hint">{t("designer.selectElement")}</p>
     </div>
   );
 }
 
 const CULTURES: { value: string; label: string }[] = [
-  { value: "", label: "System (server default)" },
+  { value: "", label: "" },
   { value: "en-US", label: "English (US)" },
   { value: "en-GB", label: "English (UK)" },
   { value: "tr-TR", label: "Türkçe (Türkiye)" },

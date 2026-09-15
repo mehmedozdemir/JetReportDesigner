@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Plus, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useDesigner } from "../store";
 import type { ParameterType } from "../types";
@@ -6,6 +7,7 @@ const TYPES: ParameterType[] = ["string", "number", "boolean", "date", "dateTime
 const NO_PARAMS: never[] = [];
 
 export function ParametersPanel() {
+  const { t } = useTranslation();
   const params = useDesigner((s) => s.report?.parameters) ?? NO_PARAMS;
   const addParameter = useDesigner((s) => s.addParameter);
   const patchParameter = useDesigner((s) => s.patchParameter);
@@ -30,7 +32,7 @@ export function ParametersPanel() {
                 <option key={t}>{t}</option>
               ))}
             </select>
-            <button className="mini danger" onClick={() => removeParameter(i)} title="Remove parameter" aria-label="Remove parameter">
+            <button className="mini danger" onClick={() => removeParameter(i)} title={t("designer.removeParameter")} aria-label={t("designer.removeParameter")}>
               <Trash2 />
             </button>
           </div>

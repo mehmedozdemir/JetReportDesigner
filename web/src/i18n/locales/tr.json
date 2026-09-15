@@ -340,5 +340,49 @@
     "bringToFrontHint": "En öne getir (Ctrl+Shift+])",
     "sendBackwardHint": "Geriye gönder (Ctrl+[)",
     "sendToBackHint": "En arkaya gönder (Ctrl+Shift+[)"
+  },
+  "toolbox": {
+    "tab": "Araçlar",
+    "data": "Veri",
+    "params": "Parametre",
+    "panels": "Tasarım panelleri",
+    "label": "Etiket",
+    "field": "Alan",
+    "table": "Tablo",
+    "chart": "Grafik",
+    "subreport": "Alt rapor",
+    "barcode": "Barkod",
+    "matrix": "Matris",
+    "rectangle": "Dikdörtgen",
+    "line": "Çizgi",
+    "image": "Görsel",
+    "pageInfo": "Sayfa bilgisi"
+  },
+  "problems": {
+    "title": "Sorunlar",
+    "none": "Sorun yok.",
+    "selectAffected": "İlgili öğeyi seç"
+  },
+  "designer": {
+    "page": "Sayfa",
+    "design": "Tasarım",
+    "preview": "Önizleme",
+    "designView": "Tasarım görünümü",
+    "previewView": "Önizleme",
+    "zoomIn": "Yakınlaştır",
+    "zoomOut": "Uzaklaştır",
+    "resetZoom": "Yakınlaştırmayı %100'e döndür",
+    "selectElement": "Özelliklerini düzenlemek için bir öğe seçin.",
+    "multiSelect": "Değişiklikler seçili tüm öğelere uygulanır.",
+    "choose": "Seç…",
+    "systemCulture": "Sistem (sunucu varsayılanı)",
+    "numberDateFormatting": "Sayı ve tarih biçimlendirmesi",
+    "unsavedChanges": "Kaydedilmemiş değişiklikler",
+    "savedAgo": "{{when}} kaydedildi",
+    "editDataSource": "Veri kaynağını düzenle",
+    "removeParameter": "Parametreyi kaldır",
+    "selected": "{{count}} öğe seçili",
+    "chooseImage": "Görsel seç",
+    "changeImage": "Görseli değiştir"
   }
 }
