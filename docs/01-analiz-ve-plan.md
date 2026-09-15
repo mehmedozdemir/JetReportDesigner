@@ -633,21 +633,27 @@ açılıyor, nav öğeleri gerçek link (+`aria-current`), 4 yıkıcı aksiyona 
 Escape ile kapanıyor, her sayfaya ortak başlık (`PageHeader`) geldi, Reports tablosu sıralamayla
 tutarlı "Updated" gösteriyor, Email sağlayıcı preset'i kayıtlı host'tan türetiliyor.
 Bilinçli olarak ertelenenler:
-- ⬜ **Görsel tutarlılık**: Reports çerçeveli bir kutuda, Jobs/Team/Schedules tabloları çıplak.
+- ✅ **Görsel tutarlılık** (2026-09-15): ortak `.data-card` — düz tablolar da Reports'unkiyle
+  aynı yüzey/çerçeve muamelesini görüyor.
 - ✅ **Sıralanabilir sütunlar** (2026-09-15): ortak `SortableTh`/`useSort`; başlıklar buton
   (klavyeyle erişilebilir) ve `aria-sort` taşıyor, boş değerler her iki yönde de sona gidiyor.
 - ⬜ **Klasör ağacı** `min-height: 420px` yüzünden kısa listede uzun boş sütun bırakıyor.
 - ✅ **Modallarda focus trap** (2026-09-15): `useFocusTrap` — Tab diyalogun içinde kalıyor,
   kapanınca odak geldiği yere dönüyor.
-- ⬜ **Bildirim izni reddedilince** nasıl geri açılacağına dair yönlendirme yok.
+- ✅ **Bildirim izni reddedilince** (2026-09-15): adres çubuğundaki kilit simgesine yönlendiren
+  metin + tooltip'te tam adımlar.
 - ✅ **İş iptali** (2026-09-15): kuyruktaki iş doğrudan iptal (204), render edilen iş süreç-içi
   token kaydı (`RunningJobs`) ile durduruluyor (202), bitmiş iş 409. Sınır: token render'ın
   asenkron aşamalarına (veri/görsel/alt rapor) geçiyor; sonraki CPU-bağlı sayfalama/PDF üretimi
   kontrol etmiyor, o aşamaya geçmiş iş tamamlanır.
-- ⬜ **Jobs'ta işin kaynağı görünmüyor** — manuel mi, hangi zamanlamadan mı geldiği belli değil.
-- ⬜ **Designer'da raporun hangi klasörde olduğu** yazmıyor, breadcrumb yok.
-- ⬜ **Responsive davranış yok** — dar ekranda 228px nav + 220px klasör ağacı sıkışıyor, nav
-  daraltılamıyor.
+- ✅ **Jobs'ta işin kaynağı** (2026-09-15): `ScheduleId` artık listeye taşınıyor, tabloda
+  Manual/Schedule sütunu var. Kalan: hangi zamanlama olduğunu adıyla göstermek.
+- ✅ **Designer'da klasör yolu** (2026-09-15): toolbar'da rapor adının yanında, tıklayınca
+  `/reports?folder=<id>`'ye götürüyor.
+- ✅ **Dar ekran davranışı** (2026-09-15): <1100px'te nav rayı ikonlara iniyor, <820px'te klasör
+  ağacı içeriğin üstüne yığılıyor. Masaüstü genişliğine dokunulmuyor. ⚠️ Tarayıcıda görsel olarak
+  doğrulanamadı (bu oturumda tarayıcı aracı yok) — bu yüzden sadece uygulamanın zaten
+  kullanılamadığı genişliklerle sınırlı tutuldu.
 - ⬜ **Reports listesi tamamen istemci tarafında** — rapor sayısı büyüyünce sunucu tarafı
   arama/sayfalama gerekecek.
 
