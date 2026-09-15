@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
 
 /** A destructive action that asks first, in place. Reports and folders already did this with
@@ -10,7 +11,7 @@ export function ConfirmButton({
   icon: Icon,
   label,
   title,
-  confirmLabel = "Confirm",
+  confirmLabel,
   onConfirm,
 }: {
   icon: LucideIcon;
@@ -20,12 +21,13 @@ export function ConfirmButton({
   confirmLabel?: string;
   onConfirm: () => void;
 }) {
+  const { t } = useTranslation();
   const [armed, setArmed] = useState(false);
 
   useEffect(() => {
     if (!armed) return;
-    const t = window.setTimeout(() => setArmed(false), 5000);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => setArmed(false), 5000);
+    return () => window.clearTimeout(timer);
   }, [armed]);
 
   if (!armed) {
@@ -47,10 +49,10 @@ export function ConfirmButton({
           onConfirm();
         }}
       >
-        {confirmLabel}
+        {confirmLabel ?? t("common.confirm")}
       </button>
       <button className="mini" onClick={() => setArmed(false)}>
-        Cancel
+        {t("common.cancel")}
       </button>
     </span>
   );

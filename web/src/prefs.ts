@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { detectLanguage, i18next, initI18n, type LanguageCode } from "./i18n";
 
 export type RulerUnit = "px" | "mm" | "cm";
 export type ThemePref = "light" | "dark";
@@ -19,6 +20,7 @@ export interface Prefs {
   leftPanelCollapsed: boolean;
   rightPanelCollapsed: boolean;
   folderViewMode: FolderViewMode;
+  language: LanguageCode;
 }
 
 export const DEFAULT_PREFS: Prefs = {
@@ -35,6 +37,9 @@ export const DEFAULT_PREFS: Prefs = {
   leftPanelCollapsed: false,
   rightPanelCollapsed: false,
   folderViewMode: "grid",
+  // Defaults to the browser's language, so a Turkish-speaking user doesn't have to find the
+  // setting first. Explicitly choosing one in Settings persists and wins from then on.
+  language: detectLanguage(),
 };
 
 interface PrefsState extends Prefs {
@@ -58,6 +63,16 @@ function applyTheme(theme: ThemePref) {
 }
 applyTheme(usePrefs.getState().theme);
 usePrefs.subscribe((s) => applyTheme(s.theme));
+
+// i18next holds the live language; this store is what persists it. Initialised from the stored
+// value and kept in step with it, so a language change is a single `set("language", …)`.
+initI18n(usePrefs.getState().language);
+function applyLanguage(language: LanguageCode) {
+  if (i18next.language !== language) void i18next.changeLanguage(language);
+  document.documentElement.setAttribute("lang", language);
+}
+applyLanguage(usePrefs.getState().language);
+usePrefs.subscribe((s) => applyLanguage(s.language));
 
 // ---- unit conversion (internal unit is px = 1/96 inch) ----
 export function pxToUnit(px: number, unit: RulerUnit): number {

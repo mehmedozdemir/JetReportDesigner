@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, CheckCircle2, Download, X } from "lucide-react";
 import { api, type ReportJob } from "../api";
 import { downloadBlob } from "../download";
@@ -21,6 +22,7 @@ interface Toast {
  * once at the app root — not tied to the Jobs tab's own lifecycle, so leaving that tab
  * doesn't stop watching. */
 export function JobNotifications() {
+  const { t } = useTranslation();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const knownStatus = useRef<Map<string, ReportJob["status"]>>(new Map());
 
@@ -53,8 +55,10 @@ export function JobNotifications() {
 
         setToasts((cur) => [...cur, { id: job.id, job }]);
         notifyIfBackgrounded(
-          job.status === "Succeeded" ? "Report ready" : "Report failed",
-          job.status === "Succeeded" ? `${job.reportName} finished rendering.` : `${job.reportName} failed to render.`,
+          job.status === "Succeeded" ? t("notifications.reportReady") : t("notifications.reportFailed"),
+          job.status === "Succeeded"
+            ? t("notifications.finishedRendering", { name: job.reportName })
+            : t("notifications.failedRendering", { name: job.reportName }),
         );
       }
     };
@@ -71,7 +75,7 @@ export function JobNotifications() {
 
   useEffect(() => {
     if (toasts.length === 0) return;
-    const timers = toasts.map((t) => window.setTimeout(() => dismiss(t.id), AUTO_DISMISS_MS));
+    const timers = toasts.map((toast) => window.setTimeout(() => dismiss(toast.id), AUTO_DISMISS_MS));
     return () => timers.forEach(window.clearTimeout);
   }, [toasts]);
 
@@ -88,21 +92,21 @@ export function JobNotifications() {
 
   return (
     <div className="job-toast-stack">
-      {toasts.map((t) => (
-        <div key={t.id} className={`job-toast${t.job.status === "Failed" ? " job-toast-error" : ""}`}>
-          {t.job.status === "Succeeded" ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+      {toasts.map((toast) => (
+        <div key={toast.id} className={`job-toast${toast.job.status === "Failed" ? " job-toast-error" : ""}`}>
+          {toast.job.status === "Succeeded" ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
           <div className="job-toast-body">
             <div className="job-toast-title">
-              {t.job.status === "Succeeded" ? "Report ready" : "Report failed"}
+              {toast.job.status === "Succeeded" ? t("notifications.reportReady") : t("notifications.reportFailed")}
             </div>
-            <div className="job-toast-name">{t.job.reportName}</div>
+            <div className="job-toast-name">{toast.job.reportName}</div>
           </div>
-          {t.job.status === "Succeeded" && (
-            <button className="mini" onClick={() => void download(t.job)} title="Download" aria-label="Download">
+          {toast.job.status === "Succeeded" && (
+            <button className="mini" onClick={() => void download(toast.job)} title={t("common.download")} aria-label={t("common.download")}>
               <Download size={13} />
             </button>
           )}
-          <button className="mini ghost" onClick={() => dismiss(t.id)} title="Dismiss" aria-label="Dismiss">
+          <button className="mini ghost" onClick={() => dismiss(toast.id)} title={t("notifications.dismiss")} aria-label={t("notifications.dismiss")}>
             <X size={13} />
           </button>
         </div>

@@ -1,6 +1,8 @@
 import { RotateCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { usePrefs, type RulerUnit, type ThemePref } from "../prefs";
 import { PageHeader } from "./PageHeader";
+import { LANGUAGES, type LanguageCode } from "../i18n";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -53,41 +55,49 @@ function Segmented<T extends string>({
  * Available to Viewers too: everything here (theme, units, panel behaviour) is a per-person
  * preference stored locally, nothing organization- or role-scoped. */
 export function SettingsPage() {
+  const { t } = useTranslation();
   const p = usePrefs();
   const set = usePrefs((s) => s.set);
   const reset = usePrefs((s) => s.reset);
 
   return (
     <>
-      <PageHeader narrow title="Settings" description="Your own preferences — stored in this browser, not shared with the team." />
+      <PageHeader narrow title={t("settings.title")} description={t("settings.description")} />
 
       <section className="start-section start-section-narrow">
-        <h3>View</h3>
-        <Check label="Show rulers" value={p.showRulers} onChange={(v) => set("showRulers", v)} />
-        <Check label="Show grid dots" value={p.showGrid} onChange={(v) => set("showGrid", v)} />
-        <Row label="Ruler unit">
-          <select value={p.rulerUnit} onChange={(e) => set("rulerUnit", e.target.value as RulerUnit)}>
-            <option value="mm">Millimetres (mm)</option>
-            <option value="cm">Centimetres (cm)</option>
-            <option value="px">Pixels (px)</option>
+        <h3>{t("settings.view")}</h3>
+        <Row label={t("settings.language")}>
+          <select value={p.language} onChange={(e) => set("language", e.target.value as LanguageCode)}>
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
           </select>
         </Row>
-        <Row label="Theme">
+        <Check label={t("settings.showRulers")} value={p.showRulers} onChange={(v) => set("showRulers", v)} />
+        <Check label={t("settings.showGrid")} value={p.showGrid} onChange={(v) => set("showGrid", v)} />
+        <Row label={t("settings.rulerUnit")}>
+          <select value={p.rulerUnit} onChange={(e) => set("rulerUnit", e.target.value as RulerUnit)}>
+            <option value="mm">{t("settings.mm")}</option>
+            <option value="cm">{t("settings.cm")}</option>
+            <option value="px">{t("settings.px")}</option>
+          </select>
+        </Row>
+        <Row label={t("settings.theme")}>
           <Segmented<ThemePref>
             value={p.theme}
             onChange={(v) => set("theme", v)}
             options={[
-              { value: "light", label: "Light" },
-              { value: "dark", label: "Dark" },
+              { value: "light", label: t("settings.light") },
+              { value: "dark", label: t("settings.dark") },
             ]}
           />
         </Row>
       </section>
 
       <section className="start-section start-section-narrow">
-        <h3>Snapping</h3>
-        <Check label="Snap to grid" value={p.snapToGrid} onChange={(v) => set("snapToGrid", v)} />
-        <Row label="Snap increment (px)">
+        <h3>{t("settings.snapping")}</h3>
+        <Check label={t("settings.snapToGrid")} value={p.snapToGrid} onChange={(v) => set("snapToGrid", v)} />
+        <Row label={t("settings.snapIncrement")}>
           <input
             type="number"
             min={1}
@@ -96,24 +106,24 @@ export function SettingsPage() {
             onChange={(e) => set("gridSize", Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
           />
         </Row>
-        <Check label="Snap to alignment guides" value={p.snapToGuides} onChange={(v) => set("snapToGuides", v)} />
+        <Check label={t("settings.snapToGuides")} value={p.snapToGuides} onChange={(v) => set("snapToGuides", v)} />
       </section>
 
       <section className="start-section start-section-narrow">
-        <h3>Auto-save</h3>
-        <Row label="Save edited reports">
+        <h3>{t("settings.autoSave")}</h3>
+        <Row label={t("settings.autoSaveLabel")}>
           <select value={String(p.autoSaveSeconds)} onChange={(e) => set("autoSaveSeconds", Number(e.target.value))}>
-            <option value="0">Off</option>
-            <option value="30">Every 30 seconds</option>
-            <option value="60">Every minute</option>
-            <option value="300">Every 5 minutes</option>
+            <option value="0">{t("settings.off")}</option>
+            <option value="30">{t("settings.every30s")}</option>
+            <option value="60">{t("settings.everyMinute")}</option>
+            <option value="300">{t("settings.every5m")}</option>
           </select>
         </Row>
       </section>
 
       <section className="start-section start-section-narrow">
         <button className="btn" onClick={reset}>
-          <RotateCcw /> Reset to defaults
+          <RotateCcw /> {t("settings.resetDefaults")}
         </button>
       </section>
     </>

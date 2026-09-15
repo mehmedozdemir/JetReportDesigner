@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   CalendarClock,
   ChevronDown,
@@ -122,6 +123,7 @@ export function StartScreen({
   onDelete: (id: string) => void;
   onMoveToFolder: (id: string, folderId: string | null) => void;
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const setView = (v: View) => navigate(VIEW_PATH[v]);
 
@@ -407,7 +409,7 @@ export function StartScreen({
   });
 
   const moveToSubmenu = (report: ReportSummary): MenuItem[] => [
-    { label: "— Root —", disabled: (report.folderId ?? null) === null, onClick: () => onMoveToFolder(report.id, null) },
+    { label: t("reports.menu.root"), disabled: (report.folderId ?? null) === null, onClick: () => onMoveToFolder(report.id, null) },
     ...folderOptions.map((f) => ({
       label: f.label,
       disabled: f.id === (report.folderId ?? null),
@@ -446,17 +448,17 @@ export function StartScreen({
       x: e.clientX,
       y: e.clientY,
       items: [
-        { label: "Open", icon: FolderOpen, onClick: () => onOpen(r.id) },
-        { label: "Preview", icon: Eye, onClick: () => setPreviewReport(r) },
+        { label: t("reports.menu.open"), icon: FolderOpen, onClick: () => onOpen(r.id) },
+        { label: t("reports.menu.preview"), icon: Eye, onClick: () => setPreviewReport(r) },
         {
-          label: "Export",
+          label: t("reports.menu.export"),
           children: [
             { label: "PDF", icon: FileText, onClick: () => void exportReport(r, "pdf") },
             { label: "Excel", icon: FileSpreadsheet, onClick: () => void exportReport(r, "xlsx") },
           ],
         },
         {
-          label: "Run in background",
+          label: t("reports.menu.runInBackground"),
           icon: Clock,
           children: [
             { label: "PDF", icon: FileText, onClick: () => void runInBackground(r, "pdf") },
@@ -465,11 +467,11 @@ export function StartScreen({
         },
         ...(canEdit
           ? ([
-              { label: "Move to", children: moveToSubmenu(r) },
-              { label: "Share", icon: Share2, onClick: () => setShareReport(r) },
-              { label: "Schedule…", icon: CalendarClock, onClick: () => setScheduleReport(r) },
+              { label: t("reports.menu.moveTo"), children: moveToSubmenu(r) },
+              { label: t("reports.menu.share"), icon: Share2, onClick: () => setShareReport(r) },
+              { label: t("reports.menu.schedule"), icon: CalendarClock, onClick: () => setScheduleReport(r) },
               { sep: true },
-              { label: "Delete", icon: Trash2, danger: true, onClick: () => setConfirmId(r.id) },
+              { label: t("common.delete"), icon: Trash2, danger: true, onClick: () => setConfirmId(r.id) },
             ] as MenuItem[])
           : []),
       ],
@@ -482,11 +484,11 @@ export function StartScreen({
       x: e.clientX,
       y: e.clientY,
       items: [
-        { label: "Open", icon: FolderOpen, onClick: () => setCurrentFolderId(f.id) },
+        { label: t("reports.menu.open"), icon: FolderOpen, onClick: () => setCurrentFolderId(f.id) },
         ...(canEdit
           ? ([
               {
-                label: "Rename",
+                label: t("reports.menu.rename"),
                 icon: Pencil,
                 onClick: () => {
                   setRenamingFolderId(f.id);
@@ -494,7 +496,7 @@ export function StartScreen({
                 },
               },
               { sep: true },
-              { label: "Delete", icon: Trash2, danger: true, onClick: () => setConfirmFolderId(f.id) },
+              { label: t("common.delete"), icon: Trash2, danger: true, onClick: () => setConfirmFolderId(f.id) },
             ] as MenuItem[])
           : []),
       ],
@@ -511,23 +513,23 @@ export function StartScreen({
         {tenant && <div className="start-nav-org">{tenant.name}</div>}
 
         <div className="start-nav-group">
-          <NavItem view="reports" current={view} icon={LayoutGrid} label="Reports" onNavigate={setView} />
-          <NavItem view="jobs" current={view} icon={Clock} label="Jobs" badge={runningJobs} onNavigate={setView} />
+          <NavItem view="reports" current={view} icon={LayoutGrid} label={t("nav.reports")} onNavigate={setView} />
+          <NavItem view="jobs" current={view} icon={Clock} label={t("nav.jobs")} badge={runningJobs} onNavigate={setView} />
         </div>
 
         {canEdit && (
           <div className="start-nav-group">
-            <div className="start-nav-label">Organization</div>
-            <NavItem view="team" current={view} icon={Users} label="Team" badge={pendingInvites} onNavigate={setView} />
-            <NavItem view="email" current={view} icon={Mail} label="Email" onNavigate={setView} />
-            <NavItem view="schedules" current={view} icon={CalendarClock} label="Schedules" onNavigate={setView} />
+            <div className="start-nav-label">{t("nav.organization")}</div>
+            <NavItem view="team" current={view} icon={Users} label={t("nav.team")} badge={pendingInvites} onNavigate={setView} />
+            <NavItem view="email" current={view} icon={Mail} label={t("nav.email")} onNavigate={setView} />
+            <NavItem view="schedules" current={view} icon={CalendarClock} label={t("nav.schedules")} onNavigate={setView} />
           </div>
         )}
 
         <div className="start-nav-footer">
           {/* Not gated on canEdit — everything in Settings is a personal preference (theme,
               units, panel behaviour), so a Viewer needs it just as much as a Designer. */}
-          <NavItem view="settings" current={view} icon={Settings} label="Settings" onNavigate={setView} />
+          <NavItem view="settings" current={view} icon={Settings} label={t("nav.settings")} onNavigate={setView} />
 
           {user && (
             <>
@@ -548,7 +550,7 @@ export function StartScreen({
                     first line of the menu this opens. */}
                 <span className="start-nav-user-text">
                   <span className="start-nav-user-name">{user.email.split("@")[0]}</span>
-                  <span className="start-nav-user-role">{canEdit ? "Designer" : "Viewer"}</span>
+                  <span className="start-nav-user-role">{canEdit ? t("nav.designer") : t("nav.viewer")}</span>
                 </span>
                 <ChevronDown size={12} />
               </button>
@@ -558,9 +560,9 @@ export function StartScreen({
                   y={userMenu.y}
                   items={[
                     { label: user.email, disabled: true },
-                    { label: canEdit ? "Designer" : "Viewer", disabled: true },
+                    { label: canEdit ? t("nav.designer") : t("nav.viewer"), disabled: true },
                     { sep: true },
-                    { label: "Sign out", icon: LogOut, onClick: logout, danger: true },
+                    { label: t("nav.signOut"), icon: LogOut, onClick: logout, danger: true },
                   ]}
                   onClose={() => setUserMenu(null)}
                 />
@@ -601,12 +603,12 @@ export function StartScreen({
 
             <section className="start-section">
               <PageHeader
-                title="Reports"
-                description={canEdit ? undefined : "Viewer role — sign in as a Designer to create reports."}
+                title={t("reports.title")}
+                description={canEdit ? undefined : t("reports.viewerHint")}
                 actions={
                   <label className="start-search">
                     <Search size={14} />
-                    <input value={query} placeholder="Search reports" onChange={(e) => setQuery(e.target.value)} />
+                    <input value={query} placeholder={t("reports.search")} onChange={(e) => setQuery(e.target.value)} />
                   </label>
                 }
               />
@@ -629,7 +631,7 @@ export function StartScreen({
                       onClick={() => setCurrentFolderId(null)}
                       {...dragOverProps(null)}
                     >
-                      <LayoutGrid /> All reports
+                      <LayoutGrid /> {t("reports.allReports")}
                     </button>
                   </div>
                   {(childrenOf.get(null) ?? []).map((f) => (
@@ -660,13 +662,13 @@ export function StartScreen({
                 <div className="drive-main">
                   <div className="drive-toolbar">
                     {isSearching ? (
-                      <span className="drive-path">Search results</span>
+                      <span className="drive-path">{t("reports.searchResults")}</span>
                     ) : breadcrumb.length === 0 ? (
                       // At the root, "All reports" already appears as the page title above and
                       // as the highlighted tree item — repeating it here as a breadcrumb too
                       // was pure redundancy. The trail earns its place once you're actually
                       // inside a folder, as a way back.
-                      <span className="drive-path">All reports</span>
+                      <span className="drive-path">{t("reports.allReports")}</span>
                     ) : (
                       <nav className="breadcrumb">
                         <button className={currentFolderId === null ? "on" : ""} onClick={() => setCurrentFolderId(null)}>
@@ -688,16 +690,16 @@ export function StartScreen({
                         <button
                           className={viewMode === "grid" ? "on" : ""}
                           onClick={() => setViewMode("grid")}
-                          title="Grid view"
-                          aria-label="Grid view"
+                          title={t("reports.gridView")}
+                          aria-label={t("reports.gridView")}
                         >
                           <LayoutGrid size={13} />
                         </button>
                         <button
                           className={viewMode === "detail" ? "on" : ""}
                           onClick={() => setViewMode("detail")}
-                          title="Detail view"
-                          aria-label="Detail view"
+                          title={t("reports.detailView")}
+                          aria-label={t("reports.detailView")}
                         >
                           <List size={13} />
                         </button>
@@ -705,7 +707,7 @@ export function StartScreen({
 
                       {canEdit && (
                         <button className="btn primary" onClick={() => setNewReportOpen(true)} disabled={busy}>
-                          <Plus size={14} /> New report
+                          <Plus size={14} /> {t("reports.newReport")}
                         </button>
                       )}
 
@@ -715,16 +717,16 @@ export function StartScreen({
                             <input
                               autoFocus
                               value={newFolderName}
-                              placeholder="Folder name"
+                              placeholder={t("reports.folderName")}
                               onChange={(e) => setNewFolderName(e.target.value)}
                               onKeyDown={(e) => e.key === "Escape" && setCreatingFolder(false)}
                             />
-                            <button className="mini" type="submit">Add</button>
-                            <button className="mini" type="button" onClick={() => setCreatingFolder(false)}>Cancel</button>
+                            <button className="mini" type="submit">{t("reports.add")}</button>
+                            <button className="mini" type="button" onClick={() => setCreatingFolder(false)}>{t("common.cancel")}</button>
                           </form>
                         ) : (
                           <button className="mini" onClick={() => setCreatingFolder(true)}>
-                            <FolderPlus size={13} /> New folder
+                            <FolderPlus size={13} /> {t("reports.newFolder")}
                           </button>
                         )
                       )}
@@ -740,12 +742,12 @@ export function StartScreen({
                         <FileText />
                         <div>
                           {reports.length === 0
-                            ? "No reports yet."
+                            ? t("reports.emptyNoReports")
                             : isSearching
-                              ? "No reports match your search."
-                              : "This folder is empty."}
+                              ? t("reports.emptyNoMatch")
+                              : t("reports.emptyFolder")}
                         </div>
-                        {reports.length === 0 && <p>Start from a blank report or a sample above.</p>}
+                        {reports.length === 0 && <p>{t("reports.emptyHint")}</p>}
                       </div>
                     ) : viewMode === "grid" ? (
                       <div className="drive-grid">
@@ -761,17 +763,17 @@ export function StartScreen({
                                   onKeyDown={(e) => e.key === "Enter" && void commitRename(f.id)}
                                 />
                                 <div className="row">
-                                  <button className="mini" onClick={() => void commitRename(f.id)}>Save</button>
-                                  <button className="mini" onClick={() => setRenamingFolderId(null)}>Cancel</button>
+                                  <button className="mini" onClick={() => void commitRename(f.id)}>{t("common.save")}</button>
+                                  <button className="mini" onClick={() => setRenamingFolderId(null)}>{t("common.cancel")}</button>
                                 </div>
                               </div>
                             ) : confirmFolderId === f.id ? (
                               <div key={f.id} className="drive-tile folder-tile drive-tile-editing">
                                 <Folder className="tile-icon" />
-                                <span>Delete “{f.name}”?</span>
+                                <span>{t("reports.deleteConfirm", { name: f.name })}</span>
                                 <div className="row">
-                                  <button className="mini danger" onClick={() => void doDeleteFolder(f.id)}>Delete</button>
-                                  <button className="mini" onClick={() => setConfirmFolderId(null)}>Cancel</button>
+                                  <button className="mini danger" onClick={() => void doDeleteFolder(f.id)}>{t("common.delete")}</button>
+                                  <button className="mini" onClick={() => setConfirmFolderId(null)}>{t("common.cancel")}</button>
                                 </div>
                               </div>
                             ) : (
@@ -787,7 +789,7 @@ export function StartScreen({
                                 <Folder className="tile-icon" />
                                 <span className="drive-tile-name">{f.name}</span>
                                 <span className="drive-tile-count">
-                                  {reportCountByFolder.get(f.id) ?? 0} report{(reportCountByFolder.get(f.id) ?? 0) === 1 ? "" : "s"}
+                                  {t("reports.reportCount", { count: reportCountByFolder.get(f.id) ?? 0 })}
                                 </span>
                               </button>
                             ),
@@ -797,7 +799,7 @@ export function StartScreen({
                           confirmId === r.id ? (
                             <div key={r.id} className="drive-tile drive-tile-editing">
                               <FileText className="tile-icon" />
-                              <span>Delete “{r.name}”?</span>
+                              <span>{t("reports.deleteConfirm", { name: r.name })}</span>
                               <div className="row">
                                 <button
                                   className="mini danger"
@@ -808,7 +810,7 @@ export function StartScreen({
                                 >
                                   Delete
                                 </button>
-                                <button className="mini" onClick={() => setConfirmId(null)}>Cancel</button>
+                                <button className="mini" onClick={() => setConfirmId(null)}>{t("common.cancel")}</button>
                               </div>
                             </div>
                           ) : (
@@ -833,8 +835,8 @@ export function StartScreen({
                               </a>
                               <button
                                 className="mini ghost drive-tile-kebab"
-                                title="More actions"
-                                aria-label="More actions"
+                                title={t("common.moreActions")}
+                                aria-label={t("common.moreActions")}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   openReportMenu(e, r);
@@ -850,10 +852,10 @@ export function StartScreen({
                       <table className="drive-table">
                         <thead>
                           <tr>
-                            <SortableTh column="name" sort={sort} onToggle={toggleSort}>Name</SortableTh>
-                            <SortableTh column="layoutMode" sort={sort} onToggle={toggleSort}>Type</SortableTh>
-                            <SortableTh column="updatedAtUtc" sort={sort} onToggle={toggleSort}>Updated</SortableTh>
-                            <SortableTh column="createdByEmail" sort={sort} onToggle={toggleSort}>Created by</SortableTh>
+                            <SortableTh column="name" sort={sort} onToggle={toggleSort}>{t("reports.name")}</SortableTh>
+                            <SortableTh column="layoutMode" sort={sort} onToggle={toggleSort}>{t("reports.type")}</SortableTh>
+                            <SortableTh column="updatedAtUtc" sort={sort} onToggle={toggleSort}>{t("reports.updated")}</SortableTh>
+                            <SortableTh column="createdByEmail" sort={sort} onToggle={toggleSort}>{t("reports.createdBy")}</SortableTh>
                             <th />
                           </tr>
                         </thead>
@@ -870,17 +872,17 @@ export function StartScreen({
                                       onChange={(e) => setRenameValue(e.target.value)}
                                       onKeyDown={(e) => e.key === "Enter" && void commitRename(f.id)}
                                     />
-                                    <button className="mini" onClick={() => void commitRename(f.id)}>Save</button>
-                                    <button className="mini" onClick={() => setRenamingFolderId(null)}>Cancel</button>
+                                    <button className="mini" onClick={() => void commitRename(f.id)}>{t("common.save")}</button>
+                                    <button className="mini" onClick={() => setRenamingFolderId(null)}>{t("common.cancel")}</button>
                                   </td>
                                 </tr>
                               ) : confirmFolderId === f.id ? (
                                 <tr key={f.id}>
                                   <td colSpan={5} className="drive-table-editing">
                                     <Folder className="tile-icon" />
-                                    <span>Delete “{f.name}”?</span>
-                                    <button className="mini danger" onClick={() => void doDeleteFolder(f.id)}>Delete</button>
-                                    <button className="mini" onClick={() => setConfirmFolderId(null)}>Cancel</button>
+                                    <span>{t("reports.deleteConfirm", { name: f.name })}</span>
+                                    <button className="mini danger" onClick={() => void doDeleteFolder(f.id)}>{t("common.delete")}</button>
+                                    <button className="mini" onClick={() => setConfirmFolderId(null)}>{t("common.cancel")}</button>
                                   </td>
                                 </tr>
                               ) : (
@@ -896,17 +898,17 @@ export function StartScreen({
                                   <td className="drive-table-name">
                                     <Folder /> {f.name}
                                     <span className="drive-tile-count">
-                                      {reportCountByFolder.get(f.id) ?? 0} report{(reportCountByFolder.get(f.id) ?? 0) === 1 ? "" : "s"}
+                                      {t("reports.reportCount", { count: reportCountByFolder.get(f.id) ?? 0 })}
                                     </span>
                                   </td>
-                                  <td>Folder</td>
+                                  <td>{t("reports.folder")}</td>
                                   <td>{new Date(f.createdAtUtc).toLocaleDateString()}</td>
                                   <td>—</td>
                                   <td>
                                     <button
                                       className="mini ghost row-kebab"
-                                      title="More actions"
-                                      aria-label="More actions"
+                                      title={t("common.moreActions")}
+                                      aria-label={t("common.moreActions")}
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         openFolderMenu(e, f);
@@ -924,7 +926,7 @@ export function StartScreen({
                               <tr key={r.id}>
                                 <td colSpan={5} className="drive-table-editing">
                                   <FileText className="tile-icon" />
-                                  <span>Delete “{r.name}”?</span>
+                                  <span>{t("reports.deleteConfirm", { name: r.name })}</span>
                                   <button
                                     className="mini danger"
                                     onClick={() => {
@@ -934,7 +936,7 @@ export function StartScreen({
                                   >
                                     Delete
                                   </button>
-                                  <button className="mini" onClick={() => setConfirmId(null)}>Cancel</button>
+                                  <button className="mini" onClick={() => setConfirmId(null)}>{t("common.cancel")}</button>
                                 </td>
                               </tr>
                             ) : (
@@ -958,8 +960,8 @@ export function StartScreen({
                                 <td>
                                   <button
                                     className="mini ghost row-kebab"
-                                    title="More actions"
-                                    aria-label="More actions"
+                                    title={t("common.moreActions")}
+                                    aria-label={t("common.moreActions")}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       openReportMenu(e, r);
@@ -1052,6 +1054,7 @@ function FolderTreeNode({
   onConfirmDelete: (id: string) => void;
   onCancelConfirm: () => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(true);
   const kids = childrenOf.get(folder.id) ?? [];
 
@@ -1078,7 +1081,7 @@ function FolderTreeNode({
     <div>
       <div className="tree-row" style={{ paddingLeft: depth * 14 }}>
         {kids.length > 0 ? (
-          <button className="tree-toggle" onClick={() => setOpen((o) => !o)} aria-label={open ? "Collapse" : "Expand"}>
+          <button className="tree-toggle" onClick={() => setOpen((o) => !o)} aria-label={open ? t("common.close") : t("reports.menu.open")}>
             <ChevronDown size={13} style={{ transform: open ? undefined : "rotate(-90deg)" }} />
           </button>
         ) : (
@@ -1092,14 +1095,14 @@ function FolderTreeNode({
               onChange={(e) => onRenameValueChange(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && onCommitRename(folder.id)}
             />
-            <button className="mini" onClick={() => onCommitRename(folder.id)}>Save</button>
-            <button className="mini" onClick={onCancelRename}>Cancel</button>
+            <button className="mini" onClick={() => onCommitRename(folder.id)}>{t("common.save")}</button>
+            <button className="mini" onClick={onCancelRename}>{t("common.cancel")}</button>
           </div>
         ) : confirmFolderId === folder.id ? (
           <div className="tree-item tree-item-editing">
-            <span>Delete “{folder.name}”?</span>
-            <button className="mini danger" onClick={() => onConfirmDelete(folder.id)}>Delete</button>
-            <button className="mini" onClick={onCancelConfirm}>Cancel</button>
+            <span>{t("reports.deleteConfirm", { name: folder.name })}</span>
+            <button className="mini danger" onClick={() => onConfirmDelete(folder.id)}>{t("common.delete")}</button>
+            <button className="mini" onClick={onCancelConfirm}>{t("common.cancel")}</button>
           </div>
         ) : (
           <button

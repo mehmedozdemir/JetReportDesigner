@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, CheckCircle2, Loader2, Send, Trash2 } from "lucide-react";
 import { api, type SmtpSecurity, type SmtpSettingsInfo } from "../api";
 import { ConfirmButton } from "./ConfirmButton";
@@ -21,6 +22,7 @@ const presetForHost = (host: string): Preset =>
 /** Tenant's outgoing-mail account — a page reached from the Start screen (like Team), since
  * it's an organization-wide setting, not something tied to whatever report you have open. */
 export function EmailSettingsPage() {
+  const { t } = useTranslation();
   const [loaded, setLoaded] = useState(false);
   const [existing, setExisting] = useState<SmtpSettingsInfo | null>(null);
   const [preset, setPreset] = useState<Preset>("custom");
@@ -149,20 +151,20 @@ export function EmailSettingsPage() {
     <>
       <PageHeader
         narrow
-        title="Email"
-        description="Used to send scheduled reports by email. Any standard SMTP account works — Exchange/Office 365, Gmail (with an app password), or your own mail server."
+        title={t("email.title")}
+        description={t("email.description")}
       />
 
       <section className="start-section start-section-narrow">
-        <h3>Mail account</h3>
+        <h3>{t("email.account")}</h3>
         {!existing && (
-          <p className="hint">No account configured yet — fill this in and save to enable emailing scheduled reports.</p>
+          <p className="hint">{t("email.notConfigured")}</p>
         )}
 
         <div className="settings-row">
-          <span>Provider</span>
+          <span>{t("email.provider")}</span>
           <div className="settings-control">
-            <div className="segmented" role="group" aria-label="Mail provider preset">
+            <div className="segmented" role="group" aria-label={t("email.provider")}>
               <button className={preset === "exchange" ? "on" : ""} onClick={() => applyPreset("exchange")}>
                 Exchange
               </button>
@@ -170,21 +172,21 @@ export function EmailSettingsPage() {
                 Gmail
               </button>
               <button className={preset === "custom" ? "on" : ""} onClick={() => applyPreset("custom")}>
-                Custom
+                {t("email.custom")}
               </button>
             </div>
           </div>
         </div>
 
         <div className="settings-row">
-          <span>Host</span>
+          <span>{t("email.host")}</span>
           <div className="settings-control">
             <input value={host} placeholder="smtp.example.com" onChange={(e) => setHost(e.target.value)} />
           </div>
         </div>
 
         <div className="settings-row">
-          <span>Port</span>
+          <span>{t("email.port")}</span>
           <div className="settings-control">
             <input
               type="number"
@@ -202,35 +204,35 @@ export function EmailSettingsPage() {
         </div>
 
         <div className="settings-row">
-          <span>Username</span>
+          <span>{t("email.username")}</span>
           <div className="settings-control">
             <input value={username} placeholder="you@example.com" onChange={(e) => setUsername(e.target.value)} />
           </div>
         </div>
 
         <div className="settings-row">
-          <span>Password</span>
+          <span>{t("email.password")}</span>
           <div className="settings-control">
             <input
               type="password"
               value={password}
-              placeholder={existing?.hasPassword ? "Unchanged — leave blank to keep it" : "Password or app password"}
+              placeholder={existing?.hasPassword ? t("email.passwordUnchanged") : t("email.passwordNew")}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
         </div>
 
         <div className="settings-row">
-          <span>From address</span>
+          <span>{t("email.fromAddress")}</span>
           <div className="settings-control">
             <input value={fromEmail} placeholder="reports@example.com" onChange={(e) => setFromEmail(e.target.value)} />
           </div>
         </div>
 
         <div className="settings-row">
-          <span>From name</span>
+          <span>{t("email.fromName")}</span>
           <div className="settings-control">
-            <input value={fromName} placeholder="Optional" onChange={(e) => setFromName(e.target.value)} />
+            <input value={fromName} placeholder={t("email.optional")} onChange={(e) => setFromName(e.target.value)} />
           </div>
         </div>
 
@@ -238,15 +240,15 @@ export function EmailSettingsPage() {
           <span />
           <div className="settings-control">
             <button className="btn primary" onClick={() => void save()} disabled={saving}>
-              {saving ? "Saving…" : "Save"}
+              {saving ? t("common.saving") : t("common.save")}
             </button>
             {saved && <CheckCircle2 size={16} style={{ color: "var(--success)" }} />}
             {existing && (
               <ConfirmButton
                 icon={Trash2}
-                label="Remove"
-                title="Remove mail account"
-                confirmLabel="Remove account"
+                label={t("common.remove")}
+                title={t("email.removeAccount")}
+                confirmLabel={t("common.remove")}
                 onConfirm={() => void remove()}
               />
             )}
@@ -256,21 +258,21 @@ export function EmailSettingsPage() {
 
       {(existing || host.trim()) && (
         <section className="start-section start-section-narrow">
-          <h3>Send a test email</h3>
-          <p className="hint">Tests whatever's in the form above — no need to save first.</p>
+          <h3>{t("email.test")}</h3>
+          <p className="hint">{t("email.testHint")}</p>
           <div className="settings-row">
-            <span>To</span>
+            <span>{t("email.testTo")}</span>
             <div className="settings-control">
               <input value={testTo} placeholder="you@example.com" onChange={(e) => setTestTo(e.target.value)} />
               <button className="mini" onClick={() => void sendTest()} disabled={testing || !testTo.trim() || !host.trim()}>
-                <Send size={13} /> {testing ? "Sending…" : "Send test"}
+                <Send size={13} /> {testing ? t("common.sending") : t("email.sendTest")}
               </button>
             </div>
           </div>
           {testResult === "ok" && (
             <div className="settings-row">
               <span style={{ color: "var(--success)", display: "flex", alignItems: "center", gap: 6 }}>
-                <CheckCircle2 size={14} /> Sent — check the inbox.
+                <CheckCircle2 size={14} /> {t("email.testSent")}
               </span>
             </div>
           )}

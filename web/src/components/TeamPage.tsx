@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, Check, Copy, Loader2, Plus, Trash2, UserMinus } from "lucide-react";
 import { api } from "../api";
 import { useAuth, type PendingInvite, type TeamMember, type TenantInfo } from "../auth";
@@ -11,6 +12,7 @@ const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
  * design surface: who's on the team, their role, and inviting new people belongs with the rest
  * of "which report am I working on", not buried inside a report you happen to have open. */
 export function TeamPage() {
+  const { t } = useTranslation();
   const currentUserId = useAuth((s) => s.user?.id);
   const [tenant, setTenant] = useState<TenantInfo | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -99,16 +101,16 @@ export function TeamPage() {
 
   return (
     <>
-      <PageHeader title="Team" description={tenant ? tenant.name : undefined} />
+      <PageHeader title={t("team.title")} description={tenant ? tenant.name : undefined} />
 
       <section className="start-section">
-        <h3>Members</h3>
+        <h3>{t("team.members")}</h3>
         <div className="data-card">
         <table className="drive-table">
           <thead>
             <tr>
-              <th>Member</th>
-              <th>Role</th>
+              <th>{t("team.member")}</th>
+              <th>{t("team.role")}</th>
               <th />
             </tr>
           </thead>
@@ -117,25 +119,25 @@ export function TeamPage() {
               <tr key={m.id}>
                 <td className="drive-table-name">
                   {m.email}
-                  {m.id === currentUserId && <span className="hint"> (you)</span>}
+                  {m.id === currentUserId && <span className="hint">{t("team.you")}</span>}
                 </td>
                 <td>
                   <select
                     value={m.roles[0] ?? "Viewer"}
                     onChange={(e) => void changeRole(m.id, e.target.value)}
                     disabled={m.id === currentUserId}
-                    title={m.id === currentUserId ? "You cannot change your own role" : undefined}
+                    title={m.id === currentUserId ? t("team.ownRoleLocked") : undefined}
                   >
-                    <option value="Designer">Designer</option>
-                    <option value="Viewer">Viewer</option>
+                    <option value="Designer">{t("nav.designer")}</option>
+                    <option value="Viewer">{t("nav.viewer")}</option>
                   </select>
                 </td>
                 <td>
                   {m.id !== currentUserId && (
                     <ConfirmButton
                       icon={UserMinus}
-                      title={`Remove ${m.email} from the organization`}
-                      confirmLabel="Remove"
+                      title={t("team.removeMember", { email: m.email })}
+                      confirmLabel={t("common.remove")}
                       onConfirm={() => void removeMember(m.id)}
                     />
                   )}
@@ -148,25 +150,25 @@ export function TeamPage() {
       </section>
 
       <section className="start-section start-section-narrow">
-        <h3>Invite a teammate</h3>
+        <h3>{t("team.invite")}</h3>
         <div className="settings-row">
-          <span>Role</span>
+          <span>{t("team.role")}</span>
           <div className="settings-control">
             <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as "Designer" | "Viewer")}>
-              <option value="Viewer">Viewer</option>
-              <option value="Designer">Designer</option>
+              <option value="Viewer">{t("nav.viewer")}</option>
+              <option value="Designer">{t("nav.designer")}</option>
             </select>
             <button className="btn primary" onClick={() => void generateInvite()} disabled={busy}>
-              <Plus size={14} /> Generate code
+              <Plus size={14} /> {t("team.generateCode")}
             </button>
           </div>
         </div>
         {newInvite && (
           <div className="settings-row">
-            <span>Share this code — expires {new Date(newInvite.expiresAtUtc).toLocaleString()}</span>
+            <span>{t("team.shareCode", { date: new Date(newInvite.expiresAtUtc).toLocaleString() })}</span>
             <div className="settings-control">
               <code style={{ fontSize: 14, letterSpacing: "0.08em" }}>{newInvite.code}</code>
-              <button className="mini" onClick={() => copyCode(newInvite.code)} title="Copy code" aria-label="Copy code">
+              <button className="mini" onClick={() => copyCode(newInvite.code)} title={t("team.copyCode")} aria-label={t("team.copyCode")}>
                 {copied ? <Check size={13} /> : <Copy size={13} />}
               </button>
             </div>
@@ -176,13 +178,13 @@ export function TeamPage() {
 
       {pending.length > 0 && (
         <section className="start-section start-section-narrow">
-          <h3>Pending invites</h3>
+          <h3>{t("team.pendingInvites")}</h3>
           {pending.map((p) => (
             <div className="settings-row" key={p.code}>
               <span>
-                <code>{p.code}</code> · {p.role} · expires {new Date(p.expiresAtUtc).toLocaleDateString()}
+                <code>{p.code}</code> · {p.role} · {t("team.expires", { date: new Date(p.expiresAtUtc).toLocaleDateString() })}
               </span>
-              <ConfirmButton icon={Trash2} title="Revoke invite" confirmLabel="Revoke" onConfirm={() => void revoke(p.code)} />
+              <ConfirmButton icon={Trash2} title={t("team.revokeInvite")} confirmLabel={t("common.remove")} onConfirm={() => void revoke(p.code)} />
             </div>
           ))}
         </section>
