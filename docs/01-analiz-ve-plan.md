@@ -610,8 +610,14 @@ tarayıcıda görsel doğrulama yapılamadı — kullanıcıdan hard-refresh son
 Yüksek/orta/küçük öncelikli maddeler uygulandı (yerel saatli zamanlama, dağıtım durumu
 görünürlüğü, zamanlama düzenleme, kebab menü, yükleme durumları, arama'da klasör yolu, nav
 rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük işler:
-- ⬜ **Jobs listesi büyüme riski**: günlük zamanlamalarla haftalar içinde yüzlerce satır birikir
-  (her satır bir DB-blob), sayfalama/filtre/otomatik temizlik yok.
+- ✅ **Jobs listesi büyüme riski** (2026-09-15): liste zaten 50 ile sınırlıydı ama sorgu tüm
+  varlığı — yani her satırın render edilmiş **sonuç blob'unu** — yüklüyordu. `/api/jobs` her açık
+  sekmede 5 saniyede bir üç ayrı yerden (Jobs sayfası, nav rozeti, bitiş bildirimi) çağrıldığı
+  için her sekme saniyeler içinde onlarca PDF'i DB'den çekiyordu; çoklu sekme akışı bunu
+  katlıyordu. `ListAsync`/`GetAsync` artık sorgu içinde `ReportJobInfo`'ya projeksiyon yapıyor,
+  blob sütunları hiç seçilmiyor. Ayrıca `ReportJobProcessor` en fazla 6 saatte bir,
+  `Jobs:RetentionDays` (varsayılan 30, 0 = kapalı) süresini aşmış bitmiş işleri siliyor.
+  Kalan: sayfalama/filtre UI'si (şu an "en son 50" dipnotu var).
 - ⬜ **Çoklu seçim / toplu işlem** yok — birden fazla raporu tek seferde taşı/sil için context
   menu'yü tek tek kullanmak gerekiyor.
 - ⬜ **Team'de üye çıkarma** yok, sadece rol değiştirme var.
