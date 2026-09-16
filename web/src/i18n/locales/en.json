@@ -397,5 +397,12 @@
     "selected": "{{count}} selected",
     "chooseImage": "Choose image",
     "changeImage": "Change image"
+  },
+  "tray": {
+    "button": "Background jobs",
+    "buttonBusy": "{{count}} in progress",
+    "empty": "Nothing running in the background.",
+    "seeAll": "See all jobs",
+    "title": "Background jobs"
   }
 }

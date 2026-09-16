@@ -626,6 +626,19 @@ rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük 
   arasında satırlar yer değiştirmesin. Filtre/sıralama değişince sayfa 1'e dönüyor,
   sayfa altında "1–25 / 34" sayacı ve Önceki/Sonraki var. Nav rozeti artık bir sayfa
   satır yerine `status=Queued&status=Running&take=1` isteyip `total` okuyor.
+- ✅ **Arka plan iş tepsisi** (2026-09-16): raporu arka plana gönderince artık **Jobs sayfasına
+  yönlendirilmiyorsun** — asıl amaç kaldığın yerde kalmaktı. Tarayıcıdaki indirmeler düğmesi
+  gibi bir tepsi eklendi: tasarımcı toolbar'ında (Ayarlar'ın solunda) ve Start ekranının sol
+  rayında aynı bileşen. Kuyruğa atınca panel 4 saniye kendiliğinden açılıp kapanıyor; üzerine
+  gelince açık kalıyor. Panel `document.body`'ye portal'lanıp düğmenin konumundan
+  hesaplanıyor — ilk sürüm sol rayın `overflow`'u tarafından kırpılmıştı, bunu ancak ekran
+  görüntüsü gösterdi. Dar rayda (≤1100px) tepsi markanın altına iniyor, yan yana dizilim rayı
+  taşırıyordu.
+  Ayrıca **tek paylaşılan yoklayıcı** (`web/src/jobFeed.ts`): önce nav rozeti, bitiş bildirimi
+  ve tepsi ayrı ayrı `/api/jobs` çağırıyordu; artık sekme başına tik başına tek istek
+  (`?take=20`). Rozet bu penceredeki bitmemiş işleri sayıyor, sayı pencereyi doldurursa "20+"
+  diyor. Tepsi açıkken tamamlandı toast'ı bastırılıyor (aynı şeyi iki kez söylememek için);
+  OS bildirimi olduğu gibi kalıyor.
 - ✅ **Çoklu seçim / toplu işlem** (2026-09-15): tile/satırda hover'da beliren onay kutusu ya da
   Ctrl/Cmd-tık ile seçim; seçim çubuğundan klasöre taşı veya sil. Düz tık hâlâ raporu açıyor.
   Toplu işlemler mevcut tekil uç noktaları sırayla kullanıp listeyi sonda bir kez yeniliyor.

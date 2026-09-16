@@ -3,9 +3,9 @@ import { useTranslation } from "react-i18next";
 import { AlertTriangle, CheckCircle2, Download, X } from "lucide-react";
 import { api, type ReportJob } from "../api";
 import { downloadBlob } from "../download";
+import { useJobFeed, useJobFeedPolling } from "../jobFeed";
 import { notifyIfBackgrounded } from "../notifications";
 
-const POLL_MS = 5000;
 const AUTO_DISMISS_MS = 8000;
 // A job finished within this long before we ever saw it (e.g. the tab was reloaded right
 // as it completed) still counts as "just finished" — anything older is stale history.
@@ -16,61 +16,53 @@ interface Toast {
   job: ReportJob;
 }
 
-/** Watches every background report job regardless of which Start-screen tab (if any) is
- * open, and surfaces the moment one finishes: an in-app toast (with a one-click download
- * for a success) plus, if the tab is in the background, a real OS notification. Mounted
- * once at the app root — not tied to the Jobs tab's own lifecycle, so leaving that tab
- * doesn't stop watching. */
+/** Surfaces the moment a background job finishes: an in-app toast (with a one-click download
+ * for a success) plus, if the tab is in the background, a real OS notification. Reads the
+ * shared job feed rather than polling itself, and stays quiet while the tray is open, where
+ * the same change is already on screen. Mounted once at the app root — not tied to the Jobs
+ * page's lifecycle, so leaving that page doesn't stop watching. */
 export function JobNotifications() {
   const { t } = useTranslation();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const knownStatus = useRef<Map<string, ReportJob["status"]>>(new Map());
 
+  useJobFeedPolling();
+  const jobs = useJobFeed((s) => s.jobs);
+  const trayOpen = useJobFeed((s) => s.trayOpen);
+  // Read through a ref: a toast is decided the moment a job's status changes, and whether the
+  // tray happened to be open then shouldn't re-run that decision when it later closes.
+  const trayOpenNow = useRef(trayOpen);
+  trayOpenNow.current = trayOpen;
+
   useEffect(() => {
-    let cancelled = false;
+    for (const job of jobs) {
+      const previous = knownStatus.current.get(job.id);
+      knownStatus.current.set(job.id, job.status);
 
-    const poll = async () => {
-      let jobs: ReportJob[];
-      try {
-        // Only the newest handful can have changed status since the last tick.
-        jobs = (await api.listJobs({ take: 20 })).items;
-      } catch {
-        return; // transient network hiccup — just try again next tick
+      const justFinished = job.status === "Succeeded" || job.status === "Failed";
+      if (!justFinished) continue;
+      if (previous === job.status) continue;
+      // The first time we ever see a job that's already finished, only notify if it
+      // finished recently — e.g. the tab was reloaded right as it completed. Otherwise
+      // every job that finished long before this tab opened would "notify" all at once.
+      if (previous === undefined) {
+        const finishedAt = job.completedAtUtc ? Date.parse(job.completedAtUtc) : NaN;
+        if (!(Date.now() - finishedAt < RECENT_MS)) continue;
       }
-      if (cancelled) return;
 
-      for (const job of jobs) {
-        const previous = knownStatus.current.get(job.id);
-        knownStatus.current.set(job.id, job.status);
-
-        const justFinished = job.status === "Succeeded" || job.status === "Failed";
-        if (!justFinished) continue;
-        if (previous === job.status) continue;
-        // The first time we ever see a job that's already finished, only notify if it
-        // finished recently — e.g. the tab was reloaded right as it completed. Otherwise
-        // every job that finished long before this tab opened would "notify" all at once.
-        if (previous === undefined) {
-          const finishedAt = job.completedAtUtc ? Date.parse(job.completedAtUtc) : NaN;
-          if (!(Date.now() - finishedAt < RECENT_MS)) continue;
-        }
-
-        setToasts((cur) => [...cur, { id: job.id, job }]);
-        notifyIfBackgrounded(
-          job.status === "Succeeded" ? t("notifications.reportReady") : t("notifications.reportFailed"),
-          job.status === "Succeeded"
-            ? t("notifications.finishedRendering", { name: job.reportName })
-            : t("notifications.failedRendering", { name: job.reportName }),
-        );
-      }
-    };
-
-    void poll();
-    const id = window.setInterval(() => void poll(), POLL_MS);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, []);
+      // The tray is already showing this job change as it happens; a toast on top of it would
+      // say the same thing twice. The OS notification still fires — that one is for when the
+      // tab isn't in front at all, where nothing on screen is visible either way.
+      if (!trayOpenNow.current) setToasts((cur) => [...cur, { id: job.id, job }]);
+      notifyIfBackgrounded(
+        job.status === "Succeeded" ? t("notifications.reportReady") : t("notifications.reportFailed"),
+        job.status === "Succeeded"
+          ? t("notifications.finishedRendering", { name: job.reportName })
+          : t("notifications.failedRendering", { name: job.reportName }),
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobs]);
 
   const dismiss = (id: string) => setToasts((cur) => cur.filter((t) => t.id !== id));
 

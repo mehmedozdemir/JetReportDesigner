@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { announceEnqueued } from "../jobFeed";
+import { JobTray } from "./JobTray";
 import {
   CalendarClock,
   ChevronDown,
@@ -197,28 +199,7 @@ export function StartScreen({
 
   // Nav badges — a running-job count and a pending-invite count are otherwise invisible
   // unless you happen to click into Jobs/Team, so surface them right on the tab.
-  const [runningJobs, setRunningJobs] = useState(0);
   const [pendingInvites, setPendingInvites] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    const poll = () => {
-      // take=1 rather than a page of rows: the badge only wants the count, and this polls
-      // every five seconds in every open tab.
-      api
-        .listJobs({ statuses: ["Queued", "Running"], take: 1 })
-        .then((page) => {
-          if (!cancelled) setRunningJobs(page.total);
-        })
-        .catch(() => undefined);
-    };
-    poll();
-    const id = window.setInterval(poll, 5000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, []);
 
   useEffect(() => {
     if (!canEdit) return;
@@ -477,7 +458,9 @@ export function StartScreen({
     setActionError(null);
     try {
       await api.enqueueReportJob(r.id, format);
-      setView("jobs");
+      // No navigation: running a report in the background is pointless if it throws you out of
+      // what you were doing. The tray flashes open instead, and keeps the status in reach.
+      announceEnqueued();
     } catch (err) {
       setActionError(msg(err));
     }
@@ -550,12 +533,13 @@ export function StartScreen({
         <div className="start-nav-brand">
           <FileBarChart2 size={18} />
           <span>JetReportDesigner</span>
+          <JobTray />
         </div>
         {tenant && <div className="start-nav-org">{tenant.name}</div>}
 
         <div className="start-nav-group">
           <NavItem view="reports" current={view} icon={LayoutGrid} label={t("nav.reports")} onNavigate={setView} />
-          <NavItem view="jobs" current={view} icon={Clock} label={t("nav.jobs")} badge={runningJobs} onNavigate={setView} />
+          <NavItem view="jobs" current={view} icon={Clock} label={t("nav.jobs")} onNavigate={setView} />
         </div>
 
         {canEdit && (

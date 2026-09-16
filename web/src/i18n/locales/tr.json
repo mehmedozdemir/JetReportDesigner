@@ -397,5 +397,12 @@
     "selected": "{{count}} öğe seçili",
     "chooseImage": "Görsel seç",
     "changeImage": "Görseli değiştir"
+  },
+  "tray": {
+    "button": "Arka plan işleri",
+    "buttonBusy": "{{count}} iş sürüyor",
+    "empty": "Arka planda çalışan iş yok.",
+    "seeAll": "Tüm işleri gör",
+    "title": "Arka plan işleri"
   }
 }
