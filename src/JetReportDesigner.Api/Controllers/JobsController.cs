@@ -13,11 +13,24 @@ namespace JetReportDesigner.Api.Controllers;
 [Produces("application/json")]
 public sealed class JobsController(IReportJobRepository jobs, RunningJobs runningJobs, IApiStrings strings) : ControllerBase
 {
+    private const int DefaultPageSize = 25;
+
+    /// <summary>One page of the tenant's jobs. <paramref name="status"/> repeats for an OR
+    /// filter (<c>?status=Queued&amp;status=Running</c>); omitting it means every status. The
+    /// nav badge asks for those two with <c>take=1</c> and reads <c>total</c>, so a busy queue
+    /// costs it one row rather than a page of them.</summary>
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<ReportJobResponse>>> List(CancellationToken cancellationToken)
+    public async Task<ActionResult<ReportJobPageResponse>> List(
+        CancellationToken cancellationToken,
+        [FromQuery] string[]? status = null,
+        [FromQuery] string? sort = null,
+        [FromQuery] bool desc = true,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = DefaultPageSize)
     {
-        var list = await jobs.ListAsync(cancellationToken);
-        return Ok(list.Select(ReportJobResponse.From).ToList());
+        var query = new ReportJobQuery(status ?? [], sort ?? ReportJobSort.Created, desc, skip, take);
+        var page = await jobs.ListAsync(query, cancellationToken);
+        return Ok(new ReportJobPageResponse(page.Items.Select(ReportJobResponse.From).ToList(), page.Total));
     }
 
     [HttpGet("{id:guid}")]

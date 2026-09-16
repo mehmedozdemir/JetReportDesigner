@@ -22,7 +22,9 @@
     "moreActions": "Diğer işlemler",
     "saving": "Kaydediliyor…",
     "sending": "Gönderiliyor…",
-    "loading": "Yükleniyor…"
+    "loading": "Yükleniyor…",
+    "previous": "Önceki",
+    "next": "Sonraki"
   },
   "reports": {
     "title": "Raporlar",
@@ -94,7 +96,11 @@
     "cancelled": "İptal edildi",
     "empty": "Henüz arka plan işi yok.",
     "emptyHint": "Raporlar'da bir raporun ⋮ menüsünü açıp (ya da sağ tıklayıp) \"Arka planda çalıştır\"ı seçin.",
-    "listLimit": "En son 50 iş gösteriliyor. Biten işler 30 gün sonra kendiliğinden siliniyor."
+    "filterAll": "Tümü",
+    "noMatch": "Bu filtreye uyan iş yok.",
+    "noMatchHint": "Başka bir durum seçin ya da Tümü'ne dönün.",
+    "range": "{{from}}–{{to}} / {{total}}",
+    "retention": "Biten işler 30 gün sonra kendiliğinden siliniyor."
   },
   "team": {
     "title": "Takım",

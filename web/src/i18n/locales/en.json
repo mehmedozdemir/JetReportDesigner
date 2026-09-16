@@ -22,7 +22,9 @@
     "moreActions": "More actions",
     "saving": "Saving…",
     "sending": "Sending…",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "previous": "Previous",
+    "next": "Next"
   },
   "reports": {
     "title": "Reports",
@@ -94,7 +96,11 @@
     "cancelled": "Cancelled",
     "empty": "No background jobs yet.",
     "emptyHint": "Open a report's ⋮ menu (or right-click it) in Reports and choose \"Run in background\".",
-    "listLimit": "Showing the 50 most recent. Older finished jobs are removed automatically after 30 days."
+    "filterAll": "All",
+    "noMatch": "No jobs match this filter.",
+    "noMatchHint": "Pick another status, or go back to All.",
+    "range": "{{from}}–{{to}} of {{total}}",
+    "retention": "Finished jobs are removed automatically after 30 days."
   },
   "team": {
     "title": "Team",

@@ -617,7 +617,15 @@ rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük 
   katlıyordu. `ListAsync`/`GetAsync` artık sorgu içinde `ReportJobInfo`'ya projeksiyon yapıyor,
   blob sütunları hiç seçilmiyor. Ayrıca `ReportJobProcessor` en fazla 6 saatte bir,
   `Jobs:RetentionDays` (varsayılan 30, 0 = kapalı) süresini aşmış bitmiş işleri siliyor.
-  Kalan: sayfalama/filtre UI'si (şu an "en son 50" dipnotu var).
+- ✅ **Jobs sayfalama + durum filtresi** (2026-09-16): `GET /api/jobs` artık
+  `?status=…&sort=…&desc=…&skip=…&take=…` alıyor ve `{ items, total }` dönüyor; `status`
+  tekrarlanabiliyor (OR). Filtreleme, sıralama ve sayfalama **veritabanında** yapılıyor —
+  ekrandaki 25 satırı istemcide sıralamak, göremediği bir geçmişi sıralıyormuş gibi
+  görünürdü. Sayfa boyutu 25, sunucu tarafında 200'e sınırlı; sıralama anahtarı
+  beyaz listede (bilinmeyen → en yeni önce), eşitlik `Id` ile bozuluyor ki iki poll
+  arasında satırlar yer değiştirmesin. Filtre/sıralama değişince sayfa 1'e dönüyor,
+  sayfa altında "1–25 / 34" sayacı ve Önceki/Sonraki var. Nav rozeti artık bir sayfa
+  satır yerine `status=Queued&status=Running&take=1` isteyip `total` okuyor.
 - ✅ **Çoklu seçim / toplu işlem** (2026-09-15): tile/satırda hover'da beliren onay kutusu ya da
   Ctrl/Cmd-tık ile seçim; seçim çubuğundan klasöre taşı veya sil. Düz tık hâlâ raporu açıyor.
   Toplu işlemler mevcut tekil uç noktaları sırayla kullanıp listeyi sonda bir kez yeniliyor.

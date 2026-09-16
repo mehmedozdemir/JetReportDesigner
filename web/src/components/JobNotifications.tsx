@@ -32,7 +32,8 @@ export function JobNotifications() {
     const poll = async () => {
       let jobs: ReportJob[];
       try {
-        jobs = await api.listJobs();
+        // Only the newest handful can have changed status since the last tick.
+        jobs = (await api.listJobs({ take: 20 })).items;
       } catch {
         return; // transient network hiccup — just try again next tick
       }

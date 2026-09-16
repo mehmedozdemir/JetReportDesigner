@@ -307,7 +307,18 @@ export const api = {
       return json<ReportJob>(r);
     }),
 
-  listJobs: (): Promise<ReportJob[]> => fetchWithAuth("/api/jobs").then(json<ReportJob[]>),
+  /** One page of jobs. Filtering, sorting and paging are the server's job — sorting only the
+   *  rows that happen to be on screen would claim to sort a history it can't see. */
+  listJobs: (opts: JobQuery = {}): Promise<JobPage> => {
+    const q = new URLSearchParams();
+    for (const s of opts.statuses ?? []) q.append("status", s);
+    if (opts.sort) q.set("sort", opts.sort);
+    if (opts.desc !== undefined) q.set("desc", String(opts.desc));
+    if (opts.skip) q.set("skip", String(opts.skip));
+    if (opts.take !== undefined) q.set("take", String(opts.take));
+    const qs = q.toString();
+    return fetchWithAuth(`/api/jobs${qs ? `?${qs}` : ""}`).then(json<JobPage>);
+  },
 
   getJob: (id: string): Promise<ReportJob> => fetchWithAuth(`/api/jobs/${id}`).then(json<ReportJob>),
 
@@ -356,6 +367,22 @@ export interface ShareInfo {
 }
 
 export type ReportJobStatus = "Queued" | "Running" | "Succeeded" | "Failed" | "Cancelled";
+
+export type JobSortKey = "reportName" | "format" | "status" | "createdAtUtc";
+
+export interface JobQuery {
+  statuses?: ReportJobStatus[];
+  sort?: JobSortKey;
+  desc?: boolean;
+  skip?: number;
+  take?: number;
+}
+
+/** `total` counts every job matching the filter, not just the returned page. */
+export interface JobPage {
+  items: ReportJob[];
+  total: number;
+}
 
 export interface ReportJob {
   id: string;

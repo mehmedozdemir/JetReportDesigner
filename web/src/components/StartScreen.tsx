@@ -203,10 +203,12 @@ export function StartScreen({
   useEffect(() => {
     let cancelled = false;
     const poll = () => {
+      // take=1 rather than a page of rows: the badge only wants the count, and this polls
+      // every five seconds in every open tab.
       api
-        .listJobs()
-        .then((jobs) => {
-          if (!cancelled) setRunningJobs(jobs.filter((j) => j.status === "Queued" || j.status === "Running").length);
+        .listJobs({ statuses: ["Queued", "Running"], take: 1 })
+        .then((page) => {
+          if (!cancelled) setRunningJobs(page.total);
         })
         .catch(() => undefined);
     };
