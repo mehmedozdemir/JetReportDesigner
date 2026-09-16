@@ -626,6 +626,13 @@ rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük 
   arasında satırlar yer değiştirmesin. Filtre/sıralama değişince sayfa 1'e dönüyor,
   sayfa altında "1–25 / 34" sayacı ve Önceki/Sonraki var. Nav rozeti artık bir sayfa
   satır yerine `status=Queued&status=Running&take=1` isteyip `total` okuyor.
+- ✅ **Renk skalası için örnek rapor** (2026-09-16): `Samples/regional-sales-heatmap.sample.json`
+  — yeni özelliği gösteren, kendi kendine yeten (inline veri) bir örnek rapor. "Analytics"
+  kategorisinde Yeni Rapor galerisinde çıkıyor: matriste bölge×çeyrek ısı haritası (satır/
+  sütun toplamları boyanmadan), tabloda üç durak renkli bir sütun. Diğer örnekler gibi
+  `Samples\*.sample.json` glob'u otomatik yakalıyor; `MetaController.SampleCategories`'e tek
+  satır eklemek yetti. Gerçek bir rapora dönüştürüp render ettim: HTML'de 33 boyalı hücre,
+  tasarımcıda aynı ısı haritası görünüyor — sonra test raporunu sildim.
 - ✅ **Renk skalası / heatmap** (2026-09-16): modern görselleştirme maddesinin ilk parçası.
   `ColorScale` (düşük/orta/yüksek renk + isteğe bağlı sabit sınırlar) matris hücrelerine ve
   tablo sütunlarına takılıyor. Yeni bir `FormatRule` türü **değil**: kural eşik testidir,
