@@ -40,6 +40,18 @@ export interface SubreportSpec {
   parameters: Record<string, string>;
 }
 
+/** A continuous colour scale over a matrix's cells or a table column's values — the heatmap.
+ *  Unlike a format rule, which is a threshold test, this is a gradient across the data's range. */
+export interface ColorScale {
+  lowColor: string;
+  /** Null blends straight from low to high. */
+  midColor?: string | null;
+  highColor: string;
+  /** Null takes the lowest value actually present. */
+  min?: number | null;
+  max?: number | null;
+}
+
 export interface MatrixSpec {
   dataSource: string;
   rowField: string;
@@ -50,6 +62,7 @@ export interface MatrixSpec {
   format?: string | null;
   showRowTotals: boolean;
   showColumnTotals: boolean;
+  colorScale?: ColorScale | null;
 }
 
 export type BarcodeSymbology = "qr" | "code128" | "ean13" | "code39" | "dataMatrix";
@@ -142,6 +155,7 @@ export interface TableColumn {
   width: number;
   format?: string | null;
   align: TextAlign;
+  colorScale?: ColorScale | null;
 }
 
 export interface TableSpec {

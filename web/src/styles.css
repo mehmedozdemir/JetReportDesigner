@@ -429,6 +429,11 @@ body {
 .mini.ghost { border-color: transparent; }
 .mini.danger:hover:not(:disabled) { background: var(--error-bg); color: var(--error); border-color: var(--error); }
 
+/* Colour-scale (heatmap) editor: a preview strip over the stop pickers and the bounds. */
+.scale-editor { display: flex; flex-direction: column; gap: 5px; margin: 4px 0 8px; }
+.scale-strip { display: flex; height: 10px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); }
+.scale-strip span { flex: 1; }
+
 /* ============================================================
    Background job tray — the downloads-button pattern: a button in the app chrome with a
    panel under it, so sending a report to the background never has to take you anywhere.

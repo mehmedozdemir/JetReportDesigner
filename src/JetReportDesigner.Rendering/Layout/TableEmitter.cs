@@ -33,6 +33,34 @@ public static class TableEmitter
         var y = element.Bounds.Y + offsetY;
         var grid = style.Border?.Color;
 
+        // A column's scale needs the whole column's range before the first row is emitted, and
+        // this is a lazy sequence — so resolve the scaled columns' raw values up front. Columns
+        // without a scale (the usual case) cost nothing here.
+        var ranges = new Dictionary<int, (double Min, double Max)>();
+        var numbers = new Dictionary<(int Column, int Row), double>();
+        for (var c = 0; c < table.Columns.Count; c++)
+        {
+            var scale = table.Columns[c].ColorScale;
+            if (scale is null)
+            {
+                continue;
+            }
+
+            for (var r = 0; r < rows.Count; r++)
+            {
+                var raw = BindingResolver.ResolveGroupKey(table.Columns[c].Value, context.WithRow(rows[r]));
+                if (ColorScalePainter.Number(raw) is { } n)
+                {
+                    numbers[(c, r)] = n;
+                }
+            }
+
+            if (ColorScalePainter.Range(scale, numbers.Where(kv => kv.Key.Column == c).Select(kv => kv.Value)) is { } range)
+            {
+                ranges[c] = range;
+            }
+        }
+
         if (table.ShowHeader)
         {
             var cx = x0;
@@ -50,13 +78,21 @@ public static class TableEmitter
             y += rowHeight;
         }
 
-        foreach (var row in rows)
+        for (var r = 0; r < rows.Count; r++)
         {
-            var rowContext = context.WithRow(row);
+            var rowContext = context.WithRow(rows[r]);
             var cx = x0;
-            foreach (var column in table.Columns)
+            for (var c = 0; c < table.Columns.Count; c++)
             {
-                yield return BodyCell(column, cx, y, rowHeight, style, rowContext);
+                var column = table.Columns[c];
+                string? fill = null;
+                if (column.ColorScale is { } scale && ranges.TryGetValue(c, out var range) && numbers.TryGetValue((c, r), out var n))
+                {
+                    fill = ColorScalePainter.Fill(scale, n, range.Min, range.Max);
+                    yield return Paint(cx, y, column.Width, rowHeight, fill);
+                }
+
+                yield return BodyCell(column, cx, y, rowHeight, style, rowContext, fill is null ? null : ColorScalePainter.TextOn(fill));
                 cx += column.Width;
             }
 
@@ -90,7 +126,8 @@ public static class TableEmitter
         double y,
         double h,
         EffectiveStyle style,
-        BindingContext context) => new()
+        BindingContext context,
+        string? colorHex = null) => new()
     {
         X = x + 2,
         Y = y,
@@ -99,10 +136,14 @@ public static class TableEmitter
         Text = BindingResolver.ResolveValue(column.Value, column.Format, context),
         FontFamily = style.FontFamily,
         FontSizePt = style.FontSizePt,
-        ColorHex = style.Color,
+        ColorHex = colorHex ?? style.Color,
         VAlign = VerticalAnchor.Middle,
         HAlign = Anchor(column.Align),
     };
+
+    /// <summary>Drawn before the text so the value sits on top of its fill.</summary>
+    private static RectanglePrimitive Paint(double x, double y, double w, double h, string fill) =>
+        new() { X = x, Y = y, Width = w, Height = h, FillColorHex = fill, BorderThicknessPx = 0 };
 
     private static LinePrimitive HLine(double x, double y, double width, string color) => new()
     {

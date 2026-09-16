@@ -1,3 +1,4 @@
+import { scaleFill, textOn } from "../colorScale";
 import type { MatrixSpec } from "../types";
 
 // Fixed representative sample — same spirit as the table element's two fake rows.
@@ -10,6 +11,18 @@ const ROWS: { key: string; values: number[] }[] = [
 export function MatrixPreview({ spec }: { spec: MatrixSpec }) {
   const colTotals = COLS.map((_, c) => ROWS.reduce((sum, r) => sum + r.values[c], 0));
   const grandTotal = colTotals.reduce((a, b) => a + b, 0);
+
+  // Same range rule as the renderer: the grid's own cells, never the totals, so the canvas
+  // shows the shading you'll actually get.
+  const cells = ROWS.flatMap((r) => r.values);
+  const scale = spec.colorScale;
+  const min = scale?.min ?? Math.min(...cells);
+  const max = scale?.max ?? Math.max(...cells);
+  const paint = (v: number) => {
+    if (!scale) return undefined;
+    const background = scaleFill(scale, v, min, max);
+    return { background, color: textOn(background) };
+  };
 
   return (
     <table className="tbl-preview">
@@ -24,7 +37,11 @@ export function MatrixPreview({ spec }: { spec: MatrixSpec }) {
         {ROWS.map((r) => (
           <tr key={r.key}>
             <td>{r.key}</td>
-            {r.values.map((v, i) => <td key={i} style={{ textAlign: "right" }}>{v}</td>)}
+            {r.values.map((v, i) => (
+              <td key={i} style={{ textAlign: "right", ...paint(v) }}>
+                {v}
+              </td>
+            ))}
             {spec.showRowTotals && (
               <td style={{ textAlign: "right", fontWeight: 600 }}>{r.values.reduce((a, b) => a + b, 0)}</td>
             )}

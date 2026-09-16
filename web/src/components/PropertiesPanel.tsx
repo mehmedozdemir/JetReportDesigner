@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { DEFAULT_COLOR_SCALE } from "../colorScale";
+import { ColorScaleEditor } from "./ColorScaleEditor";
 import type { LucideIcon } from "lucide-react";
 import {
   AlignCenter,
@@ -28,6 +30,7 @@ import {
   PanelLeft,
   PanelRight,
   PanelTop,
+  Palette,
   Plus,
   QrCode,
   Rows3,
@@ -697,6 +700,20 @@ function ElementProperties({
             />
             <span>{t("props.columnTotals")}</span>
           </label>
+          <label className="row" style={{ marginBottom: 4 }}>
+            <input
+              type="checkbox"
+              checked={!!element.matrix.colorScale}
+              onChange={(v) => onPatch((e) => (e.matrix!.colorScale = v.target.checked ? { ...DEFAULT_COLOR_SCALE } : null))}
+            />
+            <span>{t("props.colorScale")}</span>
+          </label>
+          {element.matrix.colorScale && (
+            <ColorScaleEditor
+              scale={element.matrix.colorScale}
+              onChange={(patch) => onPatch((e) => patch(e.matrix!.colorScale!))}
+            />
+          )}
         </div>
       )}
 
@@ -757,10 +774,30 @@ function ElementProperties({
                   placeholder="fmt"
                   onChange={(v) => onPatch((e) => (e.table!.columns[i].format = v.target.value || null))}
                 />
+                <button
+                  className={`mini ${col.colorScale ? "on" : ""}`}
+                  type="button"
+                  title={t("props.colorScale")}
+                  aria-label={t("props.colorScale")}
+                  aria-pressed={!!col.colorScale}
+                  onClick={() =>
+                    onPatch((e) => {
+                      e.table!.columns[i].colorScale = col.colorScale ? null : { ...DEFAULT_COLOR_SCALE };
+                    })
+                  }
+                >
+                  <Palette />
+                </button>
                 <button className="mini danger" onClick={() => onPatch((e) => e.table!.columns.splice(i, 1))} aria-label={t("props.removeColumn")}>
                   <Trash2 />
                 </button>
               </div>
+              {col.colorScale && (
+                <ColorScaleEditor
+                  scale={col.colorScale}
+                  onChange={(patch) => onPatch((e) => patch(e.table!.columns[i].colorScale!))}
+                />
+              )}
             </div>
           ))}
           <button

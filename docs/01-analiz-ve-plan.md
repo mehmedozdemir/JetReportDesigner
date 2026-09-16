@@ -626,6 +626,21 @@ rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük 
   arasında satırlar yer değiştirmesin. Filtre/sıralama değişince sayfa 1'e dönüyor,
   sayfa altında "1–25 / 34" sayacı ve Önceki/Sonraki var. Nav rozeti artık bir sayfa
   satır yerine `status=Queued&status=Running&take=1` isteyip `total` okuyor.
+- ✅ **Renk skalası / heatmap** (2026-09-16): modern görselleştirme maddesinin ilk parçası.
+  `ColorScale` (düşük/orta/yüksek renk + isteğe bağlı sabit sınırlar) matris hücrelerine ve
+  tablo sütunlarına takılıyor. Yeni bir `FormatRule` türü **değil**: kural eşik testidir,
+  gradyanı kurallarla ifade etmek her değer aralığı için ayrı kural yazmak demekti.
+  - Aralık varsayılan olarak otomatik: matriste **yalnızca gövde hücreleri**, toplamlar hariç —
+    satır toplamı kendi hücrelerini ezip skalayı tek tona düşürürdü.
+  - Metin rengi WCAG bağıl parlaklığına göre siyah/beyaz seçiliyor; koyu uçtaki (yani en
+    önemli) hücreler okunaksız kalmasın diye. Düz RGB ortalaması doygun maviyi "açık" sayıp
+    okunmaz siyah metin seçiyordu.
+  - Sayısal olmayan/boş hücre boyanmıyor — sıfır gibi görünmesi yanlış olurdu.
+  - Emitter'lar tembel dizi olduğu için hücre değerleri önden hesaplanıyor; skala ilk hücre
+    boyanmadan önce aralığı bilmek zorunda.
+  - **Sınır:** PDF ve HTML'de çıkıyor, **XLSX'te çıkmıyor** — Excel kolu tanımdan yalnızca
+    tablo değerlerini yazıyor, primitive akışını tüketmiyor. Excel'in kendi koşullu
+    biçimlendirmesine yazmak ayrı bir iş.
 - ✅ **Arka plan iş tepsisi** (2026-09-16): raporu arka plana gönderince artık **Jobs sayfasına
   yönlendirilmiyorsun** — asıl amaç kaldığın yerde kalmaktı. Tarayıcıdaki indirmeler düğmesi
   gibi bir tepsi eklendi: tasarımcı toolbar'ında (Ayarlar'ın solunda) ve Start ekranının sol
