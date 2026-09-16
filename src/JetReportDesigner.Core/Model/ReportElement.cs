@@ -112,6 +112,12 @@ public sealed class TableColumn
     /// <summary>Paints each cell in this column by where its value falls in the column's range.
     /// Null leaves the column unpainted.</summary>
     public ColorScale? ColorScale { get; set; }
+
+    /// <summary>Draws a per-row mini trend chart instead of this column's text. Mutually
+    /// meaningful on its own — a sparkline column's <see cref="Value"/> binding supplies the
+    /// series, not a single displayed value, so <see cref="Format"/> and <see cref="ColorScale"/>
+    /// are ignored when this is set.</summary>
+    public SparklineSpec? Sparkline { get; set; }
 }
 
 public sealed class ChartSpec

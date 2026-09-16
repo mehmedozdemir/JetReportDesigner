@@ -29,6 +29,7 @@ public sealed class MetaController : ControllerBase
         ["personnel-card"] = "Cards & IDs",
         ["transit-card"] = "Cards & IDs",
         ["regional-sales-heatmap"] = "Analytics",
+        ["sparkline-trends"] = "Analytics",
     };
 
     /// <summary>Built-in sample reports the designer can create from.</summary>

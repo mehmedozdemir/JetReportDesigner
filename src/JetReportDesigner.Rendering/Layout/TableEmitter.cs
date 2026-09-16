@@ -41,7 +41,7 @@ public static class TableEmitter
         for (var c = 0; c < table.Columns.Count; c++)
         {
             var scale = table.Columns[c].ColorScale;
-            if (scale is null)
+            if (scale is null || table.Columns[c].Sparkline is not null)
             {
                 continue;
             }
@@ -85,14 +85,29 @@ public static class TableEmitter
             for (var c = 0; c < table.Columns.Count; c++)
             {
                 var column = table.Columns[c];
-                string? fill = null;
-                if (column.ColorScale is { } scale && ranges.TryGetValue(c, out var range) && numbers.TryGetValue((c, r), out var n))
+                if (column.Sparkline is { } spark)
                 {
-                    fill = ColorScalePainter.Fill(scale, n, range.Min, range.Max);
-                    yield return Paint(cx, y, column.Width, rowHeight, fill);
+                    // Replaces the cell's text entirely: a sparkline column's Value binding
+                    // supplies the whole series, not one formatted value to show alongside it.
+                    var raw = BindingResolver.ResolveGroupKey(column.Value, rowContext);
+                    var values = SparklineValues.Parse(raw);
+                    foreach (var p in SparklineEmitter.Emit(spark, values, cx, y, column.Width, rowHeight))
+                    {
+                        yield return p;
+                    }
+                }
+                else
+                {
+                    string? fill = null;
+                    if (column.ColorScale is { } scale && ranges.TryGetValue(c, out var range) && numbers.TryGetValue((c, r), out var n))
+                    {
+                        fill = ColorScalePainter.Fill(scale, n, range.Min, range.Max);
+                        yield return Paint(cx, y, column.Width, rowHeight, fill);
+                    }
+
+                    yield return BodyCell(column, cx, y, rowHeight, style, rowContext, fill is null ? null : ColorScalePainter.TextOn(fill));
                 }
 
-                yield return BodyCell(column, cx, y, rowHeight, style, rowContext, fill is null ? null : ColorScalePainter.TextOn(fill));
                 cx += column.Width;
             }
 

@@ -626,6 +626,33 @@ rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük 
   arasında satırlar yer değiştirmesin. Filtre/sıralama değişince sayfa 1'e dönüyor,
   sayfa altında "1–25 / 34" sayacı ve Önceki/Sonraki var. Nav rozeti artık bir sayfa
   satır yerine `status=Queued&status=Running&take=1` isteyip `total` okuyor.
+- ✅ **Sparkline (hücre içi mini eğilim grafiği)** (2026-09-16): modern görselleştirme
+  maddesinin 2. parçası. `SparklineSpec` (çizgi/çubuk, renk, alan doldurma, isteğe bağlı
+  "son nokta" vurgu rengi) tablo sütununa takılıyor — matrise değil, çünkü seri kavramı
+  satır bazlı: sütunun `Value` bağlaması artık tek bir değeri değil, tüm seriyi besliyor
+  (JSON dizisi `[4,7,2,9]` — bir JSON veri kaynağındaki iç içe dizi alanının doğal biçimi
+  zaten bu — ya da virgülle ayrılmış liste). Sparkline açıkken sütunun `Format`/`ColorScale`
+  alanları göz ardı ediliyor; ikisi aynı hücrede anlamsız.
+  - Her iki tip de kendi min/max'ı üzerinden aynı yükseklik eşlemesini kullanıyor —
+    sıfır tabanlı çubuk taban çizgisi bilerek atlandı, aynı seri çizgi ve çubukta
+    farklı okunurdu.
+  - Tasarımcı kanvası sabit örnek iki seriyle (MatrixPreview'daki gibi) gerçek şekli
+    gösteriyor; gerçek veri yalnızca render çıktısında.
+  - **Sınır:** HTML önizlemede çapraz çizgi, motorun köşegen olmayan çizgileri
+    eksenle-hizalı dolgu kutusu olarak çizmesi yüzünden basamaklı görünüyor — bu
+    ChartEmitter'ın çizgi/alan grafiklerini de etkileyen, önceden var olan bir motor
+    davranışı, kapsam dışı bıraktım. PDF çıktısında (`XGraphics.DrawLine`) gerçek
+    çapraz çizgi çiziliyor, doğrulandı.
+  - Satır yüksekliği tüm sütunlar arasında paylaşılıyor (yazı boyutundan türetiliyor,
+    sütun başına ayarlanamıyor) — çok daha yüksek bir sparkline istenirse tablo
+    elemanının yazı boyutunu büyütmek pratik kaldıraç.
+  - Doğrulama: 5 satırlık örnek veri → HTML'de 30 çizgi parçası (5×6), 35 çubuk
+    (5×7), 5 vurgu noktası — beklenenle birebir. PDF içerik akışında gerçek `RG`/`m`/`l`
+    çizgi operatörleri var. Tasarımcıda hem tasarım hem "Önizleme" (gerçek render)
+    sekmesinde ekran görüntüsüyle doğrulandı.
+- ✅ **Sparkline için örnek rapor** (2026-09-16): `Samples/sparkline-trends.sample.json`
+  — "Analytics" kategorisinde, 5 ürünün 7 haftalık eğilimini çizgi (kırmızı son-nokta
+  vurgusu) ve çubuk sütunlarıyla gösteriyor.
 - ✅ **Renk skalası için örnek rapor** (2026-09-16): `Samples/regional-sales-heatmap.sample.json`
   — yeni özelliği gösteren, kendi kendine yeten (inline veri) bir örnek rapor. "Analytics"
   kategorisinde Yeni Rapor galerisinde çıkıyor: matriste bölge×çeyrek ısı haritası (satır/

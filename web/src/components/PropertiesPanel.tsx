@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DEFAULT_COLOR_SCALE } from "../colorScale";
+import { DEFAULT_SPARKLINE } from "../sparkline";
+import { SparklineEditor } from "./SparklineEditor";
 import { ColorScaleEditor } from "./ColorScaleEditor";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -32,6 +34,7 @@ import {
   PanelTop,
   Palette,
   Plus,
+  TrendingUp,
   QrCode,
   Rows3,
   Square,
@@ -780,6 +783,7 @@ function ElementProperties({
                   title={t("props.colorScale")}
                   aria-label={t("props.colorScale")}
                   aria-pressed={!!col.colorScale}
+                  disabled={!!col.sparkline}
                   onClick={() =>
                     onPatch((e) => {
                       e.table!.columns[i].colorScale = col.colorScale ? null : { ...DEFAULT_COLOR_SCALE };
@@ -788,14 +792,34 @@ function ElementProperties({
                 >
                   <Palette />
                 </button>
+                <button
+                  className={`mini ${col.sparkline ? "on" : ""}`}
+                  type="button"
+                  title={t("props.sparkline")}
+                  aria-label={t("props.sparkline")}
+                  aria-pressed={!!col.sparkline}
+                  onClick={() =>
+                    onPatch((e) => {
+                      e.table!.columns[i].sparkline = col.sparkline ? null : { ...DEFAULT_SPARKLINE };
+                    })
+                  }
+                >
+                  <TrendingUp />
+                </button>
                 <button className="mini danger" onClick={() => onPatch((e) => e.table!.columns.splice(i, 1))} aria-label={t("props.removeColumn")}>
                   <Trash2 />
                 </button>
               </div>
-              {col.colorScale && (
+              {col.colorScale && !col.sparkline && (
                 <ColorScaleEditor
                   scale={col.colorScale}
                   onChange={(patch) => onPatch((e) => patch(e.table!.columns[i].colorScale!))}
+                />
+              )}
+              {col.sparkline && (
+                <SparklineEditor
+                  spec={col.sparkline}
+                  onChange={(patch) => onPatch((e) => patch(e.table!.columns[i].sparkline!))}
                 />
               )}
             </div>

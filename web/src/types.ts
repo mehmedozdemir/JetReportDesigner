@@ -149,6 +149,15 @@ export type AggregateFunction =
   | "last";
 export type AggregateScope = "group" | "report" | "page";
 
+/** A per-row mini trend chart drawn instead of a table cell's text. The column's own `value`
+ *  binding supplies the series: a JSON array or a comma-separated list of numbers. */
+export interface SparklineSpec {
+  type: "line" | "bar";
+  color: string;
+  showArea: boolean;
+  highlightColor?: string | null;
+}
+
 export interface TableColumn {
   header: string;
   value: string;
@@ -156,6 +165,7 @@ export interface TableColumn {
   format?: string | null;
   align: TextAlign;
   colorScale?: ColorScale | null;
+  sparkline?: SparklineSpec | null;
 }
 
 export interface TableSpec {
