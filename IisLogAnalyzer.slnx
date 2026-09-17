@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/IisLogAnalyzer.App/IisLogAnalyzer.App.csproj" />
+    <Project Path="src/IisLogAnalyzer.Core/IisLogAnalyzer.Core.csproj" />
+  </Folder>
+</Solution>
