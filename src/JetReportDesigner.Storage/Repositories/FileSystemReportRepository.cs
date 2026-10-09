@@ -73,7 +73,8 @@ internal sealed class FileSystemReportRepository : IReportRepository
                     envelope.Definition.LayoutMode,
                     envelope.CreatedAtUtc,
                     envelope.UpdatedAtUtc,
-                    envelope.CreatedByEmail));
+                    envelope.CreatedByEmail,
+                    envelope.Definition.Code));
             }
         }
 
@@ -106,6 +107,7 @@ internal sealed class FileSystemReportRepository : IReportRepository
         var now = _clock.GetUtcNow().UtcDateTime;
         var id = definition.Id == Guid.Empty ? Guid.NewGuid() : definition.Id;
         definition.Id = id;
+        definition.Code = await ResolveCodeAsync(definition, id, null, cancellationToken);
 
         var envelope = new Envelope(definition, now, now, Guid.NewGuid(), createdByEmail);
         await WriteAsync(ReportPath(id), envelope, cancellationToken);
@@ -133,6 +135,7 @@ internal sealed class FileSystemReportRepository : IReportRepository
 
         var now = _clock.GetUtcNow().UtcDateTime;
         definition.Id = id;
+        definition.Code = await ResolveCodeAsync(definition, id, existing.Definition.Code, cancellationToken);
         var envelope = new Envelope(definition, existing.CreatedAtUtc, now, Guid.NewGuid(), existing.CreatedByEmail);
         await WriteAsync(ReportPath(id), envelope, cancellationToken);
 
@@ -140,6 +143,28 @@ internal sealed class FileSystemReportRepository : IReportRepository
         await WriteVersionAsync(id, nextVersion, definition, now, cancellationToken);
 
         return new ReportRecord(id, definition, existing.CreatedAtUtc, now, envelope.ConcurrencyToken, existing.CreatedByEmail);
+    }
+
+    /// <summary>Same rules as the database store: keep an explicit code, else the existing one, else make one from the name.</summary>
+    private async Task<string> ResolveCodeAsync(ReportDefinition definition, Guid id, string? existing, CancellationToken cancellationToken)
+    {
+        var taken = (await ListAsync(cancellationToken))
+            .Where(r => r.Id != id && r.Code is not null)
+            .Select(r => r.Code!)
+            .ToHashSet(StringComparer.Ordinal);
+
+        if (!string.IsNullOrWhiteSpace(definition.Code))
+        {
+            var code = ReportCode.Normalize(definition.Code);
+            return taken.Contains(code) ? throw new ReportCodeConflictException(code) : code;
+        }
+
+        if (existing is not null && !taken.Contains(existing))
+        {
+            return existing;
+        }
+
+        return ReportCode.MakeUnique(ReportCode.FromName(definition.Name), taken.Contains);
     }
 
     public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)

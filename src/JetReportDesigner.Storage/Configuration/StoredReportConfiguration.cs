@@ -14,6 +14,7 @@ internal sealed class StoredReportConfiguration : IEntityTypeConfiguration<Store
         builder.Property(r => r.Id).ValueGeneratedNever();
 
         builder.Property(r => r.Name).HasMaxLength(200).IsRequired();
+        builder.Property(r => r.Code).HasMaxLength(64);
         builder.Property(r => r.Description).HasMaxLength(2000);
         builder.Property(r => r.LayoutMode).HasMaxLength(16).IsRequired();
 
@@ -24,5 +25,7 @@ internal sealed class StoredReportConfiguration : IEntityTypeConfiguration<Store
 
         builder.HasIndex(r => r.Name);
         builder.HasIndex(r => r.TenantId);
+        // Unique per organization. Nullable so reports predating codes do not collide before the backfill.
+        builder.HasIndex(r => new { r.TenantId, r.Code }).IsUnique();
     }
 }

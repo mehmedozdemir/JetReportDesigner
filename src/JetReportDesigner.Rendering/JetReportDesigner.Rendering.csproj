@@ -1,10 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <!-- PDFtoImage (pdfium) runs on Windows/Linux/macOS, which is everywhere this service is hosted. -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="PdfSharp" />
     <PackageReference Include="PDFsharp-MigraDoc" />
     <PackageReference Include="ClosedXML" />
     <PackageReference Include="ZXing.Net" />
+    <PackageReference Include="PDFtoImage" />
   </ItemGroup>
 
   <ItemGroup>

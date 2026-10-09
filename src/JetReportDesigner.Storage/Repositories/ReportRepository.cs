@@ -14,11 +14,11 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
             .AsNoTracking()
             .Where(r => r.TenantId == tenant.TenantId)
             .OrderByDescending(r => r.UpdatedAtUtc)
-            .Select(r => new { r.Id, r.Name, r.LayoutMode, r.CreatedAtUtc, r.UpdatedAtUtc, r.CreatedByEmail })
+            .Select(r => new { r.Id, r.Name, r.LayoutMode, r.CreatedAtUtc, r.UpdatedAtUtc, r.CreatedByEmail, r.Code })
             .ToListAsync(cancellationToken);
 
         return rows
-            .Select(r => new ReportSummary(r.Id, r.Name, ParseLayout(r.LayoutMode), r.CreatedAtUtc, r.UpdatedAtUtc, r.CreatedByEmail))
+            .Select(r => new ReportSummary(r.Id, r.Name, ParseLayout(r.LayoutMode), r.CreatedAtUtc, r.UpdatedAtUtc, r.CreatedByEmail, r.Code))
             .ToList();
     }
 
@@ -43,12 +43,14 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         var now = clock.GetUtcNow().UtcDateTime;
         var id = definition.Id == Guid.Empty ? Guid.NewGuid() : definition.Id;
         definition.Id = id;
+        definition.Code = await ResolveCodeAsync(definition, id, cancellationToken);
 
         var row = new StoredReport
         {
             Id = id,
             TenantId = tenant.TenantId,
             Name = definition.Name,
+            Code = definition.Code,
             Description = definition.Description,
             LayoutMode = LayoutToString(definition.LayoutMode),
             DefinitionJson = ReportJson.Serialize(definition),
@@ -61,7 +63,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
 
         db.Reports.Add(row);
         db.ReportVersions.Add(NewVersion(row, version: 1));
-        await db.SaveChangesAsync(cancellationToken);
+        await SaveAsync(row.Code, cancellationToken);
         return ToRecord(row);
     }
 
@@ -83,6 +85,8 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         }
 
         definition.Id = id;
+        definition.Code = await ResolveCodeAsync(definition, id, cancellationToken, row.Code);
+        row.Code = definition.Code;
         row.Name = definition.Name;
         row.Description = definition.Description;
         row.LayoutMode = LayoutToString(definition.LayoutMode);
@@ -95,7 +99,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
 
         try
         {
-            await db.SaveChangesAsync(cancellationToken);
+            await SaveAsync(row.Code, cancellationToken);
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -103,6 +107,48 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         }
 
         return ToRecord(row);
+    }
+
+    /// <summary>
+    /// The code the report is saved under: the one it carries (normalised), else the one it already had,
+    /// else a fresh one made from its name. An explicit code that another report holds is a conflict;
+    /// a generated one just gets a numeric suffix.
+    /// </summary>
+    private async Task<string> ResolveCodeAsync(ReportDefinition definition, Guid id, CancellationToken cancellationToken, string? existing = null)
+    {
+        var taken = await db.Reports
+            .AsNoTracking()
+            .Where(r => r.TenantId == tenant.TenantId && r.Id != id && r.Code != null)
+            .Select(r => r.Code!)
+            .ToListAsync(cancellationToken);
+        var set = new HashSet<string>(taken, StringComparer.Ordinal);
+
+        if (!string.IsNullOrWhiteSpace(definition.Code))
+        {
+            var code = ReportCode.Normalize(definition.Code);
+            return set.Contains(code) ? throw new ReportCodeConflictException(code) : code;
+        }
+
+        if (existing is not null && !set.Contains(existing))
+        {
+            return existing;
+        }
+
+        return ReportCode.MakeUnique(ReportCode.FromName(definition.Name), set.Contains);
+    }
+
+    /// <summary>Saves, turning a unique-index violation on the code (a concurrent save won the race) into a conflict.</summary>
+    private async Task SaveAsync(string? code, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (code is not null && ex is not DbUpdateConcurrencyException
+            && ex.InnerException?.Message.Contains("Code", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            throw new ReportCodeConflictException(code);
+        }
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)

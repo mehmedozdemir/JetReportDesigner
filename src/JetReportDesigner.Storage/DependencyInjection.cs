@@ -1,3 +1,4 @@
+using JetReportDesigner.Storage.ApiKeys;
 using JetReportDesigner.Storage.Assets;
 using JetReportDesigner.Storage.Connections;
 using JetReportDesigner.Storage.Email;
@@ -50,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<ISmtpSettingsRepository, SmtpSettingsRepository>();
         services.AddScoped<IReportJobRepository, ReportJobRepository>();
         services.AddScoped<IReportScheduleRepository, ReportScheduleRepository>();
+        services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
 
         if (options.ReportStore.Equals("filesystem", StringComparison.OrdinalIgnoreCase))
         {
@@ -132,6 +134,46 @@ public static class DependencyInjection
             db.Tenants.Add(new Entities.Tenant { Id = Guid.Empty, Name = "Default Organization", CreatedAtUtc = clock.GetUtcNow().UtcDateTime });
             await db.SaveChangesAsync(cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Gives every report saved before codes existed one, made from its name (unique per organization).
+    /// Call once at startup, after migrations. A no-op once everything has a code. Only the database store
+    /// is backfilled — file-system reports get theirs the next time they are saved.
+    /// </summary>
+    public static async Task BackfillReportCodesAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JetReportDbContext>();
+
+        var missing = await db.Reports.Where(r => r.Code == null || (r.Code.StartsWith("tmp-") && r.Code.Length == 36)).OrderBy(r => r.CreatedAtUtc).ToListAsync(cancellationToken);
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        var taken = (await db.Reports.Where(r => r.Code != null && !(r.Code.StartsWith("tmp-") && r.Code.Length == 36)).Select(r => new { r.TenantId, Code = r.Code! }).ToListAsync(cancellationToken))
+            .GroupBy(r => r.TenantId)
+            .ToDictionary(g => g.Key, g => g.Select(r => r.Code).ToHashSet(StringComparer.Ordinal));
+
+        foreach (var report in missing)
+        {
+            if (!taken.TryGetValue(report.TenantId, out var set))
+            {
+                taken[report.TenantId] = set = new HashSet<string>(StringComparer.Ordinal);
+            }
+
+            var code = Core.Model.ReportCode.MakeUnique(Core.Model.ReportCode.FromName(report.Name), set.Contains);
+            set.Add(code);
+            report.Code = code;
+
+            // The definition carries the code too, so the designer shows it and later saves keep it.
+            var definition = Core.Serialization.ReportJson.Deserialize(report.DefinitionJson);
+            definition.Code = code;
+            report.DefinitionJson = Core.Serialization.ReportJson.Serialize(definition);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     private static void TryAddSingletonTimeProvider(this IServiceCollection services)

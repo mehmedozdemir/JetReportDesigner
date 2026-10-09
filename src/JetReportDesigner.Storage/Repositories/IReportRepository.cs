@@ -8,7 +8,8 @@ public sealed record ReportSummary(
     LayoutMode LayoutMode,
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
-    string? CreatedByEmail = null);
+    string? CreatedByEmail = null,
+    string? Code = null);
 
 public sealed record ReportRecord(
     Guid Id,
@@ -21,6 +22,13 @@ public sealed record ReportRecord(
 public sealed record ReportVersionInfo(int Version, string Name, DateTime SavedAtUtc);
 
 public sealed record ReportVersionRecord(int Version, string Name, DateTime SavedAtUtc, ReportDefinition Definition);
+
+/// <summary>Thrown when a report is saved with a code another report in the organization already uses.</summary>
+public sealed class ReportCodeConflictException(string code)
+    : Exception($"Another report already uses the code '{code}'.")
+{
+    public string Code { get; } = code;
+}
 
 /// <summary>Thrown by <see cref="IReportRepository.UpdateAsync"/> when the supplied concurrency token is stale.</summary>
 public sealed class ReportConcurrencyException(Guid id)

@@ -15,6 +15,13 @@ public sealed class ReportDefinition
 
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Stable, unique-per-organization identifier meant for programs to call the report by
+    /// (<c>barkod-rapor</c>): lowercase ASCII letters, digits, '-' and '_' only — no spaces, no Turkish
+    /// characters. Generated from <see cref="Name"/> when left empty; the name can then change freely.
+    /// </summary>
+    public string? Code { get; set; }
+
     public string? Description { get; set; }
 
     public LayoutMode LayoutMode { get; set; } = LayoutMode.Free;

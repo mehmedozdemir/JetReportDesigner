@@ -47,7 +47,18 @@ builder.Services.AddSingleton<JwtTokenService>();
 var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
 var jwtSecret = jwtSection["Secret"] ?? string.Empty;
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddAuthentication(options =>
+    {
+        // A request carrying X-Api-Key is a machine client; anything else is a signed-in user's JWT.
+        options.DefaultScheme = "JwtOrApiKey";
+        options.DefaultChallengeScheme = "JwtOrApiKey";
+    })
+    .AddPolicyScheme("JwtOrApiKey", "JWT or API key", options =>
+        options.ForwardDefaultSelector = ctx =>
+            ctx.Request.Headers.ContainsKey(ApiKeyDefaults.HeaderName)
+                ? ApiKeyDefaults.Scheme
+                : JwtBearerDefaults.AuthenticationScheme)
+    .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(ApiKeyDefaults.Scheme, _ => { })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -146,6 +157,7 @@ if (storageOptions.MigrateOnStartup)
 
 await app.Services.SeedJetReportRolesAsync();
 await app.Services.SeedDefaultTenantAsync();
+await app.Services.BackfillReportCodesAsync();
 
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
@@ -161,14 +173,14 @@ app.UseRequestLocalization(new RequestLocalizationOptions()
     .AddSupportedCultures(supportedCultures)
     .AddSupportedUICultures(supportedCultures));
 
+// Serve the built SPA from wwwroot when present before auth, so the fallback policy never gates it (single-container deployment).
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseCors(SpaCorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Serve the built SPA from wwwroot when present (single-container deployment).
-app.UseDefaultFiles();
-app.UseStaticFiles();
 
 app.MapControllers();
 app.MapHealthChecks("/health/live", new() { Predicate = _ => false }).AllowAnonymous();

@@ -22,6 +22,59 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
 
             OracleModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("JetReportDesigner.Storage.Entities.ApiKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("RAW(16)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<string>("CreatedByEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("NVARCHAR2(1000)");
+
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("BOOLEAN");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("NVARCHAR2(64)");
+
+                    b.Property<string>("KeyPrefix")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("NVARCHAR2(24)");
+
+                    b.Property<DateTime?>("LastUsedAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("NVARCHAR2(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("RAW(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeyHash")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("ApiKeys", (string)null);
+                });
+
             modelBuilder.Entity("JetReportDesigner.Storage.Entities.AppRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -477,6 +530,10 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("RAW(16)");
 
+                    b.Property<string>("Code")
+                        .HasMaxLength(64)
+                        .HasColumnType("NVARCHAR2(64)");
+
                     b.Property<Guid>("ConcurrencyToken")
                         .IsConcurrencyToken()
                         .HasColumnType("RAW(16)");
@@ -519,6 +576,10 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                     b.HasIndex("Name");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "Code")
+                        .IsUnique()
+                        .HasFilter("\"Code\" IS NOT NULL");
 
                     b.ToTable("Reports", (string)null);
                 });

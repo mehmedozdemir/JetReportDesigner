@@ -18,6 +18,19 @@ services:
       timeout: 5s
       retries: 10
 
+  app:
+    build: .
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      Storage__Provider: "SqlServer"
+      Storage__ConnectionString: "Server=sqlserver,1433;Database=JetReportDesigner;User Id=sa;Password=Your_strong_Pass123;TrustServerCertificate=True;Encrypt=False"
+      Storage__MigrateOnStartup: "true"
+      Jwt__Secret: "local-docker-dev-secret-change-me-0123456789abcdef"
+    ports:
+      - "8081:8080"
+
   postgres:
     image: postgres:16-alpine
     environment:

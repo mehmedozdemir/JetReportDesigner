@@ -33,6 +33,8 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
 
     public DbSet<ReportSchedule> ReportSchedules => Set<ReportSchedule>();
 
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

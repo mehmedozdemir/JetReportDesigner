@@ -12,9 +12,28 @@ public enum RenderFormat
     Pdf,
     Html,
     Xlsx,
+    Png,
+    Jpeg,
 }
 
-public sealed record RenderResult(byte[] Content, string ContentType, string FileName);
+/// <summary>
+/// Per-call render options. <see cref="DataOverrides"/> replaces the rows of the named data sources
+/// with the given JSON (an array of objects) for this render only — the stored report is untouched.
+/// <see cref="Page"/> (1-based) and <see cref="Dpi"/> apply to the image formats.
+/// </summary>
+public sealed record RenderOptions(
+    IReadOnlyDictionary<string, string>? DataOverrides = null,
+    int Page = 1,
+    int Dpi = 150);
+
+public sealed class UnknownDataSourceException(string name)
+    : Exception($"The report has no data source named '{name}'.");
+
+public sealed class PageOutOfRangeException(int page, int pageCount)
+    : Exception($"Page {page} is out of range; the report has {pageCount} page(s).");
+
+/// <summary><paramref name="PageCount"/> is set for the image formats (the whole report's page count, not just the page returned).</summary>
+public sealed record RenderResult(byte[] Content, string ContentType, string FileName, int? PageCount = null);
 
 /// <summary>
 /// Report + parameters + data → rendered output. Phase 1 handles free-layout
@@ -39,8 +58,10 @@ public sealed class ReportRenderService(
         ReportDefinition report,
         IReadOnlyDictionary<string, object?>? parameters,
         RenderFormat format,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        RenderOptions? options = null)
     {
+        report = ApplyDataOverrides(report, options?.DataOverrides);
         var resolvedParameters = ParameterValues.Resolve(report, parameters);
         var data = await dataResolver.ResolveAsync(report, resolvedParameters, cancellationToken);
 
@@ -72,12 +93,39 @@ public sealed class ReportRenderService(
         return format switch
         {
             RenderFormat.Pdf => new RenderResult(pdfRenderer.Render(document), "application/pdf", $"{safeName}.pdf"),
+            RenderFormat.Png or RenderFormat.Jpeg => PdfRasterizer.Rasterize(
+                pdfRenderer.Render(document), format, options?.Page ?? 1, options?.Dpi ?? 150, safeName),
             RenderFormat.Html => new RenderResult(
                 Encoding.UTF8.GetBytes(_htmlRenderer.Render(document)),
                 "text/html; charset=utf-8",
                 $"{safeName}.html"),
             _ => throw new ArgumentOutOfRangeException(nameof(format)),
         };
+    }
+
+    /// <summary>
+    /// Returns a copy of <paramref name="report"/> in which each overridden data source reads the
+    /// supplied JSON instead of its configured source (JSON, REST or SQL alike).
+    /// </summary>
+    private static ReportDefinition ApplyDataOverrides(ReportDefinition report, IReadOnlyDictionary<string, string>? overrides)
+    {
+        if (overrides is null || overrides.Count == 0)
+        {
+            return report;
+        }
+
+        var copy = Core.Serialization.ReportJson.Deserialize(Core.Serialization.ReportJson.Serialize(report));
+        foreach (var (name, json) in overrides)
+        {
+            var source = copy.DataSources.FirstOrDefault(s => s.Name.Equals(name, StringComparison.Ordinal))
+                ?? throw new UnknownDataSourceException(name);
+            source.Kind = DataSourceKind.Json;
+            source.Rest = null;
+            source.Sql = null;
+            source.Json = new JsonSourceConfig { InlineData = json, ResultPath = "$" };
+        }
+
+        return copy;
     }
 
     /// <summary>

@@ -19,6 +19,11 @@ public sealed class ReportDefinitionValidator : AbstractValidator<ReportDefiniti
 
         RuleFor(r => r.Name).NotEmpty().MaximumLength(200);
 
+        RuleFor(r => r.Code)
+            .Must(c => ReportCode.IsValid(c))
+            .When(r => !string.IsNullOrWhiteSpace(r.Code))
+            .WithMessage($"The report code may only contain letters a-z, digits, '-' and '_' (max {ReportCode.MaxLength} characters, starting with a letter or digit).");
+
         RuleFor(r => r.Page).NotNull().SetValidator(new PageSetupValidator());
 
         RuleForEach(r => r.Parameters).SetValidator(new ParameterValidator());

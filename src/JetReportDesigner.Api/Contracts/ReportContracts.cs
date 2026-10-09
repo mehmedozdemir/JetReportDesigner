@@ -10,7 +10,8 @@ public sealed record ReportSummaryResponse(
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
     Guid? FolderId,
-    string? CreatedByEmail)
+    string? CreatedByEmail,
+    string? Code)
 {
     public static ReportSummaryResponse From(ReportSummary s, Guid? folderId = null) => new(
         s.Id,
@@ -19,7 +20,8 @@ public sealed record ReportSummaryResponse(
         s.CreatedAtUtc,
         s.UpdatedAtUtc,
         folderId,
-        s.CreatedByEmail);
+        s.CreatedByEmail,
+        s.Code);
 }
 
 public sealed record ReportResponse(

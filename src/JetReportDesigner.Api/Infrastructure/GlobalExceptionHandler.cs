@@ -27,9 +27,17 @@ internal sealed class GlobalExceptionHandler(IProblemDetailsService problemDetai
                 validation.Errors
                     .GroupBy(e => e.PropertyName)
                     .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())),
+            JetReportDesigner.Storage.Repositories.ReportCodeConflictException codeConflict => (
+                StatusCodes.Status409Conflict,
+                codeConflict.Message,
+                (Dictionary<string, string[]>?)null),
             ReportConcurrencyException => (
                 StatusCodes.Status409Conflict,
                 "The report was modified by another writer.",
+                (Dictionary<string, string[]>?)null),
+            JetReportDesigner.Rendering.UnknownDataSourceException or JetReportDesigner.Rendering.PageOutOfRangeException => (
+                StatusCodes.Status400BadRequest,
+                exception.Message,
                 (Dictionary<string, string[]>?)null),
             NotSupportedException => (
                 StatusCodes.Status501NotImplemented,

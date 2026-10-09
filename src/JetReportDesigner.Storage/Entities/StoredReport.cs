@@ -13,6 +13,10 @@ public sealed class StoredReport
 
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>Denormalised copy of <c>ReportDefinition.Code</c> (lowercase, unique per tenant). Null only
+    /// for reports saved before codes existed, until the startup backfill assigns one.</summary>
+    public string? Code { get; set; }
+
     public string? Description { get; set; }
 
     /// <summary>Denormalised copy of <c>ReportDefinition.LayoutMode</c> ("banded" | "free").</summary>

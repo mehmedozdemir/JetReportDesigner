@@ -148,6 +148,143 @@ public abstract class ReportsApiTestsBase(DatabaseFixture fixture)
         Assert.Equal(4, afterRestore!.Count); // the restore itself is a new version
     }
 
+    private static ReportDefinition SimpleReport(string name, string? code = null) => new()
+    {
+        Name = name,
+        Code = code,
+        LayoutMode = LayoutMode.Free,
+        Body = new ReportBody { Height = 100, Elements = [] },
+    };
+
+    [Fact]
+    public async Task Report_Codes_Are_Generated_Unique_And_Conflicts_Rejected()
+    {
+        if (!fixture.Available)
+        {
+            return; // Docker unavailable; exercised in CI. See class summary.
+        }
+
+        await using var factory = CreateFactory();
+        var client = await factory.CreateDesignerClientAsync();
+
+        async Task<ReportResponse> Create(ReportDefinition d)
+        {
+            var response = await client.PostAsJsonAsync("/api/reports", d, Json);
+            response.EnsureSuccessStatusCode();
+            return (await response.Content.ReadFromJsonAsync<ReportResponse>(Json))!;
+        }
+
+        var first = await Create(SimpleReport("Aylık Özet Raporu"));
+        var second = await Create(SimpleReport("Aylık Özet Raporu"));
+
+        Assert.Equal("aylik-ozet-raporu", first.Definition.Code);
+        Assert.Equal("aylik-ozet-raporu-2", second.Definition.Code);
+
+        // An explicit code is kept (lowercased) and shows up in the list.
+        var custom = await Create(SimpleReport("Barkod", "Barkod_Etiket"));
+        Assert.Equal("barkod_etiket", custom.Definition.Code);
+        var list = await client.GetFromJsonAsync<List<ReportSummaryResponse>>("/api/reports", Json);
+        Assert.Contains(list!, r => r.Id == custom.Id && r.Code == "barkod_etiket");
+
+        // Taking someone else's code is a conflict; a malformed one is invalid.
+        var clash = await client.PostAsJsonAsync("/api/reports", SimpleReport("Başka", "barkod_etiket"), Json);
+        Assert.Equal(HttpStatusCode.Conflict, clash.StatusCode);
+        var bad = await client.PostAsJsonAsync("/api/reports", SimpleReport("Başka", "rapör kodu"), Json);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, bad.StatusCode);
+
+        // Renaming a report does not change its code.
+        var renamed = SimpleReport("Tamamen Yeni Ad", first.Definition.Code);
+        using var update = new HttpRequestMessage(HttpMethod.Put, $"/api/reports/{first.Id}")
+        {
+            Content = JsonContent.Create(renamed, options: Json),
+        };
+        update.Headers.TryAddWithoutValidation("If-Match", $"\"{first.ConcurrencyToken}\"");
+        var updated = await (await client.SendAsync(update)).Content.ReadFromJsonAsync<ReportResponse>(Json);
+        Assert.Equal("aylik-ozet-raporu", updated!.Definition.Code);
+    }
+
+    [Fact]
+    public async Task Api_Key_Lifecycle_Controls_Access()
+    {
+        if (!fixture.Available)
+        {
+            return; // Docker unavailable; exercised in CI. See class summary.
+        }
+
+        await using var factory = CreateFactory();
+        var designer = await factory.CreateDesignerClientAsync();
+        var report = await (await designer.PostAsJsonAsync("/api/reports", SimpleReport("Key Test"), Json))
+            .Content.ReadFromJsonAsync<ReportResponse>(Json);
+
+        var created = await (await designer.PostAsJsonAsync(
+                "/api/api-keys",
+                new { name = "Test app", description = "integration", expiresAtUtc = (DateTime?)null }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var secret = created.GetProperty("secret").GetString()!;
+        var id = created.GetProperty("key").GetProperty("id").GetGuid();
+        Assert.StartsWith("jrd_", secret, StringComparison.Ordinal);
+        Assert.Equal("active", created.GetProperty("key").GetProperty("status").GetString());
+
+        HttpClient WithKey(string key)
+        {
+            var c = factory.CreateClient();
+            c.DefaultRequestHeaders.Add("X-Api-Key", key);
+            return c;
+        }
+
+        // The key lists and renders reports of its own organization ...
+        var keyClient = WithKey(secret);
+        var reports = await keyClient.GetFromJsonAsync<List<ReportSummaryResponse>>("/api/reports", Json);
+        Assert.Contains(reports!, r => r.Id == report!.Id);
+        var render = await keyClient.PostAsJsonAsync($"/api/reports/by-code/{report!.Definition.Code}/render?format=html", new { });
+        Assert.Equal(HttpStatusCode.OK, render.StatusCode);
+
+        // ... but is read-only, and cannot manage keys.
+        Assert.Equal(HttpStatusCode.Forbidden, (await keyClient.PostAsJsonAsync("/api/reports", SimpleReport("Nope"), Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await keyClient.GetAsync("/api/api-keys")).StatusCode);
+
+        // A wrong key, a disabled key and a deleted key are all refused.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await WithKey("jrd_wrong").GetAsync("/api/reports")).StatusCode);
+
+        (await designer.PutAsJsonAsync($"/api/api-keys/{id}/active", new { isActive = false })).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await keyClient.GetAsync("/api/reports")).StatusCode);
+
+        (await designer.PutAsJsonAsync($"/api/api-keys/{id}/active", new { isActive = true })).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.OK, (await keyClient.GetAsync("/api/reports")).StatusCode);
+
+        // The list never shows the secret, but does show when the key was last used.
+        var listed = await designer.GetFromJsonAsync<JsonElement>("/api/api-keys");
+        Assert.DoesNotContain(secret, listed.GetRawText(), StringComparison.Ordinal);
+        Assert.NotEqual(JsonValueKind.Null, listed[0].GetProperty("lastUsedAtUtc").ValueKind);
+
+        (await designer.DeleteAsync($"/api/api-keys/{id}")).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await keyClient.GetAsync("/api/reports")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Api_Key_Expiry_Is_Enforced()
+    {
+        if (!fixture.Available)
+        {
+            return; // Docker unavailable; exercised in CI. See class summary.
+        }
+
+        await using var factory = CreateFactory();
+        var designer = await factory.CreateDesignerClientAsync();
+
+        var past = await designer.PostAsJsonAsync("/api/api-keys", new { name = "x", expiresAtUtc = DateTime.UtcNow.AddMinutes(-1) });
+        Assert.Equal(HttpStatusCode.BadRequest, past.StatusCode);
+
+        var created = await (await designer.PostAsJsonAsync("/api/api-keys", new { name = "short", expiresAtUtc = DateTime.UtcNow.AddSeconds(2) }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Api-Key", created.GetProperty("secret").GetString()!);
+
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/reports")).StatusCode);
+        await Task.Delay(TimeSpan.FromSeconds(2.5));
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/reports")).StatusCode);
+    }
+
     [Fact]
     public async Task Invalid_Definition_Returns_422()
     {
