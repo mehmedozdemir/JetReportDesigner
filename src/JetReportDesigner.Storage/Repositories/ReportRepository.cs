@@ -38,7 +38,8 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         ReportDefinition definition,
         CancellationToken cancellationToken,
         Guid? createdByUserId = null,
-        string? createdByEmail = null)
+        string? createdByEmail = null,
+        string? origin = null)
     {
         var now = clock.GetUtcNow().UtcDateTime;
         var id = definition.Id == Guid.Empty ? Guid.NewGuid() : definition.Id;
@@ -62,7 +63,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         };
 
         db.Reports.Add(row);
-        db.ReportVersions.Add(NewVersion(row, version: 1, createdByEmail, changes: null, restoredFrom: null));
+        db.ReportVersions.Add(NewVersion(row, version: 1, createdByEmail, origin is null ? null : [origin], restoredFrom: null));
         await SaveAsync(row.Code, cancellationToken);
         return ToRecord(row);
     }
@@ -72,8 +73,9 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         ReportDefinition definition,
         Guid? expectedToken,
         CancellationToken cancellationToken,
-        string? savedByEmail = null) =>
-        await SaveNewVersionAsync(id, definition, expectedToken, savedByEmail, restoredFrom: null, cancellationToken);
+        string? savedByEmail = null,
+        string? origin = null) =>
+        await SaveNewVersionAsync(id, definition, expectedToken, savedByEmail, restoredFrom: null, cancellationToken, origin);
 
     private async Task<ReportRecord?> SaveNewVersionAsync(
         Guid id,
@@ -81,7 +83,8 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         Guid? expectedToken,
         string? savedByEmail,
         int? restoredFrom,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? origin = null)
     {
         var row = await db.Reports.FirstOrDefaultAsync(r => r.Id == id && r.TenantId == tenant.TenantId, cancellationToken);
         if (row is null)
@@ -114,7 +117,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         row.ConcurrencyToken = Guid.NewGuid();
 
         var nextVersion = await NextVersionNumberAsync(id, cancellationToken);
-        db.ReportVersions.Add(NewVersion(row, nextVersion, savedByEmail, changes, restoredFrom));
+        db.ReportVersions.Add(NewVersion(row, nextVersion, savedByEmail, origin is null ? changes : [origin, .. changes], restoredFrom));
 
         try
         {

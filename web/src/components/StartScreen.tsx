@@ -28,6 +28,8 @@ import {
   Share2,
   Trash2,
   History,
+  PackagePlus,
+  PackageOpen,
   KeyRound,
   Users,
   type LucideIcon,
@@ -47,6 +49,7 @@ import { NewReportDialog } from "./NewReportDialog";
 import { PageHeader } from "./PageHeader";
 import { SortableTh, useSort } from "./SortableTh";
 import { ReportPreviewDialog } from "./ReportPreviewDialog";
+import { ExportPackageDialog, ImportPackageDialog } from "./TransferDialogs";
 import { VersionHistoryDialog } from "./VersionHistoryDialog";
 import { ScheduleDialog } from "./ScheduleDialog";
 import { SchedulesPage } from "./SchedulesPage";
@@ -193,6 +196,8 @@ export function StartScreen({
   const [newReportOpen, setNewReportOpen] = useState(false);
   const [previewReport, setPreviewReport] = useState<ReportSummary | null>(null);
   const [historyReport, setHistoryReport] = useState<ReportSummary | null>(null);
+  const [exportSel, setExportSel] = useState<{ reportIds: string[]; folderIds: string[]; title: string } | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [shareReport, setShareReport] = useState<ReportSummary | null>(null);
   const [scheduleReport, setScheduleReport] = useState<ReportSummary | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -484,6 +489,15 @@ export function StartScreen({
         { label: t("reports.menu.open"), icon: FolderOpen, onClick: () => onOpen(r.id) },
         { label: t("reports.menu.preview"), icon: Eye, onClick: () => setPreviewReport(r) },
         { label: t("reports.menu.history"), icon: History, onClick: () => setHistoryReport(r) },
+        ...(canEdit
+          ? ([
+              {
+                label: t("reports.menu.exportPackage"),
+                icon: PackagePlus,
+                onClick: () => setExportSel({ reportIds: [r.id], folderIds: [], title: r.name }),
+              },
+            ] as MenuItem[])
+          : []),
         {
           label: t("reports.menu.export"),
           children: [
@@ -521,6 +535,11 @@ export function StartScreen({
         { label: t("reports.menu.open"), icon: FolderOpen, onClick: () => setCurrentFolderId(f.id) },
         ...(canEdit
           ? ([
+              {
+                label: t("reports.menu.exportFolder"),
+                icon: PackagePlus,
+                onClick: () => setExportSel({ reportIds: [], folderIds: [f.id], title: f.name }),
+              },
               {
                 label: t("reports.menu.rename"),
                 icon: Pencil,
@@ -668,6 +687,20 @@ export function StartScreen({
                       <option key={f.id} value={f.id}>{f.label}</option>
                     ))}
                   </select>
+                  {canEdit && (
+                    <button
+                      className="mini"
+                      onClick={() =>
+                        setExportSel({
+                          reportIds: [...selectedIds],
+                          folderIds: [],
+                          title: t("reports.bulk.selected", { count: selectedIds.size }),
+                        })
+                      }
+                    >
+                      <PackagePlus size={13} /> {t("reports.bulk.exportPackage")}
+                    </button>
+                  )}
                   <ConfirmButton
                     icon={Trash2}
                     label={t("common.delete")}
@@ -773,6 +806,12 @@ export function StartScreen({
                           <List size={13} />
                         </button>
                       </div>
+
+                      {canEdit && (
+                        <button className="btn" onClick={() => setImportOpen(true)} title={t("transfer.import.hint")}>
+                          <PackageOpen size={14} /> {t("transfer.import.button")}
+                        </button>
+                      )}
 
                       {canEdit && (
                         <button className="btn primary" onClick={() => setNewReportOpen(true)} disabled={busy}>
@@ -1067,6 +1106,27 @@ export function StartScreen({
             setPreviewReport(null);
           }}
           onClose={() => setPreviewReport(null)}
+        />
+      )}
+
+      {exportSel && (
+        <ExportPackageDialog
+          reportIds={exportSel.reportIds}
+          folderIds={exportSel.folderIds}
+          title={exportSel.title}
+          onClose={() => setExportSel(null)}
+        />
+      )}
+
+      {importOpen && (
+        <ImportPackageDialog
+          folderOptions={folderOptions}
+          initialFolderId={currentFolderId}
+          onClose={() => setImportOpen(false)}
+          onImported={() => {
+            onReportChanged();
+            refreshFolders();
+          }}
         />
       )}
 

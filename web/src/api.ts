@@ -41,6 +41,13 @@ const jsonHeaders = { "Content-Type": "application/json" };
 
 export type ParamValues = Record<string, unknown>;
 
+function packageForm(file: File, options: unknown): FormData {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("options", JSON.stringify(options));
+  return form;
+}
+
 export const api = {
   listReports: (): Promise<ReportSummary[]> => fetchWithAuth("/api/reports").then(json<ReportSummary[]>),
 
@@ -173,6 +180,28 @@ export const api = {
     fetchWithAuth(`/api/sqlqueries/${id}`, { method: "DELETE" }).then((r) => {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
+
+  // --- export / import packages ---
+  planExport: (request: ExportRequest): Promise<ExportPlan> =>
+    fetchWithAuth("/api/transfer/export/plan", { method: "POST", headers: jsonHeaders, body: JSON.stringify(request) }).then(
+      json<ExportPlan>,
+    ),
+
+  exportPackage: (request: ExportRequest): Promise<{ blob: Blob; fileName: string }> =>
+    fetchWithAuth("/api/transfer/export", { method: "POST", headers: jsonHeaders, body: JSON.stringify(request) }).then(
+      async (r) => {
+        if (!r.ok) throw new Error(problemMessage(await r.text()));
+        const disposition = r.headers.get("Content-Disposition") ?? "";
+        const name = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)?.[1];
+        return { blob: await r.blob(), fileName: name ? decodeURIComponent(name) : "reports.jrdpkg" };
+      },
+    ),
+
+  previewImport: (file: File, options: ImportOptions): Promise<ImportPlan> =>
+    fetchWithAuth("/api/transfer/import/preview", { method: "POST", body: packageForm(file, options) }).then(json<ImportPlan>),
+
+  importPackage: (file: File, options: ImportOptions): Promise<ImportResult> =>
+    fetchWithAuth("/api/transfer/import", { method: "POST", body: packageForm(file, options) }).then(json<ImportResult>),
 
   // --- version history ---
   listVersions: (id: string): Promise<ReportVersionInfo[]> =>
@@ -403,6 +432,64 @@ export interface ShareInfo {
 }
 
 export type ReportJobStatus = "Queued" | "Running" | "Succeeded" | "Failed" | "Cancelled";
+
+export interface ExportRequest {
+  reportIds: string[];
+  folderIds: string[];
+  stripSampleData: boolean;
+}
+
+export interface ExportPlan {
+  reports: { id: string; code: string; name: string; role: "selected" | "dependency"; folder: string | null }[];
+  folders: string[];
+  assets: number;
+  connections: { name: string; provider: string }[];
+  redactedValues: number;
+  /** Tokens "kind|detail", e.g. "subreportMissing|Report name". */
+  warnings: string[];
+}
+
+export type ImportAction = "create" | "update" | "copy" | "skip";
+
+export interface ImportOptions {
+  targetFolderId: string | null;
+  decisions: { code: string; action: ImportAction }[];
+}
+
+export interface ImportPlanItem {
+  code: string;
+  name: string;
+  role: string;
+  folder: string | null;
+  status: "new" | "changed" | "identical" | "invalid";
+  changes: string[];
+  existingName: string | null;
+  existingVersion: number | null;
+  errors: string[];
+  defaultAction: ImportAction;
+  allowedActions: ImportAction[];
+  action: ImportAction;
+}
+
+export interface ImportPlan {
+  source: { environment: string | null; exportedAtUtc: string; exportedBy: string | null; appVersion: string | null };
+  items: ImportPlanItem[];
+  folders: string[];
+  assetsNew: number;
+  assetsReused: number;
+  connections: { name: string; provider: string; status: "found" | "missing" | "providerMismatch" }[];
+  redactedValues: number;
+  warnings: string[];
+}
+
+export interface ImportResult {
+  created: number;
+  updated: number;
+  copies: number;
+  skipped: number;
+  items: { code: string; name: string; id: string | null; action: ImportAction; version: number | null }[];
+  warnings: string[];
+}
 
 export interface ReportVersionInfo {
   version: number;

@@ -52,6 +52,8 @@
     "emptyHint": "Start from a blank report or a sample above.",
     "deleteConfirm": "Delete “{{name}}”?",
     "menu": {
+      "exportPackage": "Export as package…",
+      "exportFolder": "Export folder as package…",
       "history": "Version history",
       "open": "Open",
       "preview": "Preview",
@@ -68,6 +70,7 @@
       "banded": "Banded"
     },
     "bulk": {
+      "exportPackage": "Export as package",
       "selected": "{{count}} selected",
       "moveTo": "Move to",
       "clear": "Clear selection",
@@ -183,6 +186,7 @@
     "unsavedWarning": "Unsaved changes in the designer will be lost.",
     "confirmRestore": "Yes, restore",
     "change": {
+      "imported": "Imported",
       "name": "Name changed",
       "code": "Code changed",
       "page": "Page setup",
@@ -197,6 +201,78 @@
       "removed_other": "{{count}} elements removed",
       "edited_one": "{{count}} element changed",
       "edited_other": "{{count}} elements changed"
+    }
+  },
+  "transfer": {
+    "dependency": "dependency",
+    "dependencyHint": "{{count}} report(s) were added automatically because a selected report embeds them as a subreport.",
+    "connectionsNote": "These reports query databases through connections that must exist, with the same names, in the target environment. The package carries names only, never passwords:",
+    "redactedNote": "{{count}} secret value(s) (Authorization headers, API keys, tokens in REST sources) were removed from the package. Enter them again in the target environment.",
+    "stripSample": "Leave out the sample data stored inside JSON data sources",
+    "stripSampleHint": "Sample rows can contain real data. Reports still work; the designer just has nothing to preview with.",
+    "overwriteNote": "{{count}} existing report(s) will be overwritten. Each overwrite is saved as a new version, so you can go back to the previous one from the report's version history.",
+    "invalidNote": "Reports marked invalid are skipped; the rest can still be imported.",
+    "connections": "Database connections",
+    "imagesSummary": "Images: {{added}} new, {{reused}} already present.",
+    "stat": {
+      "reports_one": "{{count}} report",
+      "reports_other": "{{count}} reports",
+      "folders_one": "{{count}} folder",
+      "folders_other": "{{count}} folders",
+      "images_one": "{{count}} image",
+      "images_other": "{{count}} images"
+    },
+    "export": {
+      "title": "Export as package",
+      "download": "Download package",
+      "done": "The package was downloaded. Import it from the Reports page of the other environment."
+    },
+    "import": {
+      "title": "Import package",
+      "button": "Import",
+      "hint": "Bring reports from another environment (.jrdpkg)",
+      "drop": "Drop a report package here",
+      "dropHint": "A .jrdpkg file exported from another environment. Nothing changes until you confirm.",
+      "choose": "Choose file…",
+      "checking": "Checking the package…",
+      "other": "Choose another",
+      "targetFolder": "Put new reports in",
+      "apply_one": "Import {{count}} report",
+      "apply_other": "Import {{count}} reports"
+    },
+    "col": { "report": "Report", "status": "State", "action": "What to do" },
+    "status": { "new": "New", "changed": "Changed", "identical": "Identical", "invalid": "Invalid" },
+    "action": {
+      "create": "Add",
+      "update": "Overwrite (new version)",
+      "copy": "Add as a copy",
+      "skip": "Skip"
+    },
+    "connection": {
+      "found": "found",
+      "missing": "not found here — create it before running the report",
+      "providerMismatch": "exists, but with a different database type"
+    },
+    "warning": {
+      "connectionMissing": "Connection \"{{name}}\" does not exist here.",
+      "connectionProviderMismatch": "Connection \"{{name}}\" exists here with a different database type.",
+      "redacted": "{{count}} secret value(s) were left out of the package; enter them again here.",
+      "subreportUnresolved": "\"{{name}}\" embeds a report that is not part of this import.",
+      "subreportMissing": "\"{{name}}\" embeds a subreport that no longer exists.",
+      "assetMissing": "An image used by \"{{name}}\" could not be found and was left out."
+    },
+    "result": {
+      "title": "Import finished",
+      "created_one": "{{count}} report added",
+      "created_other": "{{count}} reports added",
+      "updated_one": "{{count}} report updated",
+      "updated_other": "{{count}} reports updated",
+      "copies_one": "{{count}} copy added",
+      "copies_other": "{{count}} copies added",
+      "skipped_one": "{{count}} skipped",
+      "skipped_other": "{{count}} skipped",
+      "undoHint": "Every change is in the report's version history, so an overwrite can be rolled back there.",
+      "done": "Done"
     }
   },
   "team": {

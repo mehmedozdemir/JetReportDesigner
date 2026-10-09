@@ -105,7 +105,8 @@ internal sealed class FileSystemReportRepository : IReportRepository
         ReportDefinition definition,
         CancellationToken cancellationToken,
         Guid? createdByUserId = null,
-        string? createdByEmail = null)
+        string? createdByEmail = null,
+        string? origin = null)
     {
         var now = _clock.GetUtcNow().UtcDateTime;
         var id = definition.Id == Guid.Empty ? Guid.NewGuid() : definition.Id;
@@ -114,7 +115,7 @@ internal sealed class FileSystemReportRepository : IReportRepository
 
         var envelope = new Envelope(definition, now, now, Guid.NewGuid(), createdByEmail);
         await WriteAsync(ReportPath(id), envelope, cancellationToken);
-        await WriteVersionAsync(id, 1, definition, now, cancellationToken, createdByEmail);
+        await WriteVersionAsync(id, 1, definition, now, cancellationToken, createdByEmail, origin is null ? null : [origin]);
 
         return new ReportRecord(id, definition, now, now, envelope.ConcurrencyToken, createdByEmail);
     }
@@ -124,8 +125,9 @@ internal sealed class FileSystemReportRepository : IReportRepository
         ReportDefinition definition,
         Guid? expectedToken,
         CancellationToken cancellationToken,
-        string? savedByEmail = null) =>
-        await SaveAsync(id, definition, expectedToken, savedByEmail, restoredFrom: null, cancellationToken);
+        string? savedByEmail = null,
+        string? origin = null) =>
+        await SaveAsync(id, definition, expectedToken, savedByEmail, restoredFrom: null, cancellationToken, origin);
 
     private async Task<ReportRecord?> SaveAsync(
         Guid id,
@@ -133,7 +135,8 @@ internal sealed class FileSystemReportRepository : IReportRepository
         Guid? expectedToken,
         string? savedByEmail,
         int? restoredFrom,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? origin = null)
     {
         var existing = await ReadAsync<Envelope>(ReportPath(id), cancellationToken);
         if (existing is null)
@@ -161,7 +164,7 @@ internal sealed class FileSystemReportRepository : IReportRepository
         await WriteAsync(ReportPath(id), envelope, cancellationToken);
 
         var nextVersion = NextVersionNumber(id);
-        await WriteVersionAsync(id, nextVersion, definition, now, cancellationToken, savedByEmail, changes, restoredFrom);
+        await WriteVersionAsync(id, nextVersion, definition, now, cancellationToken, savedByEmail, origin is null ? changes : [origin, .. changes], restoredFrom);
 
         return new ReportRecord(id, definition, existing.CreatedAtUtc, now, envelope.ConcurrencyToken, existing.CreatedByEmail);
     }

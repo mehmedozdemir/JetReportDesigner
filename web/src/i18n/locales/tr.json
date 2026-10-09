@@ -52,6 +52,8 @@
     "emptyHint": "Yukarıdan boş bir raporla ya da bir şablonla başlayın.",
     "deleteConfirm": "“{{name}}” silinsin mi?",
     "menu": {
+      "exportPackage": "Paket olarak dışa aktar…",
+      "exportFolder": "Klasörü paket olarak dışa aktar…",
       "history": "Sürüm geçmişi",
       "open": "Aç",
       "preview": "Önizle",
@@ -68,6 +70,7 @@
       "banded": "Bantlı"
     },
     "bulk": {
+      "exportPackage": "Paket olarak dışa aktar",
       "selected": "{{count}} seçili",
       "moveTo": "Taşı",
       "clear": "Seçimi temizle",
@@ -183,6 +186,7 @@
     "unsavedWarning": "Tasarım ekranındaki kaydedilmemiş değişiklikler kaybolacak.",
     "confirmRestore": "Evet, geri yükle",
     "change": {
+      "imported": "İçe aktarıldı",
       "name": "Ad değişti",
       "code": "Kod değişti",
       "page": "Sayfa ayarı",
@@ -197,6 +201,78 @@
       "removed_other": "{{count}} öğe silindi",
       "edited_one": "{{count}} öğe değişti",
       "edited_other": "{{count}} öğe değişti"
+    }
+  },
+  "transfer": {
+    "dependency": "bağımlılık",
+    "dependencyHint": "Seçilen raporlar alt rapor olarak içerdiği için {{count}} rapor otomatik eklendi.",
+    "connectionsNote": "Bu raporlar, hedef ortamda aynı adla tanımlı olması gereken veritabanı bağlantılarını kullanır. Pakete yalnızca adlar girer, parola asla girmez:",
+    "redactedNote": "{{count}} gizli değer (REST kaynaklarındaki Authorization başlıkları, API anahtarları, token'lar) paketten çıkarıldı. Hedef ortamda yeniden girin.",
+    "stripSample": "JSON veri kaynaklarındaki örnek verileri pakete koyma",
+    "stripSampleHint": "Örnek satırlar gerçek veri içerebilir. Raporlar çalışır; yalnızca tasarımcıda önizleme için veri kalmaz.",
+    "overwriteNote": "{{count}} mevcut rapor üzerine yazılacak. Her üzerine yazma yeni bir sürüm olarak kaydedilir; raporun sürüm geçmişinden önceki haline dönebilirsiniz.",
+    "invalidNote": "Geçersiz işaretli raporlar atlanır; diğerleri yine de içe aktarılabilir.",
+    "connections": "Veritabanı bağlantıları",
+    "imagesSummary": "Görseller: {{added}} yeni, {{reused}} zaten var.",
+    "stat": {
+      "reports_one": "{{count}} rapor",
+      "reports_other": "{{count}} rapor",
+      "folders_one": "{{count}} klasör",
+      "folders_other": "{{count}} klasör",
+      "images_one": "{{count}} görsel",
+      "images_other": "{{count}} görsel"
+    },
+    "export": {
+      "title": "Paket olarak dışa aktar",
+      "download": "Paketi indir",
+      "done": "Paket indirildi. Diğer ortamın Raporlar sayfasından içe aktarın."
+    },
+    "import": {
+      "title": "Paketi içe aktar",
+      "button": "İçe aktar",
+      "hint": "Başka bir ortamdan rapor getir (.jrdpkg)",
+      "drop": "Rapor paketini buraya bırakın",
+      "dropHint": "Başka bir ortamdan dışa aktarılmış .jrdpkg dosyası. Siz onaylayana kadar hiçbir şey değişmez.",
+      "choose": "Dosya seç…",
+      "checking": "Paket kontrol ediliyor…",
+      "other": "Başka dosya seç",
+      "targetFolder": "Yeni raporların konacağı klasör",
+      "apply_one": "{{count}} raporu içe aktar",
+      "apply_other": "{{count}} raporu içe aktar"
+    },
+    "col": { "report": "Rapor", "status": "Durum", "action": "Ne yapılsın" },
+    "status": { "new": "Yeni", "changed": "Değişmiş", "identical": "Aynı", "invalid": "Geçersiz" },
+    "action": {
+      "create": "Ekle",
+      "update": "Üzerine yaz (yeni sürüm)",
+      "copy": "Kopya olarak ekle",
+      "skip": "Atla"
+    },
+    "connection": {
+      "found": "bulundu",
+      "missing": "burada yok — raporu çalıştırmadan önce oluşturun",
+      "providerMismatch": "var, ama veritabanı türü farklı"
+    },
+    "warning": {
+      "connectionMissing": "\"{{name}}\" bağlantısı burada tanımlı değil.",
+      "connectionProviderMismatch": "\"{{name}}\" bağlantısı burada farklı veritabanı türüyle tanımlı.",
+      "redacted": "{{count}} gizli değer pakete konmadı; burada yeniden girin.",
+      "subreportUnresolved": "\"{{name}}\" raporu, bu içe aktarmada olmayan bir rapor içeriyor.",
+      "subreportMissing": "\"{{name}}\" raporunun alt raporu artık yok.",
+      "assetMissing": "\"{{name}}\" raporundaki bir görsel bulunamadı, pakete konmadı."
+    },
+    "result": {
+      "title": "İçe aktarma tamamlandı",
+      "created_one": "{{count}} rapor eklendi",
+      "created_other": "{{count}} rapor eklendi",
+      "updated_one": "{{count}} rapor güncellendi",
+      "updated_other": "{{count}} rapor güncellendi",
+      "copies_one": "{{count}} kopya eklendi",
+      "copies_other": "{{count}} kopya eklendi",
+      "skipped_one": "{{count}} atlandı",
+      "skipped_other": "{{count}} atlandı",
+      "undoHint": "Her değişiklik raporun sürüm geçmişinde durur; üzerine yazılan bir raporu oradan geri alabilirsiniz.",
+      "done": "Tamam"
     }
   },
   "team": {

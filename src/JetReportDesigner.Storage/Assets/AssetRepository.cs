@@ -17,6 +17,9 @@ public interface IAssetRepository
 
     Task<AssetContent?> GetContentAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>The id of this tenant's asset with the given SHA-256 (lower-case hex), or null.</summary>
+    Task<Guid?> FindIdBySha256Async(string sha256, CancellationToken cancellationToken);
+
     /// <summary>
     /// Stores <paramref name="bytes"/>, or returns the existing asset when identical
     /// bytes were uploaded before (matched on SHA-256).
@@ -37,6 +40,13 @@ internal sealed class AssetRepository(JetReportDbContext db, TimeProvider clock,
 
         return rows;
     }
+
+    public async Task<Guid?> FindIdBySha256Async(string sha256, CancellationToken cancellationToken) =>
+        await db.Assets
+            .AsNoTracking()
+            .Where(a => a.Sha256 == sha256 && a.TenantId == tenant.TenantId)
+            .Select(a => (Guid?)a.Id)
+            .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<AssetContent?> GetContentAsync(Guid id, CancellationToken cancellationToken)
     {

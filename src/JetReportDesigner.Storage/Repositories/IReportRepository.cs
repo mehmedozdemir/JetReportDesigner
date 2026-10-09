@@ -61,7 +61,8 @@ public interface IReportRepository
         ReportDefinition definition,
         CancellationToken cancellationToken,
         Guid? createdByUserId = null,
-        string? createdByEmail = null);
+        string? createdByEmail = null,
+        string? origin = null);
 
     /// <summary>
     /// Saves a new definition and, when it actually differs from the current one, a new version
@@ -71,7 +72,8 @@ public interface IReportRepository
         ReportDefinition definition,
         Guid? expectedToken,
         CancellationToken cancellationToken,
-        string? savedByEmail = null);
+        string? savedByEmail = null,
+        string? origin = null);
 
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken);
 

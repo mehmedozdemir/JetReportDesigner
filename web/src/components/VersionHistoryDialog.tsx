@@ -11,7 +11,7 @@ import { useFocusTrap } from "../useFocusTrap";
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /** One change token from the server ("added:3", "page", …) as words. */
-function ChangeChips({ changes }: { changes: string[] }) {
+export function ChangeChips({ changes }: { changes: string[] }) {
   const { t } = useTranslation();
   return (
     <>
