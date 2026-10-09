@@ -23,7 +23,7 @@ const STATUS_FILTERS: (ReportJobStatus | "all")[] = [
 
 /** Background report jobs — tenant-wide, auto-refreshing while any are still in flight.
  * Reached from the Start screen like Team/Email: not tied to whatever report you have open.
- * (The actual notify-when-done logic lives in JobNotifications, mounted app-wide — this
+ * (The actual notify-when-done logic lives in JobDock, mounted app-wide — this
  * page just offers the permission opt-in and the full history/status table.) */
 export function JobsPage() {
   const { t, i18n } = useTranslation();
@@ -173,6 +173,7 @@ export function JobsPage() {
           <Clock />
           <div>{status === "all" ? t("jobs.empty") : t("jobs.noMatch")}</div>
           <p>{status === "all" ? t("jobs.emptyHint") : t("jobs.noMatchHint")}</p>
+          {status === "all" && <a className="btn tonal" href="/reports">{t("schedules.goToReports")}</a>}
         </div>
       ) : (
         <div className="data-card">

@@ -116,12 +116,19 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("NVARCHAR2(2000)");
 
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(100)
+                        .HasColumnType("NVARCHAR2(100)");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("NVARCHAR2(256)");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("BOOLEAN");
+
+                    b.Property<DateTime?>("LastLoginAtUtc")
+                        .HasColumnType("TIMESTAMP(7)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("BOOLEAN");
@@ -692,6 +699,10 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
 
                     b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("RAW(16)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)");
 
                     b.Property<DateTime>("ExpiresAtUtc")
                         .HasColumnType("TIMESTAMP(7)");

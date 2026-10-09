@@ -16,6 +16,9 @@ public sealed class TenantInvite
 
     public Guid CreatedByUserId { get; set; }
 
+    /// <summary>Who the invite was sent to, when it was sent by email. Informational only — anyone holding the code can use it.</summary>
+    public string? Email { get; set; }
+
     public DateTime CreatedAtUtc { get; set; }
 
     public DateTime ExpiresAtUtc { get; set; }

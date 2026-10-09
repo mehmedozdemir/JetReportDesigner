@@ -8,9 +8,11 @@
     "schedules": "Zamanlamalar",
     "settings": "Ayarlar",
     "organization": "Organizasyon",
-    "designer": "Designer",
-    "viewer": "Viewer",
-    "signOut": "Oturumu kapat"
+    "designer": "Tasarımcı",
+    "viewer": "Görüntüleyici",
+    "signOut": "Oturumu kapat",
+    "openMenu": "Menüyü aç",
+    "main": "Ana gezinme"
   },
   "common": {
     "cancel": "Vazgeç",
@@ -25,7 +27,8 @@
     "sending": "Gönderiliyor…",
     "loading": "Yükleniyor…",
     "previous": "Önceki",
-    "next": "Sonraki"
+    "next": "Sonraki",
+    "done": "Tamam"
   },
   "reports": {
     "title": "Raporlar",
@@ -105,7 +108,9 @@
     "noMatch": "Bu filtreye uyan iş yok.",
     "noMatchHint": "Başka bir durum seçin ya da Tümü'ne dönün.",
     "range": "{{from}}–{{to}} / {{total}}",
-    "retention": "Biten işler 30 gün sonra kendiliğinden siliniyor."
+    "retention": "Biten işler 30 gün sonra kendiliğinden siliniyor.",
+    "runningBadge_one": "{{count}} iş sürüyor",
+    "runningBadge_other": "{{count}} iş sürüyor"
   },
   "apiKeys": {
     "title": "API anahtarları",
@@ -240,8 +245,17 @@
       "apply_one": "{{count}} raporu içe aktar",
       "apply_other": "{{count}} raporu içe aktar"
     },
-    "col": { "report": "Rapor", "status": "Durum", "action": "Ne yapılsın" },
-    "status": { "new": "Yeni", "changed": "Değişmiş", "identical": "Aynı", "invalid": "Geçersiz" },
+    "col": {
+      "report": "Rapor",
+      "status": "Durum",
+      "action": "Ne yapılsın"
+    },
+    "status": {
+      "new": "Yeni",
+      "changed": "Değişmiş",
+      "identical": "Aynı",
+      "invalid": "Geçersiz"
+    },
     "action": {
       "create": "Ekle",
       "update": "Üzerine yaz (yeni sürüm)",
@@ -278,18 +292,62 @@
   "team": {
     "title": "Takım",
     "members": "Üyeler",
-    "member": "Üye",
+    "member": "Ad",
     "role": "Rol",
-    "you": " (siz)",
+    "you": "Siz",
     "ownRoleLocked": "Kendi rolünüzü değiştiremezsiniz",
-    "removeMember": "{{email}} kullanıcısını organizasyondan çıkar",
+    "removeMember": "Organizasyondan çıkar",
     "invite": "Takıma davet et",
     "generateCode": "Kod oluştur",
     "shareCode": "Bu kodu paylaşın — geçerlilik: {{date}}",
     "copyCode": "Kodu kopyala",
     "pendingInvites": "Bekleyen davetler",
     "revokeInvite": "Daveti iptal et",
-    "expires": "bitiş {{date}}"
+    "expires": "bitiş {{date}}",
+    "description_one": "{{org}} · {{count}} üye",
+    "description_other": "{{org}} · {{count}} üye",
+    "invitePeople": "Kişi davet et",
+    "search": "Kişi ara",
+    "lastSignIn": "Son oturum",
+    "never": "Hiç",
+    "locked": "Kilitli",
+    "lockedHint": "Çok fazla hatalı parola nedeniyle kilitlendi. Hemen giriş yapabilmesi için sıfırlama bağlantısı gönderin.",
+    "roleChanged": "{{name}} kişisinin rolü değiştirildi",
+    "roleFor": "{{name}} için rol",
+    "actionsFor": "{{name}} için diğer işlemler",
+    "noMatch": "Aramanızla eşleşen kimse yok.",
+    "resetLink": "Parola sıfırlama bağlantısını kopyala",
+    "resetLinkCopied": "{{name}} için sıfırlama bağlantısı kopyalandı — 2 saat içinde bir kez kullanılabilir",
+    "removeTitle": "{{name}} çıkarılsın mı?",
+    "removeText": "Erişimi hemen kesilir. Oluşturduğu raporlar, zamanlamalar ve işler organizasyonda kalır.",
+    "removed": "{{name}} çıkarıldı",
+    "invitee": "Davet edilen",
+    "expiresCol": "Bitiş",
+    "anyone": "Bağlantıya sahip herkes",
+    "revoke": "İptal et",
+    "inviteRevoked": "Davet iptal edildi",
+    "pendingBadge_one": "{{count}} bekleyen davet",
+    "pendingBadge_other": "{{count}} bekleyen davet",
+    "noMailBanner": "E-posta ayarlanmadığı için davetler ve parola sıfırlamaları e-postayla gönderilemiyor — bunun yerine kopyalanacak bağlantılar alırsınız.",
+    "setUpMail": "E-postayı ayarla",
+    "inviteTitle": "Kişi davet et",
+    "inviteReady": "Davet hazır",
+    "inviteEmail": "E-posta (isteğe bağlı)",
+    "inviteEmailHelper": "Daveti bu adrese e-postayla göndeririz. Yalnızca bağlantı almak için boş bırakın.",
+    "inviteNoMailHelper": "E-posta ayarlı değil — kendiniz göndereceğiniz bir bağlantı alacaksınız.",
+    "inviteValid": "Davetin geçerlilik süresi",
+    "validDays_one": "{{count}} gün",
+    "validDays_other": "{{count}} gün",
+    "sendInvite": "Davet gönder",
+    "createInvite": "Davet bağlantısı oluştur",
+    "inviteSent": "Davet {{email}} adresine e-postayla gönderildi. Bu bağlantıyı da paylaşabilirsiniz:",
+    "inviteNotSent": "{{email}} adresine e-posta gönderilemedi. Bunun yerine bu bağlantıyı paylaşın:",
+    "inviteShare": "Bu bağlantıyı davet ettiğiniz kişiyle paylaşın. Bir kez kullanılabilir.",
+    "copyLink": "Bağlantıyı kopyala",
+    "linkCopied": "Bağlantı kopyalandı",
+    "inviteAnother": "Başka birini davet et",
+    "inviteMeta": "{{role}} · kod {{code}} · bitiş {{date}}",
+    "inviteNoMail": "E-posta ayarlı olmadığı için {{email}} adresine bir şey gönderilmedi. Bu bağlantıyı kendisiyle paylaşın:"
   },
   "email": {
     "title": "E-posta",
@@ -330,7 +388,9 @@
     "deleteSchedule": "Zamanlamayı sil",
     "daily": "Her gün {{time}}",
     "weekly": "Her {{day}} {{time}}",
-    "monthly": "Her ayın {{day}}. günü {{time}}"
+    "monthly": "Her ayın {{day}}. günü {{time}}",
+    "emptyHint": "Raporlar sayfasında bir raporun ⋮ menüsünü açıp “Zamanla…”yı seçerek otomatik gönderin.",
+    "goToReports": "Raporlara git"
   },
   "settings": {
     "title": "Ayarlar",
@@ -356,7 +416,9 @@
     "every30s": "30 saniyede bir",
     "everyMinute": "Dakikada bir",
     "every5m": "5 dakikada bir",
-    "resetDefaults": "Varsayılanlara dön"
+    "resetDefaults": "Varsayılanlara dön",
+    "resetConfirm": "Sıfırla",
+    "resetDone": "Ayarlar varsayılana döndürüldü"
   },
   "notifications": {
     "reportReady": "Rapor hazır",
@@ -600,5 +662,127 @@
     "empty": "Arka planda çalışan iş yok.",
     "seeAll": "Tüm işleri gör",
     "title": "Arka plan işleri"
+  },
+  "roles": {
+    "Designer": "Tasarımcı",
+    "Viewer": "Görüntüleyici",
+    "DesignerHint": "Rapor oluşturur ve düzenler, ekibi ve ayarları yönetir.",
+    "ViewerHint": "Raporları açar, çalıştırır ve dışa aktarır. Hiçbir şeyi değiştiremez."
+  },
+  "auth": {
+    "email": "E-posta",
+    "password": "Parola",
+    "fullName": "Ad soyad",
+    "confirmPassword": "Parolayı onaylayın",
+    "newPassword": "Yeni parola",
+    "organization": "Organizasyon adı",
+    "inviteCode": "Davet kodu",
+    "next": "İleri",
+    "back": "Geri",
+    "createAccount": "Hesap oluştur",
+    "signInInstead": "Bunun yerine oturum açın",
+    "forgot": "Parolanızı mı unuttunuz?",
+    "backToSignIn": "Oturum açmaya dön",
+    "showPassword": "Parolayı göster",
+    "hidePassword": "Parolayı gizle",
+    "rules": {
+      "title": "Parola koşulları",
+      "met": "karşılandı",
+      "length": "En az 8 karakter",
+      "upper": "Bir büyük harf",
+      "lower": "Bir küçük harf",
+      "digit": "Bir rakam"
+    },
+    "err": {
+      "emailRequired": "Bir e-posta adresi girin",
+      "emailInvalid": "Geçerli bir e-posta adresi girin",
+      "passwordRequired": "Bir parola girin",
+      "wrongPassword": "Parola yanlış. Tekrar deneyin veya sıfırlamak için Parolanızı mı unuttunuz? bağlantısını tıklayın.",
+      "nameRequired": "Adınızı girin",
+      "passwordRules": "Parolanız aşağıdaki koşulların hepsini karşılamıyor",
+      "passwordMismatch": "Parolalar eşleşmedi. Tekrar deneyin.",
+      "orgRequired": "Organizasyonunuz için bir ad girin",
+      "codeRequired": "Size verilen davet kodunu girin"
+    },
+    "signIn": {
+      "title": "Oturum açın",
+      "subtitle": "JetReportDesigner'a devam etmek için",
+      "welcome": "Hoş geldiniz",
+      "submit": "Oturum aç"
+    },
+    "signUp": {
+      "title": "Hesabınızı oluşturun",
+      "progress": "Kayıt adımları",
+      "step1": "Adınızı ve iş e-postanızı girin",
+      "step2": "Güçlü bir parola oluşturun",
+      "step3": "Organizasyonunuzu seçin",
+      "emailHelper": "Oturum açarken bu adresi kullanacaksınız.",
+      "newOrg": "Yeni organizasyon oluştur",
+      "newOrgHint": "Tam yetkili Tasarımcısı siz olursunuz.",
+      "joinOrg": "Davet koduyla katıl",
+      "joinOrgHint": "Rolünüzü sizi davet eden kişi belirler.",
+      "codeHelper": "8 harf ve rakam, ör. VQZTW4U5",
+      "submit": "Hesap oluştur"
+    },
+    "join": {
+      "title": "{{org}} ekibine katılın",
+      "as": "{{role}} olarak katılacaksınız",
+      "loading": "Davetiniz kontrol ediliyor…",
+      "invalidTitle": "Bu davet kullanılamıyor",
+      "invalidText": "Süresi dolmuş ya da daha önce kullanılmış olabilir. Sizi davet eden kişiden yeni bir davet isteyin.",
+      "confirm": "Onaylayın ve hesabınızı oluşturun",
+      "summary": "{{name}}, hesabınız oluşturulacak ve {{org}} ekibine {{role}} olarak katılacaksınız."
+    },
+    "forgotPage": {
+      "title": "Hesap kurtarma",
+      "subtitle": "Hesabınızın e-posta adresini girin; yeni parola belirlemeniz için bir bağlantı gönderelim.",
+      "submit": "Bağlantı gönder",
+      "sentTitle": "E-postanızı kontrol edin",
+      "sentText": "{{email}} adresine ait bir hesap varsa parola sıfırlama bağlantısı gönderildi. Bağlantı 2 saat geçerlidir.",
+      "noMail": "E-posta gelmedi mi? Organizasyonunuzda e-posta henüz ayarlanmamış olabilir — ekibinizdeki bir Tasarımcıdan sıfırlama bağlantısı isteyin."
+    },
+    "resetPage": {
+      "title": "Yeni parola belirleyin",
+      "badLink": "Bu bağlantı eksik. E-postadaki bağlantıyı yeniden açın ya da yeni bir bağlantı isteyin.",
+      "done": "Parolanız değiştirildi. Yeni parolanızla oturum açın.",
+      "newLink": "Yeni bağlantı al",
+      "submit": "Parolayı kaydet"
+    },
+    "session": {
+      "title": "Oturumunuz sona erdi",
+      "text": "Güvenliğiniz için oturumunuz kapatıldı. Devam etmek için yeniden oturum açın — açık çalışmanız yerinde duruyor.",
+      "other": "Başka hesap kullan",
+      "submit": "Oturum aç"
+    }
+  },
+  "account": {
+    "title": "Hesabınız",
+    "description": "Adınız, parolanız ve ekibinizin sizi nasıl gördüğü.",
+    "menuLabel": "Hesap: {{name}}",
+    "hello": "Merhaba, {{name}}!",
+    "manage": "Hesabınızı yönetin",
+    "profile": "Kişisel bilgiler",
+    "emailFixed": "E-posta adresiniz buradan değiştirilemez.",
+    "nameSaved": "Ad kaydedildi",
+    "password": "Parola",
+    "currentPassword": "Mevcut parola",
+    "changePassword": "Parolayı değiştir",
+    "passwordChanged": "Parola değiştirildi",
+    "organization": "Organizasyon",
+    "orgRequired": "Bir organizasyon adı girin",
+    "orgSaved": "Organizasyon adı kaydedildi",
+    "lastLogin": "Son oturum açma: {{date}}"
+  },
+  "dock": {
+    "preparing_one": "{{count}} rapor hazırlanıyor",
+    "preparing_other": "{{count}} rapor hazırlanıyor",
+    "ready_one": "{{count}} rapor hazır",
+    "ready_other": "{{count}} rapor hazır",
+    "failed_one": "{{count}} rapor başarısız oldu",
+    "failed_other": "{{count}} rapor başarısız oldu",
+    "readyWithFailures": "{{done}} hazır, {{failed}} başarısız",
+    "collapse": "Küçült",
+    "expand": "Genişlet",
+    "cancel": "{{name}} işini iptal et"
   }
 }

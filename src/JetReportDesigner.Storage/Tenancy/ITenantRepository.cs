@@ -8,4 +8,6 @@ public interface ITenantRepository
     Task<Guid> CreateAsync(string name, CancellationToken cancellationToken);
 
     Task<TenantInfo?> GetAsync(Guid id, CancellationToken cancellationToken);
+
+    Task<TenantInfo?> RenameAsync(Guid id, string name, CancellationToken cancellationToken);
 }

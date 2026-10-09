@@ -4,69 +4,75 @@ import { api, type ReportJob } from "./api";
 
 const POLL_MS = 5000;
 
-/** How many of the newest jobs the feed keeps. Everything that reads this feed — the tray's
- * list and the finished-job notifier — only cares about what changed recently; the full
- * history lives on the Jobs page, which runs its own filtered, paged query. */
+/** How many of the newest jobs the feed keeps. Everything that reads this feed — the job panel,
+ * the Jobs nav badge and the finished-job notifier — only cares about what changed recently; the
+ * full history lives on the Jobs page, which runs its own filtered, paged query. */
 const WINDOW = 20;
-
-/** How long the tray stays open by itself after you send something to the background. Long
- * enough to see the row appear, short enough not to sit over your work. */
-const FLASH_MS = 4000;
 
 const isActive = (j: ReportJob) => j.status === "Queued" || j.status === "Running";
 
 interface JobFeedState {
   jobs: ReportJob[];
-  /** True once the first poll has answered — the tray shouldn't claim "no jobs" before then. */
+  /** True once the first poll has answered. */
   loaded: boolean;
-  trayOpen: boolean;
+  /**
+   * The jobs the bottom-right panel is following: every job seen running in this tab, until the
+   * panel is closed. Finished ones stay listed (with their Download button) so the result is one
+   * click away; closing the panel lets them go.
+   */
+  watched: string[];
+  /** The panel is showing (it opens by itself when a job starts). */
+  dockOpen: boolean;
+  /** Shrunk to its header bar. */
+  dockCollapsed: boolean;
 }
 
-/** The newest jobs, polled once per tab. Before this existed the tray, the nav badge and the
- * notifier each ran their own timer against /api/jobs, so every open tab asked three times per
- * tick for nearly the same rows. */
+/** The newest jobs, polled once per tab and shared by everything that shows job status. */
 export const useJobFeed = create<JobFeedState>(() => ({
   jobs: [],
   loaded: false,
-  trayOpen: false,
+  watched: [],
+  dockOpen: false,
+  dockCollapsed: false,
 }));
 
 let subscribers = 0;
 let timer: number | undefined;
-let autoClose: number | undefined;
 
 const refresh = async () => {
   try {
     const page = await api.listJobs({ take: WINDOW });
-    useJobFeed.setState({ jobs: page.items, loaded: true });
+    const { watched, dockOpen } = useJobFeed.getState();
+    // A job running that the panel isn't following yet (started here, in another tab, or by a
+    // schedule): follow it and bring the panel up.
+    const fresh = page.items.filter((j) => isActive(j) && !watched.includes(j.id)).map((j) => j.id);
+    useJobFeed.setState({
+      jobs: page.items,
+      loaded: true,
+      watched: fresh.length ? [...fresh, ...watched] : watched,
+      dockOpen: dockOpen || fresh.length > 0,
+      ...(fresh.length ? { dockCollapsed: false } : {}),
+    });
   } catch {
-    // Transient network hiccup — the next tick tries again. Blanking the tray would be worse.
+    // Transient network hiccup — the next tick tries again.
   }
 };
 
-const cancelAutoClose = () => {
-  if (autoClose !== undefined) {
-    window.clearTimeout(autoClose);
-    autoClose = undefined;
-  }
-};
-
-export const setTrayOpen = (open: boolean) => {
-  cancelAutoClose();
-  useJobFeed.setState({ trayOpen: open });
-};
-
-/** Stops the flash from closing the panel out from under someone who is reading it. */
-export const holdTrayOpen = cancelAutoClose;
-
-/** Call right after enqueuing: pull the new row in and show the tray briefly, the way a browser
- * flashes its downloads panel. Deliberately not a navigation — the point of running a report in
- * the background is that you get to stay where you are. */
+/** Call right after enqueuing: pull the new row in straight away so the panel shows it now
+ * rather than on the next tick. Deliberately not a navigation — the point of running a report
+ * in the background is that you get to stay where you are. */
 export const announceEnqueued = () => {
+  useJobFeed.setState({ dockOpen: true, dockCollapsed: false });
   void refresh();
-  cancelAutoClose();
-  useJobFeed.setState({ trayOpen: true });
-  autoClose = window.setTimeout(() => useJobFeed.setState({ trayOpen: false }), FLASH_MS);
+};
+
+export const setDockCollapsed = (collapsed: boolean) => useJobFeed.setState({ dockCollapsed: collapsed });
+
+/** Closing forgets the finished jobs. Anything still running stays followed, so it is listed again the next time the panel opens (when another job starts). */
+export const closeDock = () => {
+  const { jobs, watched } = useJobFeed.getState();
+  const stillRunning = watched.filter((id) => jobs.some((j) => j.id === id && isActive(j)));
+  useJobFeed.setState({ dockOpen: false, watched: stillRunning });
 };
 
 /** Drives the single shared poller. Every component that reads the feed calls this; the timer
@@ -89,7 +95,7 @@ export function useJobFeedPolling() {
 }
 
 /** Unfinished jobs among the newest `WINDOW`. `capped` says the real number may be
- * higher, so the badge can say "20+" rather than quietly under-reporting a busy queue. */
+ * higher, so a badge can say "20+" rather than quietly under-reporting a busy queue. */
 export function useActiveJobCount() {
   const jobs = useJobFeed((s) => s.jobs);
   const count = jobs.filter(isActive).length;

@@ -10,7 +10,9 @@
     "organization": "Organization",
     "designer": "Designer",
     "viewer": "Viewer",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "openMenu": "Open menu",
+    "main": "Main navigation"
   },
   "common": {
     "cancel": "Cancel",
@@ -25,7 +27,8 @@
     "sending": "Sending…",
     "loading": "Loading…",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "done": "Done"
   },
   "reports": {
     "title": "Reports",
@@ -105,7 +108,9 @@
     "noMatch": "No jobs match this filter.",
     "noMatchHint": "Pick another status, or go back to All.",
     "range": "{{from}}–{{to}} of {{total}}",
-    "retention": "Finished jobs are removed automatically after 30 days."
+    "retention": "Finished jobs are removed automatically after 30 days.",
+    "runningBadge_one": "{{count}} job running",
+    "runningBadge_other": "{{count}} jobs running"
   },
   "apiKeys": {
     "title": "API keys",
@@ -240,8 +245,17 @@
       "apply_one": "Import {{count}} report",
       "apply_other": "Import {{count}} reports"
     },
-    "col": { "report": "Report", "status": "State", "action": "What to do" },
-    "status": { "new": "New", "changed": "Changed", "identical": "Identical", "invalid": "Invalid" },
+    "col": {
+      "report": "Report",
+      "status": "State",
+      "action": "What to do"
+    },
+    "status": {
+      "new": "New",
+      "changed": "Changed",
+      "identical": "Identical",
+      "invalid": "Invalid"
+    },
     "action": {
       "create": "Add",
       "update": "Overwrite (new version)",
@@ -278,18 +292,62 @@
   "team": {
     "title": "Team",
     "members": "Members",
-    "member": "Member",
+    "member": "Name",
     "role": "Role",
-    "you": " (you)",
-    "ownRoleLocked": "You cannot change your own role",
-    "removeMember": "Remove {{email}} from the organization",
+    "you": "You",
+    "ownRoleLocked": "You can't change your own role",
+    "removeMember": "Remove from organization",
     "invite": "Invite a teammate",
     "generateCode": "Generate code",
     "shareCode": "Share this code — expires {{date}}",
     "copyCode": "Copy code",
-    "pendingInvites": "Pending invites",
-    "revokeInvite": "Revoke invite",
-    "expires": "expires {{date}}"
+    "pendingInvites": "Pending invitations",
+    "revokeInvite": "Revoke invitation",
+    "expires": "expires {{date}}",
+    "description_one": "{{org}} · {{count}} member",
+    "description_other": "{{org}} · {{count}} members",
+    "invitePeople": "Invite people",
+    "search": "Search people",
+    "lastSignIn": "Last sign-in",
+    "never": "Never",
+    "locked": "Locked",
+    "lockedHint": "Locked after too many wrong passwords. Send a reset link to let them back in now.",
+    "roleChanged": "{{name}}'s role changed",
+    "roleFor": "Role for {{name}}",
+    "actionsFor": "More actions for {{name}}",
+    "noMatch": "No one matches your search.",
+    "resetLink": "Copy password reset link",
+    "resetLinkCopied": "Reset link for {{name}} copied — it works once, for 2 hours",
+    "removeTitle": "Remove {{name}}?",
+    "removeText": "They lose access right away. Reports, schedules and jobs they created stay with the organization.",
+    "removed": "{{name}} was removed",
+    "invitee": "Invited",
+    "expiresCol": "Expires",
+    "anyone": "Anyone with the link",
+    "revoke": "Revoke",
+    "inviteRevoked": "Invitation revoked",
+    "pendingBadge_one": "{{count}} pending invitation",
+    "pendingBadge_other": "{{count}} pending invitations",
+    "noMailBanner": "Email isn't set up, so invitations and password resets can't be emailed — you'll get links to copy instead.",
+    "setUpMail": "Set up email",
+    "inviteTitle": "Invite people",
+    "inviteReady": "Invitation ready",
+    "inviteEmail": "Email (optional)",
+    "inviteEmailHelper": "We'll email them the invitation. Leave empty to just get a link.",
+    "inviteNoMailHelper": "Email isn't set up — you'll get a link to send yourself.",
+    "inviteValid": "Invitation expires after",
+    "validDays_one": "{{count}} day",
+    "validDays_other": "{{count}} days",
+    "sendInvite": "Send invitation",
+    "createInvite": "Create invitation link",
+    "inviteSent": "We emailed the invitation to {{email}}. You can also share this link:",
+    "inviteNotSent": "The email to {{email}} couldn't be sent. Share this link with them instead:",
+    "inviteShare": "Share this link with the person you're inviting. It works once.",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "inviteAnother": "Invite someone else",
+    "inviteMeta": "{{role}} · code {{code}} · expires {{date}}",
+    "inviteNoMail": "Email isn't set up, so nothing was sent to {{email}}. Share this link with them:"
   },
   "email": {
     "title": "Email",
@@ -330,7 +388,9 @@
     "deleteSchedule": "Delete schedule",
     "daily": "Daily at {{time}}",
     "weekly": "Weekly on {{day}} at {{time}}",
-    "monthly": "Monthly on day {{day}} at {{time}}"
+    "monthly": "Monthly on day {{day}} at {{time}}",
+    "emptyHint": "Open a report's ⋮ menu on the Reports page and choose “Schedule…” to send it automatically.",
+    "goToReports": "Go to Reports"
   },
   "settings": {
     "title": "Settings",
@@ -356,7 +416,9 @@
     "every30s": "Every 30 seconds",
     "everyMinute": "Every minute",
     "every5m": "Every 5 minutes",
-    "resetDefaults": "Reset to defaults"
+    "resetDefaults": "Reset to defaults",
+    "resetConfirm": "Reset",
+    "resetDone": "Settings reset to defaults"
   },
   "notifications": {
     "reportReady": "Report ready",
@@ -600,5 +662,127 @@
     "empty": "Nothing running in the background.",
     "seeAll": "See all jobs",
     "title": "Background jobs"
+  },
+  "roles": {
+    "Designer": "Designer",
+    "Viewer": "Viewer",
+    "DesignerHint": "Creates and edits reports, manages the team and settings.",
+    "ViewerHint": "Opens, runs and exports reports. Cannot change anything."
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "confirmPassword": "Confirm password",
+    "newPassword": "New password",
+    "organization": "Organization name",
+    "inviteCode": "Invite code",
+    "next": "Next",
+    "back": "Back",
+    "createAccount": "Create account",
+    "signInInstead": "Sign in instead",
+    "forgot": "Forgot password?",
+    "backToSignIn": "Back to sign in",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "rules": {
+      "title": "Password requirements",
+      "met": "met",
+      "length": "At least 8 characters",
+      "upper": "An uppercase letter",
+      "lower": "A lowercase letter",
+      "digit": "A number"
+    },
+    "err": {
+      "emailRequired": "Enter an email address",
+      "emailInvalid": "Enter a valid email address",
+      "passwordRequired": "Enter a password",
+      "wrongPassword": "Wrong password. Try again or click Forgot password to reset it.",
+      "nameRequired": "Enter your name",
+      "passwordRules": "Your password doesn't meet all the requirements below",
+      "passwordMismatch": "Those passwords didn't match. Try again.",
+      "orgRequired": "Enter a name for your organization",
+      "codeRequired": "Enter the invite code you were given"
+    },
+    "signIn": {
+      "title": "Sign in",
+      "subtitle": "to continue to JetReportDesigner",
+      "welcome": "Welcome",
+      "submit": "Sign in"
+    },
+    "signUp": {
+      "title": "Create your account",
+      "progress": "Sign-up progress",
+      "step1": "Enter your name and work email",
+      "step2": "Create a strong password",
+      "step3": "Choose your organization",
+      "emailHelper": "You'll use this address to sign in.",
+      "newOrg": "Create a new organization",
+      "newOrgHint": "You'll be its Designer, with full access.",
+      "joinOrg": "Join with an invite code",
+      "joinOrgHint": "Your role is set by whoever invited you.",
+      "codeHelper": "8 letters and numbers, e.g. VQZTW4U5",
+      "submit": "Create account"
+    },
+    "join": {
+      "title": "Join {{org}}",
+      "as": "You'll join as {{role}}",
+      "loading": "Checking your invitation…",
+      "invalidTitle": "This invitation can't be used",
+      "invalidText": "It may have expired or already been used. Ask the person who invited you for a new one.",
+      "confirm": "Confirm and create your account",
+      "summary": "{{name}}, your account will be created and you'll join {{org}} as {{role}}."
+    },
+    "forgotPage": {
+      "title": "Account recovery",
+      "subtitle": "Enter the email of your account and we'll send you a link to choose a new password.",
+      "submit": "Send link",
+      "sentTitle": "Check your email",
+      "sentText": "If {{email}} has an account, a link to reset the password is on its way. It works for 2 hours.",
+      "noMail": "Nothing arrived? Your organization may not have email set up yet — ask a Designer on your team for a reset link."
+    },
+    "resetPage": {
+      "title": "Choose a new password",
+      "badLink": "This link is incomplete. Open the link from your email again, or ask for a new one.",
+      "done": "Your password was changed. Sign in with your new password.",
+      "newLink": "Get a new link",
+      "submit": "Save password"
+    },
+    "session": {
+      "title": "Your session has ended",
+      "text": "For your security you've been signed out. Sign in again to continue — your open work is still here.",
+      "other": "Use another account",
+      "submit": "Sign in"
+    }
+  },
+  "account": {
+    "title": "Your account",
+    "description": "Your name, password and how your team sees you.",
+    "menuLabel": "Account: {{name}}",
+    "hello": "Hi, {{name}}!",
+    "manage": "Manage your account",
+    "profile": "Personal info",
+    "emailFixed": "Your email can't be changed here.",
+    "nameSaved": "Name saved",
+    "password": "Password",
+    "currentPassword": "Current password",
+    "changePassword": "Change password",
+    "passwordChanged": "Password changed",
+    "organization": "Organization",
+    "orgRequired": "Enter an organization name",
+    "orgSaved": "Organization name saved",
+    "lastLogin": "Last sign-in: {{date}}"
+  },
+  "dock": {
+    "preparing_one": "Preparing {{count}} report",
+    "preparing_other": "Preparing {{count}} reports",
+    "ready_one": "{{count}} report ready",
+    "ready_other": "{{count}} reports ready",
+    "failed_one": "{{count}} report failed",
+    "failed_other": "{{count}} reports failed",
+    "readyWithFailures": "{{done}} ready, {{failed}} failed",
+    "collapse": "Minimize",
+    "expand": "Expand",
+    "cancel": "Cancel {{name}}"
   }
 }

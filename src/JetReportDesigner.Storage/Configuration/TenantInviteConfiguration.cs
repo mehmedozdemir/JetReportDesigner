@@ -15,6 +15,7 @@ internal sealed class TenantInviteConfiguration : IEntityTypeConfiguration<Tenan
 
         builder.Property(i => i.Code).HasMaxLength(16).IsRequired();
         builder.Property(i => i.Role).HasMaxLength(16).IsRequired();
+        builder.Property(i => i.Email).HasMaxLength(256);
 
         builder.HasIndex(i => i.Code).IsUnique();
         builder.HasIndex(i => i.TenantId);

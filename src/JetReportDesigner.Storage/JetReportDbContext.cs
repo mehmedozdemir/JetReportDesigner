@@ -46,6 +46,7 @@ public sealed class JetReportDbContext(DbContextOptions<JetReportDbContext> opti
         modelBuilder.Entity<AppUser>().ToTable("Users");
         modelBuilder.Entity<AppUser>().Property(u => u.TenantId).IsRequired();
         modelBuilder.Entity<AppUser>().HasIndex(u => u.TenantId);
+        modelBuilder.Entity<AppUser>().Property(u => u.DisplayName).HasMaxLength(100);
         modelBuilder.Entity<AppRole>().ToTable("Roles");
         modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>().ToTable("UserRoles");
         modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserClaim<Guid>>().ToTable("UserClaims");

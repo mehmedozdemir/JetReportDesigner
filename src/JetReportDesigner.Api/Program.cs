@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using System.Text;
 using FluentValidation;
 using JetReportDesigner.Api.Infrastructure;
@@ -34,6 +35,25 @@ builder.Services.AddJetReportStorage(
     new PostgreSqlStorageProvider(),
     new OracleStorageProvider());
 builder.Services.AddJetReportIdentity();
+// Password-reset tokens (single-use: the security stamp changes on reset) and their lifetime.
+new Microsoft.AspNetCore.Identity.IdentityBuilder(typeof(AppUser), typeof(AppRole), builder.Services).AddDefaultTokenProviders();
+builder.Services.Configure<Microsoft.AspNetCore.Identity.DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromHours(2));
+
+// Sign-in, sign-up and password-reset endpoints are rate limited per client IP, on top of account lockout.
+var authPermitsPerMinute = builder.Configuration.GetValue("Auth:RateLimitPerMinute", 20);
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(AuthPolicies.AuthRateLimit, context =>
+        System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = authPermitsPerMinute,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<JetReportDesigner.Storage.Tenancy.ICurrentTenant, CurrentTenant>();
 
@@ -134,6 +154,7 @@ builder.Services.AddScoped<JetReportDesigner.Rendering.IRenderImageResolver>(sp 
 builder.Services.AddScoped<JetReportDesigner.Rendering.ISubreportResolver, JetReportDesigner.Api.Infrastructure.SubreportResolver>();
 builder.Services.AddScoped<ReportRenderService>();
 builder.Services.AddScoped<JetReportDesigner.Api.Transfer.TransferService>();
+builder.Services.AddScoped<AccountMail>();
 builder.Services.AddSingleton<JetReportDesigner.Api.Localization.IApiStrings, JetReportDesigner.Api.Localization.ApiStrings>();
 builder.Services.AddSingleton<JetReportDesigner.Api.Jobs.RunningJobs>();
 builder.Services.AddHostedService<JetReportDesigner.Api.Jobs.ReportJobProcessor>();
@@ -179,6 +200,8 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseCors(SpaCorsPolicy);
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

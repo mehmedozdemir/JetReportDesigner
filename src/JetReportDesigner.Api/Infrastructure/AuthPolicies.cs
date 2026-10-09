@@ -6,4 +6,7 @@ namespace JetReportDesigner.Api.Infrastructure;
 public static class AuthPolicies
 {
     public const string Designer = "Designer";
+
+    /// <summary>Rate-limiter policy for the anonymous sign-in / sign-up / password-reset endpoints.</summary>
+    public const string AuthRateLimit = "auth";
 }

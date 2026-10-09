@@ -23,4 +23,17 @@ internal sealed class TenantRepository(JetReportDbContext db, TimeProvider clock
         var row = await db.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
         return row is null ? null : new TenantInfo(row.Id, row.Name, row.CreatedAtUtc);
     }
+
+    public async Task<TenantInfo?> RenameAsync(Guid id, string name, CancellationToken cancellationToken)
+    {
+        var row = await db.Tenants.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+        if (row is null)
+        {
+            return null;
+        }
+
+        row.Name = name;
+        await db.SaveChangesAsync(cancellationToken);
+        return new TenantInfo(row.Id, row.Name, row.CreatedAtUtc);
+    }
 }

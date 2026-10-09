@@ -742,6 +742,26 @@ Bilinçli olarak ertelenenler:
   kullanılamadığı genişliklerle sınırlı tutuldu.
 - ⬜ **Reports listesi tamamen istemci tarafında** — rapor sayısı büyüyünce sunucu tarafı
   arama/sayfalama gerekecek.
+- ✅ **Giriş, hesap ve yönetim ekranları — Google Workspace tasarım dili** (2026-10-10): UX incelemesindeki
+  bulguların tamamı. *Kimlik:* önce e-posta sonra parola (Google akışı), adımlı "Hesap oluştur" (ad soyad →
+  canlı kural listeli parola → organizasyon), `/join/{kod}` davet bağlantısı (organizasyon ve rol önizlemesiyle),
+  "Parolanızı mı unuttunuz?" + `/reset-password` (2 saat, tek kullanımlık; e-posta organizasyonun SMTP'siyle),
+  "Parolayı göster", doğru `autocomplete`, alan altında yerelleştirilmiş hatalar, dil seçici, mobilde kartsız
+  düzen. *Güvenlik:* 5 hatalı parolada 15 dk kilit (423), IP başına hız sınırı (`Auth:RateLimitPerMinute`,
+  varsayılan 20/dk), parola sıfırlama kilidi de açar, "şifremi unuttum" var/yok hesabı ele vermez, kayıt
+  hatası artık boş organizasyon bırakmıyor. *Oturum:* süre dolunca uygulama ekranda kalır, parola istenir,
+  başarısız istekler yeniden girişten sonra kendiliğinden tekrarlanır (kaydedilmemiş tasarım kaybolmaz).
+  *Hesap:* ad soyad + son oturum (migration `AddUserProfileAndInviteEmail`), Hesabınız sayfası (ad, parola,
+  Tasarımcı için organizasyon adı), Google tarzı hesap kartı (başlangıç ekranı ve tasarımcıda aynı).
+  *Takım:* avatar/ad/son oturum/kilit durumu, arama, e-postayla "Kişi davet et" (SMTP yoksa kopyalanacak
+  bağlantı), bekleyen davetler tablosu, Tasarımcının ekip arkadaşı için parola sıfırlama bağlantısı.
+  *Tasarım sistemi* (`web/src/workspace.css`): Roboto (gömülü), Material 3 renkleri (açık/koyu), hap butonlar
+  (dolu/tonlu/çerçeveli/metin), yüzen etiketli metin alanı, anahtar düğmesi, alt bildirim (snackbar), kart
+  bölümler, tek tablo stili, Material diyaloglar; ≤820px'te üst çubuk + gezinme çekmecesi, taşma yok.
+  Ayarlar onay kutuları anahtar düğmesine, sıfırlama onaylıya döndü; İşler/Zamanlamalar boş durumlarına eylem
+  eklendi. Doğrulama: 12 yeni API testi (kilit, sıfırlama, profil, davet, hız sınırı, yerelleştirilmiş alan
+  hataları — SQL Server + PostgreSQL), tüm ekranlar masaüstü/mobil/koyu temada ekran görüntüsüyle.
+  Kalan: örnek rapor adları ("Sample — …") sunucudan İngilizce geliyor.
 - ⬜ **Görsel Kitaplığı (görselleri kopyala, depola, yönet)** (2026-10-09, analizi yapıldı,
   kararlar bekleniyor): bir görsel nesnesine cihazdan, URL'den ya da başka kaynaktan verilen
   görsel bir kez uygulamanın depolamasına kopyalanır; rapor `asset:{id}` ile ona bağlanır, her

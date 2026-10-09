@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { announceEnqueued } from "../jobFeed";
-import { JobTray } from "./JobTray";
+import { announceEnqueued, useActiveJobCount } from "../jobFeed";
 import {
   CalendarClock,
   ChevronDown,
@@ -18,7 +17,6 @@ import {
   LayoutGrid,
   List,
   Loader2,
-  LogOut,
   Mail,
   MoreVertical,
   Pencil,
@@ -31,6 +29,7 @@ import {
   PackagePlus,
   PackageOpen,
   KeyRound,
+  Menu as MenuIcon,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -55,10 +54,12 @@ import { ScheduleDialog } from "./ScheduleDialog";
 import { SchedulesPage } from "./SchedulesPage";
 import { SettingsPage } from "./SettingsPage";
 import { ShareDialog } from "./ShareDialog";
+import { AccountMenu } from "./AccountMenu";
+import { AccountPage } from "./AccountPage";
 import { ApiKeysPage } from "./ApiKeysPage";
 import { TeamPage } from "./TeamPage";
 
-type View = "reports" | "team" | "apikeys" | "email" | "jobs" | "schedules" | "settings";
+type View = "reports" | "team" | "apikeys" | "email" | "jobs" | "schedules" | "settings" | "account";
 type DragPayload = { kind: "report" | "folder"; id: string };
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -72,6 +73,7 @@ const VIEW_PATH: Record<View, string> = {
   email: "/email-settings",
   schedules: "/schedules",
   settings: "/settings",
+  account: "/account",
 };
 
 /** A nav entry is a real <a href> so it can be Ctrl/middle-clicked into a new tab like any
@@ -83,6 +85,7 @@ function NavItem({
   icon: Icon,
   label,
   badge,
+  badgeLabel,
   onNavigate,
 }: {
   view: View;
@@ -90,6 +93,8 @@ function NavItem({
   icon: LucideIcon;
   label: string;
   badge?: number;
+  /** What the number means, for the tooltip and screen readers ("1 pending invite"). */
+  badgeLabel?: string;
   onNavigate: (v: View) => void;
 }) {
   const active = view === current;
@@ -104,8 +109,12 @@ function NavItem({
         onNavigate(view);
       }}
     >
-      <Icon size={16} /> <span>{label}</span>
-      {badge != null && badge > 0 && <span className="nav-badge">{badge}</span>}
+      <Icon size={18} aria-hidden /> <span>{label}</span>
+      {badge != null && badge > 0 && (
+        <span className="nav-badge" title={badgeLabel} aria-label={badgeLabel}>
+          {badge}
+        </span>
+      )}
     </a>
   );
 }
@@ -202,10 +211,10 @@ export function StartScreen({
   const [scheduleReport, setScheduleReport] = useState<ReportSummary | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const user = useAuth((s) => s.user);
-  const logout = useAuth((s) => s.logout);
   const canEdit = isDesigner(user);
   const [tenant, setTenant] = useState<TenantInfo | null>(null);
-  const [userMenu, setUserMenu] = useState<{ x: number; y: number } | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const activeJobs = useActiveJobCount();
 
   useEffect(() => {
     api.getTenant().then(setTenant).catch(() => undefined);
@@ -557,24 +566,44 @@ export function StartScreen({
   };
 
   return (
-    <div className="start-screen">
-      <nav className="start-nav">
+    <div className={`start-screen${drawerOpen ? " drawer-open" : ""}`}>
+      <header className="start-appbar">
+        <button className="icon-btn" onClick={() => setDrawerOpen(true)} aria-label={t("nav.openMenu")}>
+          <MenuIcon size={22} />
+        </button>
+        <span className="start-appbar-brand">
+          <FileBarChart2 size={20} /> JetReportDesigner
+        </span>
+        <AccountMenu variant="compact" />
+      </header>
+      <div className="start-scrim" onClick={() => setDrawerOpen(false)} aria-hidden />
+      <nav className="start-nav" aria-label={t("nav.main")} onClick={(e) => {
+        // Following a link inside the drawer closes it.
+        if ((e.target as HTMLElement).closest("a")) setDrawerOpen(false);
+      }}>
         <div className="start-nav-brand">
           <FileBarChart2 size={18} />
           <span>JetReportDesigner</span>
-          <JobTray />
         </div>
         {tenant && <div className="start-nav-org">{tenant.name}</div>}
 
         <div className="start-nav-group">
           <NavItem view="reports" current={view} icon={LayoutGrid} label={t("nav.reports")} onNavigate={setView} />
-          <NavItem view="jobs" current={view} icon={Clock} label={t("nav.jobs")} onNavigate={setView} />
+          <NavItem
+            view="jobs"
+            current={view}
+            icon={Clock}
+            label={t("nav.jobs")}
+            badge={activeJobs.count}
+            badgeLabel={t("jobs.runningBadge", { count: activeJobs.count })}
+            onNavigate={setView}
+          />
         </div>
 
         {canEdit && (
           <div className="start-nav-group">
             <div className="start-nav-label">{t("nav.organization")}</div>
-            <NavItem view="team" current={view} icon={Users} label={t("nav.team")} badge={pendingInvites} onNavigate={setView} />
+            <NavItem view="team" current={view} icon={Users} label={t("nav.team")} badge={pendingInvites} badgeLabel={t("team.pendingBadge", { count: pendingInvites })} onNavigate={setView} />
             <NavItem view="apikeys" current={view} icon={KeyRound} label={t("nav.apiKeys")} onNavigate={setView} />
             <NavItem view="email" current={view} icon={Mail} label={t("nav.email")} onNavigate={setView} />
             <NavItem view="schedules" current={view} icon={CalendarClock} label={t("nav.schedules")} onNavigate={setView} />
@@ -586,49 +615,14 @@ export function StartScreen({
               units, panel behaviour), so a Viewer needs it just as much as a Designer. */}
           <NavItem view="settings" current={view} icon={Settings} label={t("nav.settings")} onNavigate={setView} />
 
-          {user && (
-            <>
-              <button
-                className="start-nav-item start-nav-user"
-                onClick={(e) =>
-                  setUserMenu({
-                    x: e.currentTarget.getBoundingClientRect().right,
-                    y: e.currentTarget.getBoundingClientRect().bottom + 4,
-                  })
-                }
-                title={user.email}
-              >
-                <span className="user-avatar">{user.email[0]?.toUpperCase()}</span>
-                {/* The full address never fit the 228px rail — it was rendering as
-                    "admin@asi…", which is useless for telling accounts apart. Show the
-                    local part plus the role; the full address is in the tooltip and as the
-                    first line of the menu this opens. */}
-                <span className="start-nav-user-text">
-                  <span className="start-nav-user-name">{user.email.split("@")[0]}</span>
-                  <span className="start-nav-user-role">{canEdit ? t("nav.designer") : t("nav.viewer")}</span>
-                </span>
-                <ChevronDown size={12} />
-              </button>
-              {userMenu && (
-                <ContextMenu
-                  x={userMenu.x}
-                  y={userMenu.y}
-                  items={[
-                    { label: user.email, disabled: true },
-                    { label: canEdit ? t("nav.designer") : t("nav.viewer"), disabled: true },
-                    { sep: true },
-                    { label: t("nav.signOut"), icon: LogOut, onClick: logout, danger: true },
-                  ]}
-                  onClose={() => setUserMenu(null)}
-                />
-              )}
-            </>
-          )}
+          {user && <AccountMenu variant="rail" />}
         </div>
       </nav>
 
       <div className="start-scroll">
-        {view === "team" ? (
+        {view === "account" ? (
+          <AccountPage />
+        ) : view === "team" ? (
           <TeamPage />
         ) : view === "apikeys" ? (
           <ApiKeysPage />
@@ -808,8 +802,8 @@ export function StartScreen({
                       </div>
 
                       {canEdit && (
-                        <button className="btn" onClick={() => setImportOpen(true)} title={t("transfer.import.hint")}>
-                          <PackageOpen size={14} /> {t("transfer.import.button")}
+                        <button className="btn outline" onClick={() => setImportOpen(true)} title={t("transfer.import.hint")}>
+                          <PackageOpen size={16} /> {t("transfer.import.button")}
                         </button>
                       )}
 
@@ -833,8 +827,8 @@ export function StartScreen({
                             <button className="mini" type="button" onClick={() => setCreatingFolder(false)}>{t("common.cancel")}</button>
                           </form>
                         ) : (
-                          <button className="mini" onClick={() => setCreatingFolder(true)}>
-                            <FolderPlus size={13} /> {t("reports.newFolder")}
+                          <button className="btn outline" onClick={() => setCreatingFolder(true)}>
+                            <FolderPlus size={16} /> {t("reports.newFolder")}
                           </button>
                         )
                       )}

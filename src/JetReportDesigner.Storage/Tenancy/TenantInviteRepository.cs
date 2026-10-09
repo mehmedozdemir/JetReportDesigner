@@ -10,7 +10,7 @@ internal sealed class TenantInviteRepository(JetReportDbContext db, TimeProvider
     private const string CodeAlphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
     private const int CodeLength = 8;
 
-    public async Task<CreatedInvite> CreateAsync(Guid tenantId, string role, Guid createdByUserId, TimeSpan ttl, CancellationToken cancellationToken)
+    public async Task<CreatedInvite> CreateAsync(Guid tenantId, string role, Guid createdByUserId, TimeSpan ttl, CancellationToken cancellationToken, string? email = null)
     {
         var now = clock.GetUtcNow().UtcDateTime;
         var invite = new TenantInvite
@@ -20,12 +20,23 @@ internal sealed class TenantInviteRepository(JetReportDbContext db, TimeProvider
             Code = await GenerateUniqueCodeAsync(cancellationToken),
             Role = role,
             CreatedByUserId = createdByUserId,
+            Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
             CreatedAtUtc = now,
             ExpiresAtUtc = now + ttl,
         };
         db.TenantInvites.Add(invite);
         await db.SaveChangesAsync(cancellationToken);
-        return new CreatedInvite(invite.Code, invite.Role, invite.ExpiresAtUtc);
+        return new CreatedInvite(invite.Code, invite.Role, invite.ExpiresAtUtc, invite.Email);
+    }
+
+    public async Task<InviteDetails?> FindValidAsync(string code, CancellationToken cancellationToken)
+    {
+        var now = clock.GetUtcNow().UtcDateTime;
+        var normalized = code.Trim().ToUpperInvariant();
+        var invite = await db.TenantInvites
+            .AsNoTracking()
+            .FirstOrDefaultAsync(i => i.Code == normalized && i.UsedAtUtc == null && i.ExpiresAtUtc > now, cancellationToken);
+        return invite is null ? null : new InviteDetails(invite.TenantId, invite.Role, invite.Email, invite.ExpiresAtUtc);
     }
 
     public async Task<IReadOnlyList<PendingInvite>> ListPendingAsync(Guid tenantId, CancellationToken cancellationToken)
@@ -35,10 +46,10 @@ internal sealed class TenantInviteRepository(JetReportDbContext db, TimeProvider
             .AsNoTracking()
             .Where(i => i.TenantId == tenantId && i.UsedAtUtc == null && i.ExpiresAtUtc > now)
             .OrderByDescending(i => i.CreatedAtUtc)
-            .Select(i => new { i.Code, i.Role, i.CreatedAtUtc, i.ExpiresAtUtc })
+            .Select(i => new { i.Code, i.Role, i.CreatedAtUtc, i.ExpiresAtUtc, i.Email })
             .ToListAsync(cancellationToken);
 
-        return rows.Select(i => new PendingInvite(i.Code, i.Role, i.CreatedAtUtc, i.ExpiresAtUtc)).ToList();
+        return rows.Select(i => new PendingInvite(i.Code, i.Role, i.CreatedAtUtc, i.ExpiresAtUtc, i.Email)).ToList();
     }
 
     public async Task<bool> RevokeAsync(Guid tenantId, string code, CancellationToken cancellationToken)

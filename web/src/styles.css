@@ -438,45 +438,10 @@ body {
    Background job tray — the downloads-button pattern: a button in the app chrome with a
    panel under it, so sending a report to the background never has to take you anywhere.
    ============================================================ */
-.job-tray { position: relative; display: inline-flex; margin-left: auto; }
-.job-tray-button { position: relative; }
-.job-tray-button.busy { color: var(--accent); }
-.job-tray-button .nav-badge { position: absolute; top: -2px; right: -4px; }
 
 /* Fixed and portalled to the body, placed from the button's rect: the nav rail scrolls, so a
    panel rendered inside it would be clipped at the rail's edge. Width is mirrored by
    PANEL_WIDTH in JobTray.tsx, which needs it to keep the panel on screen. */
-.job-tray-panel {
-  position: fixed; z-index: 90;
-  width: 320px;
-  display: flex; flex-direction: column;
-  background: var(--bg-surface); border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md, 8px); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
-  overflow: hidden; text-align: left;
-}
-.job-tray-head {
-  padding: 9px 12px; border-bottom: 1px solid var(--border);
-  font-size: 11px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--text-secondary);
-}
-.job-tray-empty { padding: 22px 12px; text-align: center; color: var(--text-secondary); font-size: 12px; }
-.job-tray-list { list-style: none; margin: 0; padding: 4px; max-height: 320px; overflow-y: auto; }
-.job-tray-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 8px; border-radius: var(--radius-sm);
-}
-.job-tray-item:hover { background: var(--bg-elevated); }
-.job-tray-icon { display: inline-flex; flex: 0 0 auto; color: var(--text-secondary); }
-.job-tray-icon.error { color: var(--error); }
-.job-tray-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.job-tray-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.job-tray-meta { font-size: 11px; color: var(--text-secondary); }
-.job-tray-error { font-size: 11px; color: var(--error); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.job-tray-all {
-  border: none; border-top: 1px solid var(--border); background: none;
-  padding: 9px 12px; font: inherit; font-size: 12px; color: var(--accent); cursor: pointer; text-align: center;
-}
-.job-tray-all:hover { background: var(--bg-elevated); }
 
 /* Status filter chips above a table, and the page counter below it. */
 .filter-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
@@ -1118,25 +1083,6 @@ a.drive-tile { text-decoration: none; }
 .job-status-ok { color: var(--success); }
 .job-status-error { color: var(--error); cursor: help; }
 
-/* background job "ready" toasts — top-right, distinct from the bottom-right error .toast */
-.job-toast-stack {
-  /* Above .start-overlay (90) — the Jobs tab a job finishes while you're watching lives
-     inside that overlay, so this must outrank it or the toast renders invisibly behind it. */
-  position: fixed; top: 16px; right: 16px; z-index: 100;
-  display: flex; flex-direction: column; gap: 8px; max-width: 340px;
-}
-.job-toast {
-  display: flex; align-items: flex-start; gap: 9px;
-  padding: 10px 12px; border-radius: var(--radius-md);
-  background: var(--bg-surface); border: 1px solid var(--border); box-shadow: var(--shadow-lg);
-  color: var(--success);
-  animation: toast-in 140ms ease-out;
-}
-.job-toast-error { color: var(--error); }
-.job-toast > svg { flex: 0 0 auto; margin-top: 1px; }
-.job-toast-body { flex: 1; min-width: 0; }
-.job-toast-title { font-size: 12.5px; font-weight: 650; color: var(--text-primary); }
-.job-toast-name { font-size: 11.5px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 
 /* formula editor */

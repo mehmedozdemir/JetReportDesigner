@@ -1,7 +1,9 @@
 import { RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { usePrefs, type RulerUnit, type ThemePref } from "../prefs";
+import { ConfirmButton } from "./ConfirmButton";
 import { PageHeader } from "./PageHeader";
+import { notify, Switch } from "./ui";
 import { LANGUAGES, type LanguageCode } from "../i18n";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -22,12 +24,7 @@ function Check({
   value: boolean;
   onChange: (v: boolean) => void;
 }) {
-  return (
-    <label className="settings-row settings-check">
-      <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} />
-      <span>{label}</span>
-    </label>
-  );
+  return <Switch label={label} checked={value} onChange={onChange} />;
 }
 
 function Segmented<T extends string>({
@@ -122,9 +119,16 @@ export function SettingsPage() {
       </section>
 
       <section className="start-section start-section-narrow">
-        <button className="btn" onClick={reset}>
-          <RotateCcw /> {t("settings.resetDefaults")}
-        </button>
+        <ConfirmButton
+          icon={RotateCcw}
+          label={t("settings.resetDefaults")}
+          title={t("settings.resetDefaults")}
+          confirmLabel={t("settings.resetConfirm")}
+          onConfirm={() => {
+            reset();
+            notify(t("settings.resetDone"));
+          }}
+        />
       </section>
     </>
   );

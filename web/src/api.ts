@@ -10,23 +10,37 @@ import type {
   ReportSummary,
   SqlQueryResponse,
 } from "./types";
-import { useAuth, type PendingInvite, type TeamMember, type TenantInfo } from "./auth";
+import { useAuth, type AuthUser, type CreatedInvite, type PendingInvite, type TeamMember, type TenantInfo } from "./auth";
 import { problemMessage } from "./httpError";
 import { usePrefs } from "./prefs";
 
-/** Every API call goes through this so the JWT is always attached; a 401 means the
- * token is missing/expired/revoked, so it signs the user out back to the login screen. */
-function fetchWithAuth(input: string, init: RequestInit = {}): Promise<Response> {
+/** Resolves once the person has signed in again after their session expired (true), or signed out instead (false). */
+function sessionRestored(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const stop = useAuth.subscribe((s) => {
+      if (!s.sessionExpired) {
+        stop();
+        resolve(!!s.token);
+      }
+    });
+  });
+}
+
+/** Every API call goes through this so the JWT is always attached. A 401 means the token expired or
+ * was revoked: the app stays on screen (no unsaved work is lost), a sign-in prompt appears, and the
+ * request is sent again once the person has signed back in — so screens never show a raw "401". */
+async function fetchWithAuth(input: string, init: RequestInit = {}, retried = false): Promise<Response> {
   const token = useAuth.getState().token;
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
   // The API localizes its own messages from this header. It has to be the language chosen in
   // Settings, not the browser's own preference — otherwise a Turkish UI still gets English errors.
   headers.set("Accept-Language", usePrefs.getState().language);
-  return fetch(input, { ...init, headers }).then((res) => {
-    if (res.status === 401) useAuth.getState().logout();
-    return res;
-  });
+  const res = await fetch(input, { ...init, headers });
+  if (res.status !== 401 || !token || retried) return res;
+
+  useAuth.getState().expire();
+  return (await sessionRestored()) ? fetchWithAuth(input, init, true) : res;
 }
 
 async function json<T>(response: Response): Promise<T> {
@@ -256,12 +270,25 @@ export const api = {
       if (!r.ok) throw new Error(problemMessage(await r.text()));
     }),
 
-  createInvite: (role: string, expiresInHours?: number): Promise<PendingInvite> =>
+  createInvite: (role: string, expiresInHours?: number, email?: string | null): Promise<CreatedInvite> =>
     fetchWithAuth("/api/tenant/invites", {
       method: "POST",
       headers: jsonHeaders,
-      body: JSON.stringify({ role, expiresInHours: expiresInHours ?? null }),
-    }).then(json<PendingInvite>),
+      body: JSON.stringify({ role, expiresInHours: expiresInHours ?? null, email: email || null }),
+    }).then(json<CreatedInvite>),
+
+  renameTenant: (name: string): Promise<TenantInfo> =>
+    fetchWithAuth("/api/tenant", { method: "PUT", headers: jsonHeaders, body: JSON.stringify({ name }) }).then(json<TenantInfo>),
+
+  tenantCapabilities: (): Promise<{ emailConfigured: boolean }> =>
+    fetchWithAuth("/api/tenant/capabilities").then(json<{ emailConfigured: boolean }>),
+
+  /** A one-time link a Designer passes to a teammate so they can choose a new password. */
+  createResetLink: (userId: string): Promise<{ url: string; expiresAtUtc: string }> =>
+    fetchWithAuth(`/api/auth/users/${userId}/reset-link`, { method: "POST" }).then(json<{ url: string; expiresAtUtc: string }>),
+
+  updateMe: (displayName: string): Promise<AuthUser> =>
+    fetchWithAuth("/api/auth/me", { method: "PUT", headers: jsonHeaders, body: JSON.stringify({ displayName }) }).then(json<AuthUser>),
 
   listInvites: (): Promise<PendingInvite[]> => fetchWithAuth("/api/tenant/invites").then(json<PendingInvite[]>),
 

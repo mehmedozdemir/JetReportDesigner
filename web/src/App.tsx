@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Eye, Loader2, PencilRuler, ZoomIn, ZoomOut } from "lucide-react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "./api";
 import { isDesigner, useAuth } from "./auth";
@@ -15,9 +15,9 @@ import {
   type ReportSummary,
 } from "./types";
 import { Canvas } from "./components/Canvas";
-import { JobNotifications } from "./components/JobNotifications";
+import { JobDock } from "./components/JobDock";
 import { LeftSidebar } from "./components/LeftSidebar";
-import { LoginScreen } from "./components/LoginScreen";
+import { AuthScreens, isAuthPath, SessionExpiredDialog } from "./components/AuthScreens";
 import { COLLAPSED_WIDTH, ResizablePanel } from "./components/ResizablePanel";
 import { StartScreen } from "./components/StartScreen";
 import { Toolbar } from "./components/Toolbar";
@@ -32,6 +32,7 @@ import { PreviewPane } from "./components/PreviewPane";
 export function App() {
   const { t } = useTranslation();
   const token = useAuth((s) => s.token);
+  const sessionExpired = useAuth((s) => s.sessionExpired);
   const canEdit = isDesigner(useAuth((s) => s.user));
   const navigate = useNavigate();
   const location = useLocation();
@@ -141,7 +142,7 @@ export function App() {
   // whatever it's actually showing.
   useEffect(() => {
     const section =
-      { "/jobs": "nav.jobs", "/team": "nav.team", "/api-keys": "nav.apiKeys", "/email-settings": "nav.email", "/schedules": "nav.schedules", "/settings": "nav.settings" }[
+      { "/jobs": "nav.jobs", "/team": "nav.team", "/api-keys": "nav.apiKeys", "/account": "account.title", "/email-settings": "nav.email", "/schedules": "nav.schedules", "/settings": "nav.settings" }[
         location.pathname
       ] ?? "nav.reports";
     const page =
@@ -356,7 +357,12 @@ export function App() {
   }, [autoSaveSeconds]);
 
   if (!token) {
-    return <LoginScreen />;
+    return <AuthScreens />;
+  }
+
+  // Signed in but on a sign-in/sign-up URL (bookmark, back button): go to the app.
+  if (isAuthPath(location.pathname)) {
+    return <Navigate to="/reports" replace />;
   }
 
   if (!isDesignerRoute) {
@@ -367,6 +373,8 @@ export function App() {
           ? "team"
           : location.pathname === "/api-keys"
             ? "apikeys"
+          : location.pathname === "/account"
+            ? "account"
           : location.pathname === "/email-settings"
             ? "email"
             : location.pathname === "/schedules"
@@ -390,7 +398,9 @@ export function App() {
           onBulkDelete={(ids) => void bulkDelete(ids)}
           onReportChanged={() => void refresh()}
         />
-        <JobNotifications />
+        <JobDock />
+      {sessionExpired && <SessionExpiredDialog />}
+        {sessionExpired && <SessionExpiredDialog />}
         {error && (
           <div className="toast" role="alert">
             <div className="error">
@@ -553,7 +563,7 @@ export function App() {
         </ResizablePanel>
       )}
 
-      <JobNotifications />
+      <JobDock />
 
       {error && (
         <div className="toast" role="alert">

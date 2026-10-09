@@ -87,6 +87,8 @@ export function SchedulesPage() {
         <div className="start-empty">
           <CalendarClock />
           <div>{t("schedules.empty")}</div>
+          <p>{t("schedules.emptyHint")}</p>
+          <a className="btn primary" href="/reports">{t("schedules.goToReports")}</a>
         </div>
       ) : (
         <div className="data-card">

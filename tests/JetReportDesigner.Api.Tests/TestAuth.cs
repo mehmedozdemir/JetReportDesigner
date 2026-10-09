@@ -16,7 +16,10 @@ internal static class TestAuth
     public const string JwtSecret = "integration-test-only-signing-secret-not-for-real-use";
 
     public static IWebHostBuilder UseTestJwt(this IWebHostBuilder builder) =>
-        builder.UseSetting("Jwt:Secret", JwtSecret);
+        builder
+            .UseSetting("Jwt:Secret", JwtSecret)
+            // Every test signs up fresh users from one address; the per-IP sign-in limit would trip.
+            .UseSetting("Auth:RateLimitPerMinute", "100000");
 
     /// <summary>
     /// Registers a fresh user as the founder of a brand-new organization (which always makes

@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { JobTray } from "./JobTray";
 import {
   ChevronDown,
   FileBarChart2,
@@ -10,7 +9,6 @@ import {
   FileText,
   Folder,
   LayoutGrid,
-  LogOut,
   Redo2,
   History,
   Save,
@@ -21,6 +19,7 @@ import { isDesigner, useAuth } from "../auth";
 import { useDesigner } from "../store";
 import { timeAgo } from "../time";
 import type { ReportElement } from "../types";
+import { AccountMenu } from "./AccountMenu";
 import { ContextMenu } from "./ContextMenu";
 import { AlignPicker, common, FONT_FAMILIES, setFont, setStyle, Toggle, VAlignPicker } from "./PropertiesPanel";
 
@@ -39,7 +38,6 @@ interface ToolbarProps {
 export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport, onHistory, folder }: ToolbarProps) {
   const { t } = useTranslation();
   const user = useAuth((s) => s.user);
-  const logout = useAuth((s) => s.logout);
   const canEdit = isDesigner(user);
 
   const report = useDesigner((s) => s.report);
@@ -48,7 +46,6 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
   const savedAtUtc = useDesigner((s) => s.savedAtUtc);
   const mutate = useDesigner((s) => s.mutate);
   const [exportMenu, setExportMenu] = useState<{ x: number; y: number } | null>(null);
-  const [userMenu, setUserMenu] = useState<{ x: number; y: number } | null>(null);
 
   const exportButton = (
     <>
@@ -76,32 +73,7 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
     </>
   );
 
-  const userChip = user && (
-    <>
-      <button
-        className="btn user-chip"
-        onClick={(e) => setUserMenu({ x: e.currentTarget.getBoundingClientRect().right, y: e.currentTarget.getBoundingClientRect().bottom + 4 })}
-        title={user.email}
-      >
-        <span className="user-avatar">{user.email[0]?.toUpperCase()}</span>
-        <span className="user-email">{user.email}</span>
-        <ChevronDown size={12} />
-      </button>
-      {userMenu && (
-        <ContextMenu
-          x={userMenu.x}
-          y={userMenu.y}
-          items={[
-            { label: user.email, disabled: true },
-            { label: canEdit ? "Designer" : "Viewer", disabled: true },
-            { sep: true },
-            { label: "Sign out", icon: LogOut, onClick: logout, danger: true },
-          ]}
-          onClose={() => setUserMenu(null)}
-        />
-      )}
-    </>
-  );
+  const userChip = user && <AccountMenu variant="toolbar" />;
 
   if (!canEdit) {
     // Viewer: a single, minimal row — no document actions, just navigation + export.
@@ -165,7 +137,6 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
 
         <div className="spacer" />
 
-        <JobTray />
         <button className="btn icon" onClick={onSettings} title={t("nav.settings")} aria-label={t("nav.settings")}>
           <Settings />
         </button>
