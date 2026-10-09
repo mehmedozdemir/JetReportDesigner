@@ -742,6 +742,41 @@ Bilinçli olarak ertelenenler:
   kullanılamadığı genişliklerle sınırlı tutuldu.
 - ⬜ **Reports listesi tamamen istemci tarafında** — rapor sayısı büyüyünce sunucu tarafı
   arama/sayfalama gerekecek.
+- ⬜ **Görsel Kitaplığı (görselleri kopyala, depola, yönet)** (2026-10-09, analizi yapıldı,
+  kararlar bekleniyor): bir görsel nesnesine cihazdan, URL'den ya da başka kaynaktan verilen
+  görsel bir kez uygulamanın depolamasına kopyalanır; rapor `asset:{id}` ile ona bağlanır, her
+  çalıştırmada dışarıdan çekilmez. Bugün yalnızca cihazdan yükleme DB'ye kopyalanıyor (SHA-256
+  ile tekilleştirilmiş, 5 MB, içerikten tür doğrulaması); URL ve data URI raporda olduğu gibi
+  duruyor ve her render'da yeniden indiriliyor; yönetim ekranı yok.
+  - *Kaynaklar:* cihaz, URL (sunucu bir kez indirir; SSRF koruması + zaman aşımı + boyut sınırı +
+    yönlendirmelerin yeniden denetimi + içerikten tür doğrulaması; **SVG kabul edilmez**), pano,
+    kitaplıktan seç. Eski raporlar için "dış görselleri kitaplığa taşı" aracı. Satır verisinden gelen
+    dinamik adresler (`{kaynak.alan}`) çalışma anında kısa süreli bellek önbelleğiyle çekilmeye devam.
+  - *Depolama hedefi (organizasyon başına ayar):* uygulama klasörü `{kök}/{organizasyon-id}/…`
+    (önerilen varsayılan), veritabanı (bugünkü davranış), özel klasör/UNC, SFTP (SSH.NET),
+    FTP/FTPS (FluentFTP; düz FTP'de parola uyarısı). Meta veri (ad, boyut, ölçü, hash, kaynak URL,
+    ekleyen) hep DB'de; dosya içeriği hedefte. Görselin hedefi kendi kaydında durur — hedef değişince
+    eskiler okunmaya devam eder; "mevcut görselleri yeni hedefe taşı" işi. Uzak hedeflerde yerel
+    önbellek. Docker'da uygulama klasörü geçici olduğundan compose'a kalıcı volume eklenecek.
+  - *Yönetim ekranı (Organizasyon → Görseller):* küçük resim ızgarası/liste, arama/sıralama/
+    "kullanılmayanlar" filtresi; çoklu yükleme, URL'den ekle, yeniden adlandır, indir,
+    **dosyayı değiştir** (aynı id korunur → logo bir kez güncellenir), sil (kullanımdaysa hangi
+    raporlarda olduğu listelenir, ek onayla); Depolama sekmesi: hedef, "bağlantıyı sına",
+    kullanılan alan, taşıma ilerlemesi.
+  - *Güvenlik:* dosya adı sunucuda üretilir (`ab/ab12…hash.png`, kullanıcı adı yola girmez);
+    özel yerel klasör yalnızca yönetici yapılandırmasındaki **izinli kökler** altında;
+    FTP/SFTP parolası DataProtection ile şifreli, API'den hiç dönmez; SFTP sunucu parmak izi
+    ilk bağlantıda kaydedilir; ayar/silme yalnızca Designer; `nosniff`; dosya/organizasyon
+    kotası; organizasyonlar birbirinin klasörünü/ayarını göremez.
+  - *Aşamalar:* **Faz 1** kitaplık (URL'den içe aktarma, uygulama klasörü + DB, Görseller ekranı,
+    seçicide "kitaplıktan seç", dış görselleri taşıma aracı, kullanım takibi) → **Faz 2** uzak
+    hedefler (özel klasör, SFTP, FTP/FTPS, bağlantıyı sına, taşıma işi, dosyayı değiştir) →
+    **Faz 3** kota, önbellek ayarı, kullanılmayanları temizle.
+  - *Onay bekleyen kararlar:* (1) varsayılan hedef uygulama klasörü mü, DB mi; (2) SFTP ve
+    FTP/FTPS ikisi de mi; (3) özel klasörde "izinli kökler" kuralı; (4) "dosyayı değiştir" olsun mu;
+    (5) kullanımdaki görselin silinmesi: ek onayla izin mi, tam engel mi; (6) aşamalı teslim mi.
+  - İlgili mevcut backlog: iş çıktıları için harici depolama hedefleri (MinIO/S3/Drive/OneDrive,
+    yukarıda) — depolama soyutlaması burada kurulunca onu da besleyebilir.
 
 ---
 
