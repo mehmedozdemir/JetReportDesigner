@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   LogOut,
   Redo2,
+  History,
   Save,
   Settings,
   Undo2,
@@ -30,11 +31,12 @@ interface ToolbarProps {
   onSettings: () => void;
   onSave: () => void;
   onExport: (format: "pdf" | "xlsx") => void;
+  onHistory: () => void;
   /** Where the open report lives, and a way back to that folder. */
   folder?: { path: string; onOpen: () => void };
 }
 
-export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport, folder }: ToolbarProps) {
+export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport, onHistory, folder }: ToolbarProps) {
   const { t } = useTranslation();
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
@@ -193,6 +195,11 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
           <Save />
           <span>{t("common.save")}</span>
           {dirty && <span className="dot" aria-label={t("toolbar.unsaved")} />}
+        </button>
+
+        <button className="btn" onClick={onHistory} disabled={!reportId} title={t("toolbar.historyHint")}>
+          <History />
+          <span>{t("toolbar.history")}</span>
         </button>
 
         <div className="divider" />

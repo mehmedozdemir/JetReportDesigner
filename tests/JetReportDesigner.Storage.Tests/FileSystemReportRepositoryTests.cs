@@ -32,6 +32,46 @@ public sealed class FileSystemReportRepositoryTests : IDisposable
     };
 
     [Fact]
+    public async Task History_records_who_and_what_and_skips_saves_that_change_nothing()
+    {
+        var created = await _repo.CreateAsync(Report("Invoice"), CancellationToken.None, createdByEmail: "a@x.com");
+
+        // Saving the same thing again must not add a version.
+        await _repo.UpdateAsync(created.Id, Report("Invoice"), null, CancellationToken.None, "b@x.com");
+        Assert.Single(await _repo.ListVersionsAsync(created.Id, CancellationToken.None));
+
+        var edited = Report("Invoice");
+        edited.Body!.Elements.Add(new ReportElement { Id = "x", Type = ElementType.Label, Text = "hi" });
+        await _repo.UpdateAsync(created.Id, edited, null, CancellationToken.None, "b@x.com");
+
+        var versions = await _repo.ListVersionsAsync(created.Id, CancellationToken.None);
+        Assert.Equal([2, 1], versions.Select(v => v.Version));
+        Assert.Equal("b@x.com", versions[0].SavedByEmail);
+        Assert.Equal(["added:1"], versions[0].Changes);
+        Assert.Equal("a@x.com", versions[1].SavedByEmail);
+    }
+
+    [Fact]
+    public async Task Restoring_an_old_version_makes_a_new_one_and_keeps_the_history()
+    {
+        var created = await _repo.CreateAsync(Report("Invoice"), CancellationToken.None);
+        var edited = Report("Invoice");
+        edited.Body!.Elements.Add(new ReportElement { Id = "x", Type = ElementType.Label, Text = "oops" });
+        await _repo.UpdateAsync(created.Id, edited, null, CancellationToken.None);
+
+        var restored = await _repo.RestoreVersionAsync(created.Id, 1, CancellationToken.None, "boss@x.com");
+
+        Assert.Empty(restored!.Definition.Body!.Elements);
+        var versions = await _repo.ListVersionsAsync(created.Id, CancellationToken.None);
+        Assert.Equal([3, 2, 1], versions.Select(v => v.Version));
+        Assert.Equal(1, versions[0].RestoredFromVersion);
+        Assert.Equal("boss@x.com", versions[0].SavedByEmail);
+        // The version that was current before the restore is still there, so the restore itself can be undone.
+        var oops = await _repo.GetVersionAsync(created.Id, 2, CancellationToken.None);
+        Assert.Single(oops!.Definition.Body!.Elements);
+    }
+
+    [Fact]
     public async Task Crud_And_Listing_RoundTrip()
     {
         var created = await _repo.CreateAsync(Report("Invoice"), CancellationToken.None);

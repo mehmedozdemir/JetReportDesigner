@@ -15,6 +15,10 @@ internal sealed class StoredReportVersionConfiguration : IEntityTypeConfiguratio
 
         builder.Property(v => v.Name).HasMaxLength(200).IsRequired();
         builder.Property(v => v.DefinitionJson).IsRequired();
+        builder.Property(v => v.SavedByEmail).HasMaxLength(256);
+        builder.Property(v => v.Changes).HasMaxLength(400);
+        builder.Property(v => v.SavedByEmail).HasMaxLength(256);
+        builder.Property(v => v.Changes).HasMaxLength(400);
 
         builder.HasIndex(v => new { v.ReportId, v.Version }).IsUnique();
     }

@@ -19,9 +19,22 @@ public sealed record ReportRecord(
     Guid ConcurrencyToken,
     string? CreatedByEmail = null);
 
-public sealed record ReportVersionInfo(int Version, string Name, DateTime SavedAtUtc);
+public sealed record ReportVersionInfo(
+    int Version,
+    string Name,
+    DateTime SavedAtUtc,
+    string? SavedByEmail = null,
+    IReadOnlyList<string>? Changes = null,
+    int? RestoredFromVersion = null);
 
-public sealed record ReportVersionRecord(int Version, string Name, DateTime SavedAtUtc, ReportDefinition Definition);
+public sealed record ReportVersionRecord(
+    int Version,
+    string Name,
+    DateTime SavedAtUtc,
+    ReportDefinition Definition,
+    string? SavedByEmail = null,
+    IReadOnlyList<string>? Changes = null,
+    int? RestoredFromVersion = null);
 
 /// <summary>Thrown when a report is saved with a code another report in the organization already uses.</summary>
 public sealed class ReportCodeConflictException(string code)
@@ -50,12 +63,15 @@ public interface IReportRepository
         Guid? createdByUserId = null,
         string? createdByEmail = null);
 
-    /// <summary>Returns null when the report does not exist. Throws <see cref="ReportConcurrencyException"/> on a token mismatch.</summary>
+    /// <summary>
+    /// Saves a new definition and, when it actually differs from the current one, a new version
+    /// (a save that changes nothing creates no version). Returns null when the report does not exist. Throws <see cref="ReportConcurrencyException"/> on a token mismatch.</summary>
     Task<ReportRecord?> UpdateAsync(
         Guid id,
         ReportDefinition definition,
         Guid? expectedToken,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken,
+        string? savedByEmail = null);
 
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken);
 
@@ -64,5 +80,5 @@ public interface IReportRepository
     Task<ReportVersionRecord?> GetVersionAsync(Guid id, int version, CancellationToken cancellationToken);
 
     /// <summary>Makes the given version the current definition (which itself becomes a new version). Null when the report or version does not exist.</summary>
-    Task<ReportRecord?> RestoreVersionAsync(Guid id, int version, CancellationToken cancellationToken);
+    Task<ReportRecord?> RestoreVersionAsync(Guid id, int version, CancellationToken cancellationToken, string? savedByEmail = null);
 }

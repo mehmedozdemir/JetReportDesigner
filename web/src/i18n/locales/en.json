@@ -52,6 +52,7 @@
     "emptyHint": "Start from a blank report or a sample above.",
     "deleteConfirm": "Delete “{{name}}”?",
     "menu": {
+      "history": "Version history",
       "open": "Open",
       "preview": "Preview",
       "export": "Export",
@@ -168,6 +169,36 @@
     "invalid": "Only a-z, 0-9, - and _ are allowed (no spaces or accented letters).",
     "copy": "Copy code"
   },
+  "history": {
+    "title": "Version history — {{name}}",
+    "versions": "Versions",
+    "current": "Current",
+    "first": "First version",
+    "unknownAuthor": "Unknown author",
+    "restoredFrom": "Restored from v{{version}}",
+    "previewTitle": "Rendered preview of the selected version",
+    "restore": "Use v{{version}} as the new version",
+    "alreadyCurrent": "This is the version in use.",
+    "confirm": "v{{version}} will be saved again as v{{next}}. The current version (v{{current}}) stays in the history, so you can come back to it at any time.",
+    "unsavedWarning": "Unsaved changes in the designer will be lost.",
+    "confirmRestore": "Yes, restore",
+    "change": {
+      "name": "Name changed",
+      "code": "Code changed",
+      "page": "Page setup",
+      "parameters": "Parameters",
+      "dataSources": "Data sources",
+      "styles": "Styles",
+      "bands": "Band structure",
+      "other": "Other settings",
+      "added_one": "{{count}} element added",
+      "added_other": "{{count}} elements added",
+      "removed_one": "{{count}} element removed",
+      "removed_other": "{{count}} elements removed",
+      "edited_one": "{{count}} element changed",
+      "edited_other": "{{count}} elements changed"
+    }
+  },
   "team": {
     "title": "Team",
     "members": "Members",
@@ -259,6 +290,8 @@
     "dismiss": "Dismiss"
   },
   "toolbar": {
+    "history": "History",
+    "historyHint": "See earlier versions of this report and go back to one",
     "newBlank": "New blank report",
     "undo": "Undo",
     "redo": "Redo",

@@ -157,6 +157,73 @@ public abstract class ReportsApiTestsBase(DatabaseFixture fixture)
     };
 
     [Fact]
+    public async Task Version_History_Lists_Previews_And_Restores_As_A_New_Version()
+    {
+        if (!fixture.Available)
+        {
+            return; // Docker unavailable; exercised in CI. See class summary.
+        }
+
+        await using var factory = CreateFactory();
+        var client = await factory.CreateDesignerClientAsync();
+
+        var created = await (await client.PostAsJsonAsync("/api/reports", SimpleReport("History Test"), Json))
+            .Content.ReadFromJsonAsync<ReportResponse>(Json);
+
+        async Task<ReportResponse> Save(ReportDefinition d, string token)
+        {
+            using var put = new HttpRequestMessage(HttpMethod.Put, $"/api/reports/{created!.Id}") { Content = JsonContent.Create(d, options: Json) };
+            put.Headers.TryAddWithoutValidation("If-Match", $"\"{token}\"");
+            var response = await client.SendAsync(put);
+            response.EnsureSuccessStatusCode();
+            return (await response.Content.ReadFromJsonAsync<ReportResponse>(Json))!;
+        }
+
+        // Saving without changes adds no version.
+        var same = await Save(created!.Definition, created.ConcurrencyToken.ToString());
+        Assert.Equal(created.ConcurrencyToken, same.ConcurrencyToken);
+
+        // A real change does, and records what changed.
+        var broken = created.Definition;
+        broken.Body!.Elements.Add(new ReportElement
+        {
+            Id = "oops", Type = ElementType.Label, Text = "broken",
+            Bounds = new Bounds { X = 0, Y = 0, Width = 10, Height = 10 },
+        });
+        var v2 = await Save(broken, same.ConcurrencyToken.ToString());
+
+        var versions = await client.GetFromJsonAsync<JsonElement>($"/api/reports/{created.Id}/versions");
+        Assert.Equal(2, versions.GetArrayLength());
+        Assert.Equal(2, versions[0].GetProperty("version").GetInt32());
+        Assert.Equal("added:1", versions[0].GetProperty("changes")[0].GetString());
+        Assert.Contains("@example.com", versions[0].GetProperty("savedByEmail").GetString(), StringComparison.Ordinal);
+
+        // The old version can be read (and so previewed/run) without touching the current one.
+        var v1 = await client.GetFromJsonAsync<ReportVersionDetailResponse>($"/api/reports/{created.Id}/versions/1", Json);
+        Assert.Empty(v1!.Definition.Body!.Elements);
+
+        // Restore it: that becomes version 3, the broken version 2 is kept.
+        var restore = await client.PostAsync($"/api/reports/{created.Id}/versions/1/restore", null);
+        restore.EnsureSuccessStatusCode();
+        var restored = await restore.Content.ReadFromJsonAsync<ReportResponse>(Json);
+        Assert.Empty(restored!.Definition.Body!.Elements);
+        Assert.NotEqual(v2.ConcurrencyToken, restored.ConcurrencyToken);
+
+        versions = await client.GetFromJsonAsync<JsonElement>($"/api/reports/{created.Id}/versions");
+        Assert.Equal(3, versions.GetArrayLength());
+        Assert.Equal(1, versions[0].GetProperty("restoredFromVersion").GetInt32());
+        Assert.Single((await client.GetFromJsonAsync<ReportVersionDetailResponse>($"/api/reports/{created.Id}/versions/2", Json))!
+            .Definition.Body!.Elements);
+
+        // A read-only API key may look at the history but not restore.
+        var key = await (await client.PostAsJsonAsync("/api/api-keys", new { name = "ro" })).Content.ReadFromJsonAsync<JsonElement>();
+        var ro = factory.CreateClient();
+        ro.DefaultRequestHeaders.Add("X-Api-Key", key.GetProperty("secret").GetString()!);
+        Assert.Equal(HttpStatusCode.OK, (await ro.GetAsync($"/api/reports/{created.Id}/versions")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await ro.PostAsync($"/api/reports/{created.Id}/versions/2/restore", null)).StatusCode);
+    }
+
+    [Fact]
     public async Task Report_Codes_Are_Generated_Unique_And_Conflicts_Rejected()
     {
         if (!fixture.Available)

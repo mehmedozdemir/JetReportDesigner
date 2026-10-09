@@ -84,7 +84,7 @@ public sealed class ReportsController(
         await validator.ValidateAndThrowAsync(definition, cancellationToken);
 
         var expectedToken = ParseIfMatch(Request.Headers.IfMatch);
-        var updated = await repository.UpdateAsync(id, definition, expectedToken, cancellationToken);
+        var updated = await repository.UpdateAsync(id, definition, expectedToken, cancellationToken, CurrentEmail());
         if (updated is null)
         {
             return NotFound();
@@ -136,7 +136,7 @@ public sealed class ReportsController(
     [Authorize(Policy = AuthPolicies.Designer)]
     public async Task<ActionResult<ReportResponse>> Restore(Guid id, int version, CancellationToken cancellationToken)
     {
-        var restored = await repository.RestoreVersionAsync(id, version, cancellationToken);
+        var restored = await repository.RestoreVersionAsync(id, version, cancellationToken, CurrentEmail());
         if (restored is null)
         {
             return NotFound();
@@ -145,6 +145,9 @@ public sealed class ReportsController(
         Response.Headers.ETag = $"\"{restored.ConcurrencyToken}\"";
         return Ok(ReportResponse.From(restored));
     }
+
+    private string? CurrentEmail() =>
+        User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? User.FindFirst("email")?.Value;
 
     private static Guid? ParseIfMatch(IEnumerable<string?> headerValues)
     {

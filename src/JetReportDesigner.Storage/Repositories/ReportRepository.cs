@@ -62,7 +62,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         };
 
         db.Reports.Add(row);
-        db.ReportVersions.Add(NewVersion(row, version: 1));
+        db.ReportVersions.Add(NewVersion(row, version: 1, createdByEmail, changes: null, restoredFrom: null));
         await SaveAsync(row.Code, cancellationToken);
         return ToRecord(row);
     }
@@ -71,6 +71,16 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         Guid id,
         ReportDefinition definition,
         Guid? expectedToken,
+        CancellationToken cancellationToken,
+        string? savedByEmail = null) =>
+        await SaveNewVersionAsync(id, definition, expectedToken, savedByEmail, restoredFrom: null, cancellationToken);
+
+    private async Task<ReportRecord?> SaveNewVersionAsync(
+        Guid id,
+        ReportDefinition definition,
+        Guid? expectedToken,
+        string? savedByEmail,
+        int? restoredFrom,
         CancellationToken cancellationToken)
     {
         var row = await db.Reports.FirstOrDefaultAsync(r => r.Id == id && r.TenantId == tenant.TenantId, cancellationToken);
@@ -86,6 +96,15 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
 
         definition.Id = id;
         definition.Code = await ResolveCodeAsync(definition, id, cancellationToken, row.Code);
+
+        var previous = ReportJson.Deserialize(row.DefinitionJson);
+        var changes = ReportChanges.Summarize(previous, definition);
+        if (changes.Count == 0 && restoredFrom is null)
+        {
+            // Saving without changing anything (auto-save, a double click) must not bury real versions in noise.
+            return ToRecord(row);
+        }
+
         row.Code = definition.Code;
         row.Name = definition.Name;
         row.Description = definition.Description;
@@ -95,7 +114,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         row.ConcurrencyToken = Guid.NewGuid();
 
         var nextVersion = await NextVersionNumberAsync(id, cancellationToken);
-        db.ReportVersions.Add(NewVersion(row, nextVersion));
+        db.ReportVersions.Add(NewVersion(row, nextVersion, savedByEmail, changes, restoredFrom));
 
         try
         {
@@ -174,10 +193,12 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
             .AsNoTracking()
             .Where(v => v.ReportId == id)
             .OrderByDescending(v => v.Version)
-            .Select(v => new { v.Version, v.Name, v.SavedAtUtc })
+            .Select(v => new { v.Version, v.Name, v.SavedAtUtc, v.SavedByEmail, v.Changes, v.RestoredFromVersion })
             .ToListAsync(cancellationToken);
 
-        return rows.Select(v => new ReportVersionInfo(v.Version, v.Name, v.SavedAtUtc)).ToList();
+        return rows
+            .Select(v => new ReportVersionInfo(v.Version, v.Name, v.SavedAtUtc, v.SavedByEmail, SplitChanges(v.Changes), v.RestoredFromVersion))
+            .ToList();
     }
 
     public async Task<ReportVersionRecord?> GetVersionAsync(Guid id, int version, CancellationToken cancellationToken)
@@ -193,7 +214,9 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
 
         return row is null
             ? null
-            : new ReportVersionRecord(row.Version, row.Name, row.SavedAtUtc, ReportJson.Deserialize(row.DefinitionJson));
+            : new ReportVersionRecord(
+                row.Version, row.Name, row.SavedAtUtc, ReportJson.Deserialize(row.DefinitionJson),
+                row.SavedByEmail, SplitChanges(row.Changes), row.RestoredFromVersion);
     }
 
     /// <summary>Guards the version-related methods, which key off a bare report id with no
@@ -201,7 +224,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
     private Task<bool> OwnedByTenantAsync(Guid reportId, CancellationToken cancellationToken) =>
         db.Reports.AnyAsync(r => r.Id == reportId && r.TenantId == tenant.TenantId, cancellationToken);
 
-    public async Task<ReportRecord?> RestoreVersionAsync(Guid id, int version, CancellationToken cancellationToken)
+    public async Task<ReportRecord?> RestoreVersionAsync(Guid id, int version, CancellationToken cancellationToken, string? savedByEmail = null)
     {
         var snapshot = await GetVersionAsync(id, version, cancellationToken);
         if (snapshot is null)
@@ -209,7 +232,7 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
             return null;
         }
 
-        return await UpdateAsync(id, snapshot.Definition, expectedToken: null, cancellationToken);
+        return await SaveNewVersionAsync(id, snapshot.Definition, expectedToken: null, savedByEmail, restoredFrom: version, cancellationToken);
     }
 
     private async Task<int> NextVersionNumberAsync(Guid id, CancellationToken cancellationToken)
@@ -221,7 +244,11 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         return (max ?? 0) + 1;
     }
 
-    private StoredReportVersion NewVersion(StoredReport row, int version) => new()
+    private static IReadOnlyList<string>? SplitChanges(string? changes) =>
+        string.IsNullOrEmpty(changes) ? null : changes.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+    private StoredReportVersion NewVersion(
+        StoredReport row, int version, string? savedByEmail, IReadOnlyList<string>? changes, int? restoredFrom) => new()
     {
         Id = Guid.NewGuid(),
         ReportId = row.Id,
@@ -229,6 +256,9 @@ internal sealed class ReportRepository(JetReportDbContext db, TimeProvider clock
         Name = row.Name,
         DefinitionJson = row.DefinitionJson,
         SavedAtUtc = clock.GetUtcNow().UtcDateTime,
+        SavedByEmail = savedByEmail,
+        Changes = changes is { Count: > 0 } ? string.Join(',', changes) : null,
+        RestoredFromVersion = restoredFrom,
     };
 
     private static ReportRecord ToRecord(StoredReport row) => new(

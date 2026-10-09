@@ -27,6 +27,7 @@ import {
   Settings,
   Share2,
   Trash2,
+  History,
   KeyRound,
   Users,
   type LucideIcon,
@@ -46,6 +47,7 @@ import { NewReportDialog } from "./NewReportDialog";
 import { PageHeader } from "./PageHeader";
 import { SortableTh, useSort } from "./SortableTh";
 import { ReportPreviewDialog } from "./ReportPreviewDialog";
+import { VersionHistoryDialog } from "./VersionHistoryDialog";
 import { ScheduleDialog } from "./ScheduleDialog";
 import { SchedulesPage } from "./SchedulesPage";
 import { SettingsPage } from "./SettingsPage";
@@ -134,6 +136,7 @@ export function StartScreen({
   onMoveToFolder,
   onBulkMove,
   onBulkDelete,
+  onReportChanged,
 }: {
   view: View;
   reports: ReportSummary[];
@@ -146,6 +149,8 @@ export function StartScreen({
   onMoveToFolder: (id: string, folderId: string | null) => void;
   onBulkMove: (ids: string[], folderId: string | null) => void;
   onBulkDelete: (ids: string[]) => void;
+  /** A report was changed behind the list's back (e.g. a version was restored): reload the list. */
+  onReportChanged: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -187,6 +192,7 @@ export function StartScreen({
   const clearSelection = () => setSelectedIds(new Set());
   const [newReportOpen, setNewReportOpen] = useState(false);
   const [previewReport, setPreviewReport] = useState<ReportSummary | null>(null);
+  const [historyReport, setHistoryReport] = useState<ReportSummary | null>(null);
   const [shareReport, setShareReport] = useState<ReportSummary | null>(null);
   const [scheduleReport, setScheduleReport] = useState<ReportSummary | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -477,6 +483,7 @@ export function StartScreen({
       items: [
         { label: t("reports.menu.open"), icon: FolderOpen, onClick: () => onOpen(r.id) },
         { label: t("reports.menu.preview"), icon: Eye, onClick: () => setPreviewReport(r) },
+        { label: t("reports.menu.history"), icon: History, onClick: () => setHistoryReport(r) },
         {
           label: t("reports.menu.export"),
           children: [
@@ -1060,6 +1067,18 @@ export function StartScreen({
             setPreviewReport(null);
           }}
           onClose={() => setPreviewReport(null)}
+        />
+      )}
+
+      {historyReport && (
+        <VersionHistoryDialog
+          report={historyReport}
+          canRestore={canEdit}
+          onRestored={() => {
+            setHistoryReport(null);
+            onReportChanged();
+          }}
+          onClose={() => setHistoryReport(null)}
         />
       )}
 

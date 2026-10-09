@@ -52,6 +52,7 @@
     "emptyHint": "Yukarıdan boş bir raporla ya da bir şablonla başlayın.",
     "deleteConfirm": "“{{name}}” silinsin mi?",
     "menu": {
+      "history": "Sürüm geçmişi",
       "open": "Aç",
       "preview": "Önizle",
       "export": "Dışa aktar",
@@ -168,6 +169,36 @@
     "invalid": "Yalnızca a-z, 0-9, - ve _ kullanılabilir (boşluk ve Türkçe karakter yok).",
     "copy": "Kodu kopyala"
   },
+  "history": {
+    "title": "Sürüm geçmişi — {{name}}",
+    "versions": "Sürümler",
+    "current": "Güncel",
+    "first": "İlk sürüm",
+    "unknownAuthor": "Bilinmeyen kullanıcı",
+    "restoredFrom": "v{{version}} sürümünden geri yüklendi",
+    "previewTitle": "Seçili sürümün çalıştırılmış önizlemesi",
+    "restore": "v{{version}} sürümünü yeni sürüm yap",
+    "alreadyCurrent": "Şu an kullanılan sürüm bu.",
+    "confirm": "v{{version}} yeniden kaydedilerek v{{next}} olacak. Mevcut sürüm (v{{current}}) geçmişte kalır, istediğiniz zaman ona geri dönebilirsiniz.",
+    "unsavedWarning": "Tasarım ekranındaki kaydedilmemiş değişiklikler kaybolacak.",
+    "confirmRestore": "Evet, geri yükle",
+    "change": {
+      "name": "Ad değişti",
+      "code": "Kod değişti",
+      "page": "Sayfa ayarı",
+      "parameters": "Parametreler",
+      "dataSources": "Veri kaynakları",
+      "styles": "Stiller",
+      "bands": "Bant yapısı",
+      "other": "Diğer ayarlar",
+      "added_one": "{{count}} öğe eklendi",
+      "added_other": "{{count}} öğe eklendi",
+      "removed_one": "{{count}} öğe silindi",
+      "removed_other": "{{count}} öğe silindi",
+      "edited_one": "{{count}} öğe değişti",
+      "edited_other": "{{count}} öğe değişti"
+    }
+  },
   "team": {
     "title": "Takım",
     "members": "Üyeler",
@@ -259,6 +290,8 @@
     "dismiss": "Kapat"
   },
   "toolbar": {
+    "history": "Geçmiş",
+    "historyHint": "Raporun önceki sürümlerini gör ve birine geri dön",
     "newBlank": "Yeni boş rapor",
     "undo": "Geri al",
     "redo": "Yinele",

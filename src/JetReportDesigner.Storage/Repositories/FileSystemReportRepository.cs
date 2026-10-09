@@ -53,7 +53,10 @@ internal sealed class FileSystemReportRepository : IReportRepository
         [property: JsonPropertyName("version")] int Version,
         [property: JsonPropertyName("name")] string Name,
         [property: JsonPropertyName("savedAtUtc")] DateTime SavedAtUtc,
-        [property: JsonPropertyName("definition")] ReportDefinition Definition);
+        [property: JsonPropertyName("definition")] ReportDefinition Definition,
+        [property: JsonPropertyName("savedByEmail")] string? SavedByEmail = null,
+        [property: JsonPropertyName("changes")] string? Changes = null,
+        [property: JsonPropertyName("restoredFromVersion")] int? RestoredFromVersion = null);
 
     private string ReportPath(Guid id) => Path.Combine(Root, $"{id}.json");
 
@@ -111,7 +114,7 @@ internal sealed class FileSystemReportRepository : IReportRepository
 
         var envelope = new Envelope(definition, now, now, Guid.NewGuid(), createdByEmail);
         await WriteAsync(ReportPath(id), envelope, cancellationToken);
-        await WriteVersionAsync(id, 1, definition, now, cancellationToken);
+        await WriteVersionAsync(id, 1, definition, now, cancellationToken, createdByEmail);
 
         return new ReportRecord(id, definition, now, now, envelope.ConcurrencyToken, createdByEmail);
     }
@@ -120,6 +123,16 @@ internal sealed class FileSystemReportRepository : IReportRepository
         Guid id,
         ReportDefinition definition,
         Guid? expectedToken,
+        CancellationToken cancellationToken,
+        string? savedByEmail = null) =>
+        await SaveAsync(id, definition, expectedToken, savedByEmail, restoredFrom: null, cancellationToken);
+
+    private async Task<ReportRecord?> SaveAsync(
+        Guid id,
+        ReportDefinition definition,
+        Guid? expectedToken,
+        string? savedByEmail,
+        int? restoredFrom,
         CancellationToken cancellationToken)
     {
         var existing = await ReadAsync<Envelope>(ReportPath(id), cancellationToken);
@@ -136,11 +149,19 @@ internal sealed class FileSystemReportRepository : IReportRepository
         var now = _clock.GetUtcNow().UtcDateTime;
         definition.Id = id;
         definition.Code = await ResolveCodeAsync(definition, id, existing.Definition.Code, cancellationToken);
+
+        var changes = ReportChanges.Summarize(existing.Definition, definition);
+        if (changes.Count == 0 && restoredFrom is null)
+        {
+            // A save that changes nothing creates no version.
+            return new ReportRecord(id, existing.Definition, existing.CreatedAtUtc, existing.UpdatedAtUtc, existing.ConcurrencyToken, existing.CreatedByEmail);
+        }
+
         var envelope = new Envelope(definition, existing.CreatedAtUtc, now, Guid.NewGuid(), existing.CreatedByEmail);
         await WriteAsync(ReportPath(id), envelope, cancellationToken);
 
         var nextVersion = NextVersionNumber(id);
-        await WriteVersionAsync(id, nextVersion, definition, now, cancellationToken);
+        await WriteVersionAsync(id, nextVersion, definition, now, cancellationToken, savedByEmail, changes, restoredFrom);
 
         return new ReportRecord(id, definition, existing.CreatedAtUtc, now, envelope.ConcurrencyToken, existing.CreatedByEmail);
     }
@@ -198,7 +219,7 @@ internal sealed class FileSystemReportRepository : IReportRepository
             var v = JsonSerializer.Deserialize<VersionFile>(File.ReadAllText(file), _json);
             if (v is not null)
             {
-                infos.Add(new ReportVersionInfo(v.Version, v.Name, v.SavedAtUtc));
+                infos.Add(new ReportVersionInfo(v.Version, v.Name, v.SavedAtUtc, v.SavedByEmail, SplitChanges(v.Changes), v.RestoredFromVersion));
             }
         }
 
@@ -209,16 +230,21 @@ internal sealed class FileSystemReportRepository : IReportRepository
     {
         var path = Path.Combine(VersionsDir(id), $"v{version}.json");
         var v = await ReadAsync<VersionFile>(path, cancellationToken);
-        return v is null ? null : new ReportVersionRecord(v.Version, v.Name, v.SavedAtUtc, v.Definition);
+        return v is null
+            ? null
+            : new ReportVersionRecord(v.Version, v.Name, v.SavedAtUtc, v.Definition, v.SavedByEmail, SplitChanges(v.Changes), v.RestoredFromVersion);
     }
 
-    public async Task<ReportRecord?> RestoreVersionAsync(Guid id, int version, CancellationToken cancellationToken)
+    public async Task<ReportRecord?> RestoreVersionAsync(Guid id, int version, CancellationToken cancellationToken, string? savedByEmail = null)
     {
         var snapshot = await GetVersionAsync(id, version, cancellationToken);
         return snapshot is null
             ? null
-            : await UpdateAsync(id, snapshot.Definition, expectedToken: null, cancellationToken);
+            : await SaveAsync(id, snapshot.Definition, expectedToken: null, savedByEmail, restoredFrom: version, cancellationToken);
     }
+
+    private static IReadOnlyList<string>? SplitChanges(string? changes) =>
+        string.IsNullOrEmpty(changes) ? null : changes.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
     private int NextVersionNumber(Guid id)
     {
@@ -235,11 +261,14 @@ internal sealed class FileSystemReportRepository : IReportRepository
         return max + 1;
     }
 
-    private async Task WriteVersionAsync(Guid id, int version, ReportDefinition definition, DateTime savedAt, CancellationToken cancellationToken)
+    private async Task WriteVersionAsync(
+        Guid id, int version, ReportDefinition definition, DateTime savedAt, CancellationToken cancellationToken,
+        string? savedByEmail = null, IReadOnlyList<string>? changes = null, int? restoredFrom = null)
     {
         Directory.CreateDirectory(VersionsDir(id));
         var file = Path.Combine(VersionsDir(id), $"v{version}.json");
-        await WriteAsync(file, new VersionFile(version, definition.Name, savedAt, definition), cancellationToken);
+        var changeText = changes is { Count: > 0 } ? string.Join(',', changes) : null;
+        await WriteAsync(file, new VersionFile(version, definition.Name, savedAt, definition, savedByEmail, changeText, restoredFrom), cancellationToken);
     }
 
     private async Task<T?> ReadAsync<T>(string path, CancellationToken cancellationToken) where T : class

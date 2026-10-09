@@ -41,13 +41,40 @@ public sealed record ReportIssueResponse(string Severity, string Message, string
         new(i.Severity.ToString().ToLowerInvariant(), i.Message, i.ElementId);
 }
 
-public sealed record ReportVersionResponse(int Version, string Name, DateTime SavedAtUtc)
+/// <param name="Changes">What this save changed, as tokens (see <c>ReportChanges</c>); empty for the first version or unknown.</param>
+/// <param name="RestoredFromVersion">Set when this version was made by restoring an older one.</param>
+public sealed record ReportVersionResponse(
+    int Version,
+    string Name,
+    DateTime SavedAtUtc,
+    string? SavedByEmail,
+    IReadOnlyList<string> Changes,
+    int? RestoredFromVersion)
 {
-    public static ReportVersionResponse From(ReportVersionInfo v) => new(v.Version, v.Name, v.SavedAtUtc);
+    public static ReportVersionResponse From(ReportVersionInfo v) => new(
+        v.Version,
+        v.Name,
+        DateTime.SpecifyKind(v.SavedAtUtc, DateTimeKind.Utc),
+        v.SavedByEmail,
+        v.Changes ?? [],
+        v.RestoredFromVersion);
 }
 
-public sealed record ReportVersionDetailResponse(int Version, string Name, DateTime SavedAtUtc, ReportDefinition Definition)
+public sealed record ReportVersionDetailResponse(
+    int Version,
+    string Name,
+    DateTime SavedAtUtc,
+    ReportDefinition Definition,
+    string? SavedByEmail,
+    IReadOnlyList<string> Changes,
+    int? RestoredFromVersion)
 {
-    public static ReportVersionDetailResponse From(ReportVersionRecord v) =>
-        new(v.Version, v.Name, v.SavedAtUtc, v.Definition);
+    public static ReportVersionDetailResponse From(ReportVersionRecord v) => new(
+        v.Version,
+        v.Name,
+        DateTime.SpecifyKind(v.SavedAtUtc, DateTimeKind.Utc),
+        v.Definition,
+        v.SavedByEmail,
+        v.Changes ?? [],
+        v.RestoredFromVersion);
 }

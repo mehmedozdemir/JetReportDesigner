@@ -21,6 +21,7 @@ import { LoginScreen } from "./components/LoginScreen";
 import { COLLAPSED_WIDTH, ResizablePanel } from "./components/ResizablePanel";
 import { StartScreen } from "./components/StartScreen";
 import { Toolbar } from "./components/Toolbar";
+import { VersionHistoryDialog } from "./components/VersionHistoryDialog";
 import { PropertiesPanel } from "./components/PropertiesPanel";
 import { PreviewPane } from "./components/PreviewPane";
 
@@ -41,6 +42,7 @@ export function App() {
   const [folders, setFolders] = useState<FolderSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const [loadingReport, setLoadingReport] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -53,6 +55,7 @@ export function App() {
 
   const report = useDesigner((s) => s.report);
   const reportId = useDesigner((s) => s.reportId);
+  const dirty = useDesigner((s) => s.dirty);
   const load = useDesigner((s) => s.load);
   const markSaved = useDesigner((s) => s.markSaved);
   const inspectorPulse = useDesigner((s) => s.inspectorPulse);
@@ -385,6 +388,7 @@ export function App() {
           onMoveToFolder={(id, folderId) => void moveReportToFolder(id, folderId)}
           onBulkMove={(ids, folderId) => void bulkMove(ids, folderId)}
           onBulkDelete={(ids) => void bulkDelete(ids)}
+          onReportChanged={() => void refresh()}
         />
         <JobNotifications />
         {error && (
@@ -419,7 +423,22 @@ export function App() {
         onSettings={() => navigate("/settings")}
         onSave={() => void save()}
         onExport={(format) => void exportAs(format)}
+        onHistory={() => setHistoryOpen(true)}
       />
+
+      {historyOpen && report && reportId && (
+        <VersionHistoryDialog
+          report={{ id: reportId, name: report.name }}
+          canRestore={canEdit}
+          unsavedChanges={dirty}
+          onRestored={(restored) => {
+            markSaved(restored);
+            setHistoryOpen(false);
+            void refresh();
+          }}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
 
       {canEdit && (
         <ResizablePanel

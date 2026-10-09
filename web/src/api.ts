@@ -174,6 +174,17 @@ export const api = {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
 
+  // --- version history ---
+  listVersions: (id: string): Promise<ReportVersionInfo[]> =>
+    fetchWithAuth(`/api/reports/${id}/versions`).then(json<ReportVersionInfo[]>),
+
+  getVersion: (id: string, version: number): Promise<ReportVersionDetail> =>
+    fetchWithAuth(`/api/reports/${id}/versions/${version}`).then(json<ReportVersionDetail>),
+
+  /** Saves an old version again as the newest one. Nothing is deleted. */
+  restoreVersion: (id: string, version: number): Promise<ReportResponse> =>
+    fetchWithAuth(`/api/reports/${id}/versions/${version}/restore`, { method: "POST" }).then(json<ReportResponse>),
+
   // --- API keys ---
   listApiKeys: (): Promise<ApiKeyInfo[]> => fetchWithAuth("/api/api-keys").then(json<ApiKeyInfo[]>),
 
@@ -392,6 +403,21 @@ export interface ShareInfo {
 }
 
 export type ReportJobStatus = "Queued" | "Running" | "Succeeded" | "Failed" | "Cancelled";
+
+export interface ReportVersionInfo {
+  version: number;
+  name: string;
+  savedAtUtc: string;
+  savedByEmail: string | null;
+  /** What the save changed, as tokens: name, code, page, parameters, dataSources, styles, bands, other, added:N, removed:N, edited:N. */
+  changes: string[];
+  /** Set when the version was made by restoring an older one. */
+  restoredFromVersion: number | null;
+}
+
+export interface ReportVersionDetail extends ReportVersionInfo {
+  definition: ReportDefinition;
+}
 
 export type ApiKeyStatus = "active" | "disabled" | "expired";
 

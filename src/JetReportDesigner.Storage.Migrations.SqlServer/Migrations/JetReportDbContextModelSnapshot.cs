@@ -589,6 +589,10 @@ namespace JetReportDesigner.Storage.Migrations.SqlServer.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Changes")
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
                     b.Property<string>("DefinitionJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -601,8 +605,15 @@ namespace JetReportDesigner.Storage.Migrations.SqlServer.Migrations
                     b.Property<Guid>("ReportId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int?>("RestoredFromVersion")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("SavedAtUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("SavedByEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<int>("Version")
                         .HasColumnType("int");

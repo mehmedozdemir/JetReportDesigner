@@ -589,6 +589,10 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("RAW(16)");
 
+                    b.Property<string>("Changes")
+                        .HasMaxLength(400)
+                        .HasColumnType("NVARCHAR2(400)");
+
                     b.Property<string>("DefinitionJson")
                         .IsRequired()
                         .HasColumnType("NCLOB");
@@ -601,8 +605,15 @@ namespace JetReportDesigner.Storage.Migrations.Oracle.Migrations
                     b.Property<Guid>("ReportId")
                         .HasColumnType("RAW(16)");
 
+                    b.Property<int?>("RestoredFromVersion")
+                        .HasColumnType("NUMBER(10)");
+
                     b.Property<DateTime>("SavedAtUtc")
                         .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<string>("SavedByEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("NVARCHAR2(256)");
 
                     b.Property<int>("Version")
                         .HasColumnType("NUMBER(10)");
