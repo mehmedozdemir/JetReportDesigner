@@ -1,0 +1,410 @@
+{
+  "schemaVersion": 1,
+  "id": "63a34fb2-9bc4-4d4b-b4e8-300bfaa36830",
+  "name": "Barkod Rapor - Claude",
+  "layoutMode": "banded",
+  "unit": "px",
+  "page": {
+    "size": "Custom",
+    "orientation": "landscape",
+    "customWidth": 392.69,
+    "customHeight": 200.69,
+    "margins": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "columns": 1,
+    "columnSpacing": 16
+  },
+  "parameters": [],
+  "connections": [],
+  "styles": {},
+  "dataSources": [
+    {
+      "name": "data",
+      "kind": "json",
+      "fields": [
+        {
+          "name": "Adi",
+          "type": "string"
+        },
+        {
+          "name": "Soyadi",
+          "type": "string"
+        },
+        {
+          "name": "TeslimAdresi",
+          "type": "string"
+        },
+        {
+          "name": "TeslimIl",
+          "type": "string"
+        },
+        {
+          "name": "TeslimIlce",
+          "type": "string"
+        },
+        {
+          "name": "Barkod",
+          "type": "string"
+        }
+      ],
+      "json": {
+        "inlineData": "[{\"Adi\": \"Ahmet\", \"Soyadi\": \"Yılmaz\", \"TeslimAdresi\": \"Atatürk Mah. Cumhuriyet Cad. No:12 D:3\", \"TeslimIl\": \"İSTANBUL\", \"TeslimIlce\": \"Kadıköy\", \"Barkod\": \"8690000000015\"}, {\"Adi\": \"Ayşe\", \"Soyadi\": \"Demir\", \"TeslimAdresi\": \"Alsancak Mah. 1453 Sok. No:7\", \"TeslimIl\": null, \"TeslimIlce\": \"Konak\", \"Barkod\": \"8690000000022\"}]",
+        "resultPath": "$"
+      }
+    }
+  ],
+  "bands": [
+    {
+      "type": "detail",
+      "height": 200,
+      "visible": true,
+      "dataSource": "data",
+      "repeatOnEveryPage": false,
+      "elements": [
+        {
+          "id": "lbl_0",
+          "type": "label",
+          "bounds": {
+            "x": 11,
+            "y": 13,
+            "width": 96,
+            "height": 13.23
+          },
+          "style": {
+            "font": {
+              "size": 7,
+              "bold": true
+            },
+            "border": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 1,
+              "color": "#b0b0b0"
+            },
+            "vAlign": "top"
+          },
+          "text": "Adı",
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        },
+        {
+          "id": "fld_0",
+          "type": "field",
+          "bounds": {
+            "x": 109,
+            "y": 13,
+            "width": 264.57,
+            "height": 13.23
+          },
+          "style": {
+            "font": {
+              "size": 7,
+              "bold": true
+            },
+            "border": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 1,
+              "color": "#b0b0b0"
+            },
+            "vAlign": "top"
+          },
+          "value": "{data.Adi}",
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        },
+        {
+          "id": "lbl_1",
+          "type": "label",
+          "bounds": {
+            "x": 11,
+            "y": 28,
+            "width": 96,
+            "height": 13.23
+          },
+          "style": {
+            "font": {
+              "size": 7,
+              "bold": true
+            },
+            "border": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 1,
+              "color": "#b0b0b0"
+            },
+            "vAlign": "top"
+          },
+          "text": "Soyadı",
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        },
+        {
+          "id": "fld_1",
+          "type": "field",
+          "bounds": {
+            "x": 109,
+            "y": 28,
+            "width": 264.57,
+            "height": 13.23
+          },
+          "style": {
+            "font": {
+              "size": 7,
+              "bold": true
+            },
+            "border": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 1,
+              "color": "#b0b0b0"
+            },
+            "vAlign": "top"
+          },
+          "value": "{data.Soyadi}",
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        },
+        {
+          "id": "lbl_2",
+          "type": "label",
+          "bounds": {
+            "x": 11,
+            "y": 43,
+            "width": 96,
+            "height": 66.14
+          },
+          "style": {
+            "font": {
+              "size": 7,
+              "bold": true
+            },
+            "border": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 1,
+              "color": "#b0b0b0"
+            },
+            "vAlign": "top"
+          },
+          "text": "Adresi",
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        },
+        {
+          "id": "fld_2",
+          "type": "field",
+          "bounds": {
+            "x": 109,
+            "y": 43,
+            "width": 264.57,
+            "height": 66.14
+          },
+          "style": {
+            "font": {
+              "size": 7,
+              "bold": true
+            },
+            "border": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 1,
+              "color": "#b0b0b0"
+            },
+            "vAlign": "top"
+          },
+          "value": "{data.TeslimAdresi}",
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        },
+        {
+          "id": "lbl_3",
+          "type": "label",
+          "bounds": {
+            "x": 11,
+            "y": 111,
+            "width": 96,
+            "height": 13.23
+          },
+          "style": {
+            "font": {
+              "size": 7,
+              "bold": true
+            },
+            "border": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 1,
+              "color": "#b0b0b0"
+            },
+            "vAlign": "top"
+          },
+          "text": "İl",
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        },
+        {
+          "id": "fld_3",
+          "type": "field",
+          "bounds": {
+            "x": 109,
+            "y": 111,
+            "width": 264.57,
+            "height": 13.23
+          },
+          "style": {
+            "font": {
+              "size": 7,
+              "bold": true
+            },
+            "border": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 1,
+              "color": "#b0b0b0"
+            },
+            "vAlign": "top"
+          },
+          "value": "=coalesce(TeslimIl, 'İZMİR')",
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        },
+        {
+          "id": "lbl_4",
+          "type": "label",
+          "bounds": {
+            "x": 11,
+            "y": 126,
+            "width": 96,
+            "height": 13.23
+          },
+          "style": {
+            "font": {
+              "size": 7,
+              "bold": true
+            },
+            "border": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 1,
+              "color": "#b0b0b0"
+            },
+            "vAlign": "top"
+          },
+          "text": "İlçe",
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        },
+        {
+          "id": "fld_4",
+          "type": "field",
+          "bounds": {
+            "x": 109,
+            "y": 126,
+            "width": 264.57,
+            "height": 13.23
+          },
+          "style": {
+            "font": {
+              "size": 7,
+              "bold": true
+            },
+            "border": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 1,
+              "color": "#b0b0b0"
+            },
+            "vAlign": "top"
+          },
+          "value": "{data.TeslimIlce}",
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        },
+        {
+          "id": "lbl_barkod",
+          "type": "label",
+          "bounds": {
+            "x": 11,
+            "y": 141,
+            "width": 96,
+            "height": 13.23
+          },
+          "style": {
+            "font": {
+              "size": 7,
+              "bold": true
+            },
+            "border": {
+              "top": 1,
+              "right": 1,
+              "bottom": 1,
+              "left": 1,
+              "color": "#b0b0b0"
+            }
+          },
+          "text": "Barkod",
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        },
+        {
+          "id": "barcode",
+          "type": "barcode",
+          "bounds": {
+            "x": 109,
+            "y": 141,
+            "width": 268,
+            "height": 52
+          },
+          "barcode": {
+            "symbology": "ean13",
+            "value": "{data.Barkod}",
+            "foreColor": "#000000",
+            "backColor": "#ffffff",
+            "showText": true
+          },
+          "formatRules": [],
+          "canGrow": false,
+          "aggregate": "none",
+          "aggregateScope": "group"
+        }
+      ]
+    }
+  ]
+}
