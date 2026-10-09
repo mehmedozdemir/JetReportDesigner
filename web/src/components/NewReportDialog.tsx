@@ -1,16 +1,12 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, FileBarChart2, LayoutTemplate, Rows3, Search, SquareDashed, X } from "lucide-react";
-import { emptyBandedReport, emptyFreeReport, type Orientation, type PageSize, type ReportDefinition } from "../types";
+import { emptyBandedReport, emptyFreeReport, type Orientation, type PageChoice, type PageSize, type ReportDefinition } from "../types";
 import { useEscapeKey } from "../useEscapeKey";
 import { useFocusTrap } from "../useFocusTrap";
+import { CustomPageSize } from "./CustomPageSize";
 import { PAGE_SIZES } from "./PropertiesPanel";
 import { ReportThumbnail } from "./ReportThumbnail";
-
-export interface PageChoice {
-  size: PageSize;
-  orientation: Orientation;
-}
 
 const ALL = "__all__";
 
@@ -38,6 +34,8 @@ export function NewReportDialog({
   useEscapeKey(onClose);
   const dialogRef = useFocusTrap<HTMLDivElement>();
   const [orientation, setOrientation] = useState<Orientation>("portrait");
+  const [customWidth, setCustomWidth] = useState(794);
+  const [customHeight, setCustomHeight] = useState(1123);
 
   const categories = useMemo(() => [ALL, ...new Set(samples.map((s) => s.category))], [samples]);
   const filteredSamples = useMemo(() => {
@@ -51,12 +49,13 @@ export function NewReportDialog({
     if (!picked) return null;
     const base = picked.kind === "sample" ? samples.find((s) => s.name === picked.name)?.definition : undefined;
     const source = base ?? (picked.kind === "blank" && picked.mode === "banded" ? emptyBandedReport("") : emptyFreeReport(""));
-    return { ...source, page: { ...source.page, size, orientation } };
-  }, [picked, samples, size, orientation]);
+    return { ...source, page: { ...source.page, size, orientation, customWidth, customHeight } };
+  }, [picked, samples, size, orientation, customWidth, customHeight]);
 
   const create = () => {
     if (!picked) return;
-    const page: PageChoice = { size, orientation };
+    const page: PageChoice =
+      size === "Custom" ? { size, orientation, customWidth, customHeight } : { size, orientation };
     if (picked.kind === "blank") onCreateBlank(picked.mode, page);
     else onCreateFromSample(picked.name, page);
   };
@@ -142,17 +141,29 @@ export function NewReportDialog({
                     ))}
                   </select>
                 </label>
-                <label className="field">
-                  <span>{t("newReport.orientation")}</span>
-                  <div className="segmented" role="group" aria-label={t("newReport.orientation")}>
-                    <button className={orientation === "portrait" ? "on" : ""} onClick={() => setOrientation("portrait")}>
-                      {t("newReport.portrait")}
-                    </button>
-                    <button className={orientation === "landscape" ? "on" : ""} onClick={() => setOrientation("landscape")}>
-                      {t("newReport.landscape")}
-                    </button>
-                  </div>
-                </label>
+                {size === "Custom" && (
+                  <CustomPageSize
+                    width={customWidth}
+                    height={customHeight}
+                    onChange={(w, h) => {
+                      setCustomWidth(w);
+                      setCustomHeight(h);
+                    }}
+                  />
+                )}
+                {size !== "Custom" && (
+  <label className="field">
+                    <span>{t("newReport.orientation")}</span>
+                    <div className="segmented" role="group" aria-label={t("newReport.orientation")}>
+                      <button className={orientation === "portrait" ? "on" : ""} onClick={() => setOrientation("portrait")}>
+                        {t("newReport.portrait")}
+                      </button>
+                      <button className={orientation === "landscape" ? "on" : ""} onClick={() => setOrientation("landscape")}>
+                        {t("newReport.landscape")}
+                      </button>
+                    </div>
+                  </label>
+                )}
                 <p className="hint">{t("newReport.tuneHint")}</p>
               </div>
 
@@ -167,7 +178,7 @@ export function NewReportDialog({
 
         {picked && (
           <footer>
-            <button className="btn primary" onClick={create} disabled={busy}>
+            <button className="btn primary" onClick={create} disabled={busy || (size === "Custom" && (customWidth <= 0 || customHeight <= 0))}>
               <FileBarChart2 /> {t("newReport.create")}
             </button>
           </footer>

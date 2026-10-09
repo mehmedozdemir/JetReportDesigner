@@ -8,6 +8,8 @@ import {
   AlignLeft,
   AlignRight,
   AlignStartHorizontal,
+  Check,
+  Copy,
   ArrowDown,
   ArrowDownToLine,
   ArrowUp,
@@ -38,6 +40,8 @@ import {
   Variable,
 } from "lucide-react";
 import { useDesigner } from "../store";
+import { CustomPageSize } from "./CustomPageSize";
+import { UnitField, UnitInput } from "./UnitInput";
 import { FormatField } from "./FormatDialog";
 import { FormulaField } from "./FormulaDialog";
 import { ConditionalFormatDialog } from "./ConditionalFormatDialog";
@@ -68,6 +72,7 @@ export const PAGE_SIZES: [PageSize, string][] = [
   ["Legal", "Legal"],
   ["IDCard", "ID / credit card (85.6×54 mm)"],
   ["Badge", "Badge (105×74 mm)"],
+  ["Custom", "Custom"],
 ];
 
 /** "Conditional formatting" button + rule count, opening the editor dialog. */
@@ -291,11 +296,7 @@ function BandProperties({ index }: { index: number }) {
 
       <label className="field">
         <span>{t("props.height")}</span>
-        <input
-          type="number"
-          value={Math.round(band.height)}
-          onChange={(e) => patchBand(index, (b) => (b.height = Math.max(8, Number(e.target.value) || 8)))}
-        />
+        <UnitInput value={band.height} min={8} onChange={(v) => patchBand(index, (b) => (b.height = v))} />
       </label>
 
       {band.type === "detail" && (
@@ -416,10 +417,10 @@ function ElementProperties({
       </div>
 
       <div className="grid2">
-        <Num label="X" value={element.bounds.x} onChange={(v) => onPatch((e) => (e.bounds.x = v))} />
-        <Num label="Y" value={element.bounds.y} onChange={(v) => onPatch((e) => (e.bounds.y = v))} />
-        <Num label="W" value={element.bounds.width} onChange={(v) => onPatch((e) => (e.bounds.width = v))} />
-        <Num label="H" value={element.bounds.height} onChange={(v) => onPatch((e) => (e.bounds.height = v))} />
+        <UnitField label="X" value={element.bounds.x} onChange={(v) => onPatch((e) => (e.bounds.x = v))} />
+        <UnitField label="Y" value={element.bounds.y} onChange={(v) => onPatch((e) => (e.bounds.y = v))} />
+        <UnitField label="W" value={element.bounds.width} onChange={(v) => onPatch((e) => (e.bounds.width = v))} />
+        <UnitField label="H" value={element.bounds.height} onChange={(v) => onPatch((e) => (e.bounds.height = v))} />
       </div>
 
       {element.type === "label" && (
@@ -737,11 +738,10 @@ function ElementProperties({
                 onChange={(v) => onPatch((e) => (e.table!.columns[i].value = v.target.value))}
               />
               <div className="row">
-                <input
-                  type="number"
+                <UnitInput
                   style={{ width: 56 }}
-                  value={Math.round(col.width)}
-                  onChange={(v) => onPatch((e) => (e.table!.columns[i].width = Number(v.target.value) || 0))}
+                  value={col.width}
+                  onChange={(v) => onPatch((e) => (e.table!.columns[i].width = v))}
                 />
                 <select
                   value={col.align}
@@ -825,6 +825,49 @@ function ElementProperties({
   );
 }
 
+/** The report's unique, program-facing name. Empty = generated from the name on the next save. */
+function ReportCodeField() {
+  const { t } = useTranslation();
+  const code = useDesigner((s) => s.report?.code ?? "");
+  const mutate = useDesigner((s) => s.mutate);
+  const [copied, setCopied] = useState(false);
+  const invalid = code !== "" && !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(code);
+
+  return (
+    <div className="field">
+      <span>{t("reportCode.label")}</span>
+      <div className="row">
+        <input
+          value={code}
+          maxLength={64}
+          spellCheck={false}
+          autoCapitalize="none"
+          placeholder={t("reportCode.placeholder")}
+          aria-invalid={invalid}
+          style={{ fontFamily: "ui-monospace, Menlo, Consolas, monospace", ...(invalid ? { borderColor: "var(--error)" } : {}) }}
+          onChange={(e) => mutate((r) => (r.code = e.target.value.trim().toLowerCase()))}
+        />
+        <button
+          className="mini"
+          disabled={!code || invalid}
+          title={t("reportCode.copy")}
+          aria-label={t("reportCode.copy")}
+          onClick={() => {
+            void navigator.clipboard.writeText(code);
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 1500);
+          }}
+        >
+          {copied ? <Check size={13} /> : <Copy size={13} />}
+        </button>
+      </div>
+      <p className="hint" style={{ margin: "4px 0 0", ...(invalid ? { color: "var(--error)" } : {}) }}>
+        {invalid ? t("reportCode.invalid") : t("reportCode.hint")}
+      </p>
+    </div>
+  );
+}
+
 function PageProperties() {
   const { t } = useTranslation();
   const report = useDesigner((s) => s.report)!;
@@ -835,6 +878,7 @@ function PageProperties() {
   return (
     <div className="panel">
       <h2><FileText /> {t("designer.page")}</h2>
+      <ReportCodeField />
       <label className="field">
         <span>{t("props.size")}</span>
         <select value={p.size} onChange={(e) => set((page) => (page.size = e.target.value as PageSize))}>
@@ -843,18 +887,30 @@ function PageProperties() {
           ))}
         </select>
       </label>
-      <label className="field">
+      {p.size === "Custom" && (
+        <CustomPageSize
+          width={p.customWidth ?? 794}
+          height={p.customHeight ?? 1123}
+          onChange={(w, h) =>
+            set((page) => {
+              page.customWidth = w;
+              page.customHeight = h;
+            })
+          }
+        />
+      )}
+      {p.size !== "Custom" && <label className="field">
         <span>{t("props.orientation")}</span>
         <select value={p.orientation} onChange={(e) => set((page) => (page.orientation = e.target.value as "portrait" | "landscape"))}>
           <option value="portrait">{t("props.portrait")}</option>
           <option value="landscape">{t("props.landscape")}</option>
         </select>
-      </label>
+      </label>}
       <div className="grid2">
-        <Num label={t("props.marginT")} value={p.margins.top} onChange={(v) => set((page) => (page.margins.top = v))} />
-        <Num label={t("props.marginR")} value={p.margins.right} onChange={(v) => set((page) => (page.margins.right = v))} />
-        <Num label={t("props.marginB")} value={p.margins.bottom} onChange={(v) => set((page) => (page.margins.bottom = v))} />
-        <Num label={t("props.marginL")} value={p.margins.left} onChange={(v) => set((page) => (page.margins.left = v))} />
+        <UnitField label={t("props.marginT")} value={p.margins.top} onChange={(v) => set((page) => (page.margins.top = v))} />
+        <UnitField label={t("props.marginR")} value={p.margins.right} onChange={(v) => set((page) => (page.margins.right = v))} />
+        <UnitField label={t("props.marginB")} value={p.margins.bottom} onChange={(v) => set((page) => (page.margins.bottom = v))} />
+        <UnitField label={t("props.marginL")} value={p.margins.left} onChange={(v) => set((page) => (page.margins.left = v))} />
       </div>
 
       <div className="grid2">
@@ -870,7 +926,7 @@ function PageProperties() {
           </select>
         </label>
         {p.columns > 1 && (
-          <Num label={t("props.columnGap")} value={p.columnSpacing ?? 16} onChange={(v) => set((page) => (page.columnSpacing = v))} />
+          <UnitField label={t("props.columnGap")} value={p.columnSpacing ?? 16} onChange={(v) => set((page) => (page.columnSpacing = v))} />
         )}
       </div>
       {p.columns > 1 && (

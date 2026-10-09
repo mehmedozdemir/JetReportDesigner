@@ -23,8 +23,8 @@ public static class PageGeometry
         double w, h;
         if (page.Size.Equals("Custom", StringComparison.OrdinalIgnoreCase))
         {
-            w = page.CustomWidth ?? 794;
-            h = page.CustomHeight ?? 1123;
+            // Custom width/height are the literal page dimensions; orientation does not swap them.
+            return (page.CustomWidth ?? 794, page.CustomHeight ?? 1123);
         }
         else if (Sizes.TryGetValue(page.Size, out var s))
         {

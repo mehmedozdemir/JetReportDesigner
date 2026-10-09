@@ -83,3 +83,8 @@ export function pxToUnit(px: number, unit: RulerUnit): number {
 export function unitLabel(unit: RulerUnit): string {
   return unit;
 }
+export function unitToPx(value: number, unit: RulerUnit): number {
+  if (unit === "mm") return (value / 25.4) * 96;
+  if (unit === "cm") return (value / 2.54) * 96;
+  return value;
+}

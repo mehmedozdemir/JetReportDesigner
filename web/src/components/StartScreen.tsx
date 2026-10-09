@@ -25,6 +25,7 @@ import {
   Settings,
   Share2,
   Trash2,
+  KeyRound,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -34,7 +35,7 @@ import { downloadBlob } from "../download";
 import { notificationPermission, requestNotificationPermission } from "../notifications";
 import { usePrefs } from "../prefs";
 import { timeAgo } from "../time";
-import type { FolderSummary, Orientation, PageSize, ReportDefinition, ReportSummary } from "../types";
+import type { FolderSummary, PageChoice, ReportDefinition, ReportSummary } from "../types";
 import { ConfirmButton } from "./ConfirmButton";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { EmailSettingsPage } from "./EmailSettingsPage";
@@ -47,9 +48,10 @@ import { ScheduleDialog } from "./ScheduleDialog";
 import { SchedulesPage } from "./SchedulesPage";
 import { SettingsPage } from "./SettingsPage";
 import { ShareDialog } from "./ShareDialog";
+import { ApiKeysPage } from "./ApiKeysPage";
 import { TeamPage } from "./TeamPage";
 
-type View = "reports" | "team" | "email" | "jobs" | "schedules" | "settings";
+type View = "reports" | "team" | "apikeys" | "email" | "jobs" | "schedules" | "settings";
 type DragPayload = { kind: "report" | "folder"; id: string };
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -59,6 +61,7 @@ const VIEW_PATH: Record<View, string> = {
   reports: "/reports",
   jobs: "/jobs",
   team: "/team",
+  apikeys: "/api-keys",
   email: "/email-settings",
   schedules: "/schedules",
   settings: "/settings",
@@ -134,8 +137,8 @@ export function StartScreen({
   reports: ReportSummary[];
   samples: { name: string; category: string; definition: ReportDefinition }[];
   busy: boolean;
-  onBlank: (mode: "free" | "banded", page: { size: PageSize; orientation: Orientation }, folderId: string | null) => void;
-  onSample: (name: string, page: { size: PageSize; orientation: Orientation }, folderId: string | null) => void;
+  onBlank: (mode: "free" | "banded", page: PageChoice, folderId: string | null) => void;
+  onSample: (name: string, page: PageChoice, folderId: string | null) => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
   onMoveToFolder: (id: string, folderId: string | null) => void;
@@ -560,6 +563,7 @@ export function StartScreen({
           <div className="start-nav-group">
             <div className="start-nav-label">{t("nav.organization")}</div>
             <NavItem view="team" current={view} icon={Users} label={t("nav.team")} badge={pendingInvites} onNavigate={setView} />
+            <NavItem view="apikeys" current={view} icon={KeyRound} label={t("nav.apiKeys")} onNavigate={setView} />
             <NavItem view="email" current={view} icon={Mail} label={t("nav.email")} onNavigate={setView} />
             <NavItem view="schedules" current={view} icon={CalendarClock} label={t("nav.schedules")} onNavigate={setView} />
           </div>
@@ -614,6 +618,8 @@ export function StartScreen({
       <div className="start-scroll">
         {view === "team" ? (
           <TeamPage />
+        ) : view === "apikeys" ? (
+          <ApiKeysPage />
         ) : view === "email" ? (
           <EmailSettingsPage />
         ) : view === "jobs" ? (
@@ -1022,6 +1028,7 @@ export function StartScreen({
                                   <a className="drive-row-link" href={reportHref(r.id)} onClick={(e) => openOnClick(e, r.id)}>
                                     <FileText /> {r.name}
                                   </a>
+                                  {r.code && <code className="report-code-chip" title={t("reportCode.label")}>{r.code}</code>}
                                   {isSearching && folderPath(r.folderId) && (
                                     <span className="drive-tile-count">{folderPath(r.folderId)}</span>
                                   )}

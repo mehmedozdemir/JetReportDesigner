@@ -2,6 +2,7 @@
   "nav": {
     "reports": "Reports",
     "jobs": "Jobs",
+    "apiKeys": "API keys",
     "team": "Team",
     "email": "Email",
     "schedules": "Schedules",
@@ -95,6 +96,71 @@
     "empty": "No background jobs yet.",
     "emptyHint": "Open a report's ⋮ menu (or right-click it) in Reports and choose \"Run in background\".",
     "listLimit": "Showing the 50 most recent. Older finished jobs are removed automatically after 30 days."
+  },
+  "apiKeys": {
+    "title": "API keys",
+    "description": "Desktop applications and services call your reports with these keys. A key can list and run reports only — it cannot change anything.",
+    "newKey": "New key",
+    "neverUsed": "Never used",
+    "disable": "Disable",
+    "enable": "Enable",
+    "disableHint": "Stop this key from working, without deleting it",
+    "enableHint": "Let this key work again",
+    "edit": "Edit",
+    "deleteTitle": "Delete key {{name}}",
+    "empty": "No API keys yet",
+    "emptyHint": "Create a key for each application that needs to run reports, so you can switch off one without affecting the others.",
+    "footnote": "Only the first characters of a key are kept for identification. The full key is shown once, when it is created.",
+    "col": {
+      "name": "Name",
+      "key": "Key",
+      "status": "Status",
+      "expires": "Expires",
+      "lastUsed": "Last used",
+      "created": "Created"
+    },
+    "status": {
+      "active": "Active",
+      "disabled": "Disabled",
+      "expired": "Expired"
+    },
+    "expiry": {
+      "never": "Never expires",
+      "days30": "30 days",
+      "days90": "90 days",
+      "year1": "1 year",
+      "custom": "Pick a date",
+      "pickDate": "Pick the last day the key works",
+      "neverHint": "The key works until you disable or delete it.",
+      "until": "The key works through {{date}}.",
+      "today": "ends today",
+      "daysLeft_one": "{{count}} day left",
+      "daysLeft_other": "{{count}} days left"
+    },
+    "dialog": {
+      "createTitle": "New API key",
+      "editTitle": "Edit API key",
+      "name": "Name",
+      "namePlaceholder": "e.g. Warehouse label printing app",
+      "description": "Notes (optional)",
+      "validity": "Validity",
+      "create": "Create key"
+    },
+    "reveal": {
+      "title": "Your new key",
+      "warning": "Copy this key now. For security it will not be shown again — if you lose it, create a new one.",
+      "copy": "Copy",
+      "copied": "Copied",
+      "usage": "How to use it",
+      "done": "I have copied it"
+    }
+  },
+  "reportCode": {
+    "label": "Report code",
+    "placeholder": "generated when saved",
+    "hint": "Applications call the report by this name. Letters a-z, digits, - and _ only. It stays the same if you rename the report.",
+    "invalid": "Only a-z, 0-9, - and _ are allowed (no spaces or accented letters).",
+    "copy": "Copy code"
   },
   "team": {
     "title": "Team",
@@ -288,6 +354,7 @@
     "gridlines": "Gridlines",
     "groupBy": "Group by",
     "headerRow": "Header row",
+    "width": "Width",
     "height": "Height",
     "landscape": "Landscape",
     "last": "Last",
@@ -303,6 +370,9 @@
     "rowHeader": "Row header",
     "rowTotals": "Row totals",
     "showValueBelowBars": "Show value below bars",
+    "sizeCustom": "Custom size",
+    "widthMm": "Width (mm)",
+    "heightMm": "Height (mm)",
     "size": "Size",
     "sort": "Sort",
     "style": "Style",

@@ -298,6 +298,11 @@ export interface SqlQueryResponse {
   createdAtUtc: string;
 }
 
+/** The page-format fields picked when creating a report. */
+export type PageChoice = Pick<PageSetup, "size" | "orientation" | "customWidth" | "customHeight">;
+
+export const MM_TO_PX = 96 / 25.4;
+
 export interface PageSetup {
   size: PageSize;
   orientation: Orientation;
@@ -315,6 +320,8 @@ export interface ReportDefinition {
   schemaVersion: 1;
   id?: string;
   name: string;
+  /** Unique, URL-safe name for programs to call the report by; generated from the name when empty. */
+  code?: string | null;
   description?: string | null;
   layoutMode: LayoutMode;
   unit: "px";
@@ -336,6 +343,8 @@ export interface ReportSummary {
   updatedAtUtc: string;
   folderId?: string | null;
   createdByEmail?: string | null;
+  /** Stable unique name programs call the report by (lowercase ASCII, no spaces). */
+  code?: string | null;
 }
 
 export interface FolderSummary {
@@ -375,8 +384,8 @@ export function pageDimensions(page: PageSetup): { width: number; height: number
   let w: number;
   let h: number;
   if (page.size === "Custom") {
-    w = page.customWidth ?? 794;
-    h = page.customHeight ?? 1123;
+    // Custom width/height are the literal page dimensions; orientation does not swap them.
+    return { width: page.customWidth ?? 794, height: page.customHeight ?? 1123 };
   } else {
     [w, h] = SIZES[page.size];
   }

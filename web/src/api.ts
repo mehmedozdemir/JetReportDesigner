@@ -174,6 +174,31 @@ export const api = {
       if (!r.ok && r.status !== 404) throw new Error(`${r.status} ${r.statusText}`);
     }),
 
+  // --- API keys ---
+  listApiKeys: (): Promise<ApiKeyInfo[]> => fetchWithAuth("/api/api-keys").then(json<ApiKeyInfo[]>),
+
+  createApiKey: (body: ApiKeyInput): Promise<{ key: ApiKeyInfo; secret: string }> =>
+    fetchWithAuth("/api/api-keys", { method: "POST", headers: jsonHeaders, body: JSON.stringify(body) }).then(
+      json<{ key: ApiKeyInfo; secret: string }>,
+    ),
+
+  updateApiKey: (id: string, body: ApiKeyInput): Promise<ApiKeyInfo> =>
+    fetchWithAuth(`/api/api-keys/${id}`, { method: "PUT", headers: jsonHeaders, body: JSON.stringify(body) }).then(
+      json<ApiKeyInfo>,
+    ),
+
+  setApiKeyActive: (id: string, isActive: boolean): Promise<ApiKeyInfo> =>
+    fetchWithAuth(`/api/api-keys/${id}/active`, {
+      method: "PUT",
+      headers: jsonHeaders,
+      body: JSON.stringify({ isActive }),
+    }).then(json<ApiKeyInfo>),
+
+  deleteApiKey: (id: string): Promise<void> =>
+    fetchWithAuth(`/api/api-keys/${id}`, { method: "DELETE" }).then(async (r) => {
+      if (!r.ok && r.status !== 404) throw new Error(problemMessage(await r.text()));
+    }),
+
   // --- tenant / team ---
   getTenant: (): Promise<TenantInfo> => fetchWithAuth("/api/tenant").then(json<TenantInfo>),
 
@@ -356,6 +381,29 @@ export interface ShareInfo {
 }
 
 export type ReportJobStatus = "Queued" | "Running" | "Succeeded" | "Failed" | "Cancelled";
+
+export type ApiKeyStatus = "active" | "disabled" | "expired";
+
+export interface ApiKeyInfo {
+  id: string;
+  name: string;
+  description: string | null;
+  /** First characters of the key, so keys can be told apart. The full key is shown only once, at creation. */
+  keyPrefix: string;
+  isActive: boolean;
+  expiresAtUtc: string | null;
+  createdAtUtc: string;
+  createdByEmail: string | null;
+  lastUsedAtUtc: string | null;
+  status: ApiKeyStatus;
+}
+
+export interface ApiKeyInput {
+  name: string;
+  description: string | null;
+  /** Null = never expires. */
+  expiresAtUtc: string | null;
+}
 
 export interface ReportJob {
   id: string;

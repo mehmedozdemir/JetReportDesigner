@@ -26,6 +26,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/reports" element={<App />} />
           <Route path="/jobs" element={<App />} />
           <Route path="/team" element={<App />} />
+          <Route path="/api-keys" element={<App />} />
           <Route path="/email-settings" element={<App />} />
           <Route path="/schedules" element={<App />} />
           <Route path="*" element={<Navigate to="/reports" replace />} />

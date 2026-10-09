@@ -10,8 +10,7 @@ import {
   emptyBandedReport,
   emptyFreeReport,
   type FolderSummary,
-  type Orientation,
-  type PageSize,
+  type PageChoice,
   type ReportDefinition,
   type ReportSummary,
 } from "./types";
@@ -139,7 +138,7 @@ export function App() {
   // whatever it's actually showing.
   useEffect(() => {
     const section =
-      { "/jobs": "nav.jobs", "/team": "nav.team", "/email-settings": "nav.email", "/schedules": "nav.schedules", "/settings": "nav.settings" }[
+      { "/jobs": "nav.jobs", "/team": "nav.team", "/api-keys": "nav.apiKeys", "/email-settings": "nav.email", "/schedules": "nav.schedules", "/settings": "nav.settings" }[
         location.pathname
       ] ?? "nav.reports";
     const page =
@@ -171,7 +170,7 @@ export function App() {
 
   const createFromSample = async (
     name: string,
-    page?: { size: PageSize; orientation: Orientation },
+    page?: PageChoice,
     folderId?: string | null,
   ) => {
     const sample = samples.find((s) => s.name === name);
@@ -261,7 +260,7 @@ export function App() {
 
   const createReport = async (
     mode: "free" | "banded" = "free",
-    page?: { size: PageSize; orientation: Orientation },
+    page?: PageChoice,
     folderId?: string | null,
   ) => {
     const layout = mode;
@@ -363,6 +362,8 @@ export function App() {
         ? "jobs"
         : location.pathname === "/team"
           ? "team"
+          : location.pathname === "/api-keys"
+            ? "apikeys"
           : location.pathname === "/email-settings"
             ? "email"
             : location.pathname === "/schedules"

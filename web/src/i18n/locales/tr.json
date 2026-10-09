@@ -2,6 +2,7 @@
   "nav": {
     "reports": "Raporlar",
     "jobs": "İşler",
+    "apiKeys": "API anahtarları",
     "team": "Takım",
     "email": "E-posta",
     "schedules": "Zamanlamalar",
@@ -95,6 +96,71 @@
     "empty": "Henüz arka plan işi yok.",
     "emptyHint": "Raporlar'da bir raporun ⋮ menüsünü açıp (ya da sağ tıklayıp) \"Arka planda çalıştır\"ı seçin.",
     "listLimit": "En son 50 iş gösteriliyor. Biten işler 30 gün sonra kendiliğinden siliniyor."
+  },
+  "apiKeys": {
+    "title": "API anahtarları",
+    "description": "Masaüstü uygulamaları ve servisler raporlarınızı bu anahtarlarla çağırır. Bir anahtar yalnızca raporları listeleyip çalıştırabilir, hiçbir şeyi değiştiremez.",
+    "newKey": "Yeni anahtar",
+    "neverUsed": "Hiç kullanılmadı",
+    "disable": "Pasife al",
+    "enable": "Etkinleştir",
+    "disableHint": "Anahtarı silmeden çalışmasını durdur",
+    "enableHint": "Anahtarın yeniden çalışmasına izin ver",
+    "edit": "Düzenle",
+    "deleteTitle": "{{name}} anahtarını sil",
+    "empty": "Henüz API anahtarı yok",
+    "emptyHint": "Rapor çalıştıracak her uygulama için ayrı bir anahtar oluşturun; böylece birini kapatınca diğerleri etkilenmez.",
+    "footnote": "Anahtarın yalnızca ilk karakterleri tanımak için saklanır. Tamamı oluşturulurken bir kez gösterilir.",
+    "col": {
+      "name": "Ad",
+      "key": "Anahtar",
+      "status": "Durum",
+      "expires": "Bitiş",
+      "lastUsed": "Son kullanım",
+      "created": "Oluşturulma"
+    },
+    "status": {
+      "active": "Etkin",
+      "disabled": "Pasif",
+      "expired": "Süresi dolmuş"
+    },
+    "expiry": {
+      "never": "Süresiz",
+      "days30": "30 gün",
+      "days90": "90 gün",
+      "year1": "1 yıl",
+      "custom": "Tarih seç",
+      "pickDate": "Anahtarın çalışacağı son günü seçin",
+      "neverHint": "Anahtar, siz pasife alana veya silene kadar çalışır.",
+      "until": "Anahtar {{date}} tarihine kadar çalışır.",
+      "today": "bugün bitiyor",
+      "daysLeft_one": "{{count}} gün kaldı",
+      "daysLeft_other": "{{count}} gün kaldı"
+    },
+    "dialog": {
+      "createTitle": "Yeni API anahtarı",
+      "editTitle": "API anahtarını düzenle",
+      "name": "Ad",
+      "namePlaceholder": "Örn. Depo etiket yazdırma uygulaması",
+      "description": "Not (isteğe bağlı)",
+      "validity": "Geçerlilik",
+      "create": "Anahtar oluştur"
+    },
+    "reveal": {
+      "title": "Yeni anahtarınız",
+      "warning": "Bu anahtarı şimdi kopyalayın. Güvenlik nedeniyle bir daha gösterilmeyecek; kaybederseniz yenisini oluşturmanız gerekir.",
+      "copy": "Kopyala",
+      "copied": "Kopyalandı",
+      "usage": "Nasıl kullanılır",
+      "done": "Kopyaladım"
+    }
+  },
+  "reportCode": {
+    "label": "Rapor kodu",
+    "placeholder": "kaydedilince oluşturulur",
+    "hint": "Uygulamalar raporu bu adla çağırır. Yalnızca a-z, rakam, - ve _ kullanılabilir. Rapor adı değişse de kod aynı kalır.",
+    "invalid": "Yalnızca a-z, 0-9, - ve _ kullanılabilir (boşluk ve Türkçe karakter yok).",
+    "copy": "Kodu kopyala"
   },
   "team": {
     "title": "Takım",
@@ -288,6 +354,7 @@
     "gridlines": "Kılavuz çizgileri",
     "groupBy": "Gruplama",
     "headerRow": "Başlık satırı",
+    "width": "Genişlik",
     "height": "Yükseklik",
     "landscape": "Yatay",
     "last": "Son",
@@ -303,6 +370,9 @@
     "rowHeader": "Satır başlığı",
     "rowTotals": "Satır toplamları",
     "showValueBelowBars": "Değeri çubukların altında göster",
+    "sizeCustom": "Özel boyut",
+    "widthMm": "Genişlik (mm)",
+    "heightMm": "Yükseklik (mm)",
     "size": "Boyut",
     "sort": "Sıralama",
     "style": "Stil",
