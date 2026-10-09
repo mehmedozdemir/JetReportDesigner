@@ -19,4 +19,8 @@ public sealed record ReportJobResponse(
             j.CompletedAtUtc, j.ScheduleId);
 }
 
+/// <summary><paramref name="Total"/> is how many jobs match the filter overall, so the page
+/// can show "1–25 / 132" and know whether there is a next page.</summary>
+public sealed record ReportJobPageResponse(IReadOnlyList<ReportJobResponse> Items, int Total);
+
 public sealed record EnqueueReportJobRequest(string Format);

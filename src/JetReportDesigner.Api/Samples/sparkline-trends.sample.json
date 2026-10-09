@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "name": "Sample - Product trend sparklines",
+  "layoutMode": "free",
+  "unit": "px",
+  "page": {
+    "size": "A4",
+    "orientation": "portrait",
+    "margins": {
+      "top": 40,
+      "right": 40,
+      "bottom": 40,
+      "left": 40
+    },
+    "columns": 1
+  },
+  "parameters": [],
+  "connections": [],
+  "styles": {},
+  "bands": [],
+  "dataSources": [
+    {
+      "name": "products",
+      "kind": "json",
+      "fields": [],
+      "json": {
+        "inlineData": "[{\"product\": \"Widget Pro\", \"trend\": [12, 14, 13, 18, 22, 25, 29], \"latest\": 29}, {\"product\": \"Widget Lite\", \"trend\": [40, 36, 33, 28, 24, 19, 15], \"latest\": 15}, {\"product\": \"Gadget Max\", \"trend\": [20, 22, 19, 24, 18, 23, 21], \"latest\": 21}, {\"product\": \"Gadget Mini\", \"trend\": [10, 10, 11, 10, 12, 11, 10], \"latest\": 10}, {\"product\": \"Accessory Kit\", \"trend\": [5, 9, 4, 12, 6, 15, 8], \"latest\": 8}]",
+        "resultPath": "$"
+      }
+    }
+  ],
+  "body": {
+    "height": 320,
+    "elements": [
+      {
+        "id": "title",
+        "type": "label",
+        "text": "Product Trends - Last 7 Weeks",
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 500,
+          "height": 26
+        },
+        "style": {
+          "font": {
+            "size": 16,
+            "bold": true
+          }
+        }
+      },
+      {
+        "id": "subtitle",
+        "type": "label",
+        "text": "Sparkline demo: a per-row mini trend chart drawn instead of the cell's text. Line column highlights the latest point; bar column shows the same series as bars.",
+        "bounds": {
+          "x": 0,
+          "y": 28,
+          "width": 480,
+          "height": 34
+        },
+        "style": {
+          "color": "#6b7280",
+          "font": {
+            "size": 9
+          }
+        }
+      },
+      {
+        "id": "table",
+        "type": "table",
+        "bounds": {
+          "x": 0,
+          "y": 72,
+          "width": 420,
+          "height": 200
+        },
+        "table": {
+          "dataSource": "products",
+          "showHeader": true,
+          "columns": [
+            {
+              "header": "Product",
+              "value": "{products.product}",
+              "width": 130,
+              "align": "left"
+            },
+            {
+              "header": "Latest",
+              "value": "{products.latest}",
+              "format": "n0",
+              "width": 60,
+              "align": "right"
+            },
+            {
+              "header": "Trend (line)",
+              "value": "{products.trend}",
+              "width": 110,
+              "align": "left",
+              "sparkline": {
+                "type": "line",
+                "color": "#2563eb",
+                "showArea": true,
+                "highlightColor": "#dc2626"
+              }
+            },
+            {
+              "header": "Trend (bar)",
+              "value": "{products.trend}",
+              "width": 110,
+              "align": "left",
+              "sparkline": {
+                "type": "bar",
+                "color": "#16a34a",
+                "showArea": false
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

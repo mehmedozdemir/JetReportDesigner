@@ -24,6 +24,7 @@ import { FormulaDialog } from "./FormulaDialog";
 import { ChartPreview } from "./ChartPreview";
 import { BarcodePreview } from "./BarcodePreview";
 import { MatrixPreview } from "./MatrixPreview";
+import { SparklinePreview } from "./SparklinePreview";
 import { backgroundImageCss, imageSrc } from "../image";
 
 const HANDLES: ResizeHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
@@ -264,7 +265,9 @@ export function ElementView({ element }: { element: ReportElement }) {
             {[0, 1].map((r) => (
               <tr key={r}>
                 {element.table!.columns.map((c, i) => (
-                  <td key={i} style={{ width: c.width, textAlign: c.align }}>{c.value}</td>
+                  <td key={i} style={{ width: c.width, textAlign: c.align }}>
+                    {c.sparkline ? <SparklinePreview spec={c.sparkline} seed={r} /> : c.value}
+                  </td>
                 ))}
               </tr>
             ))}

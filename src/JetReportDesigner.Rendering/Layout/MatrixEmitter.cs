@@ -82,6 +82,23 @@ public static class MatrixEmitter
         var totalColW = matrix.ShowRowTotals ? Math.Min(70, b.Width * 0.15) : 0;
         var dataColW = Math.Max(24, (b.Width - rowHeaderW - totalColW) / Math.Max(1, colKeys.Count));
 
+        // Cell values up front: a colour scale has to know the grid's range before the first
+        // cell is painted, and the emitter is a lazy sequence. Totals are left out of the range
+        // on purpose — a row total dwarfs its own cells and would flatten the scale to one shade.
+        var cellValues = new Dictionary<(string Row, string Col), object?>();
+        foreach (var rk in rowKeys)
+        {
+            foreach (var ck in colKeys)
+            {
+                cellValues[(rk, ck)] = AggregateComputer.Compute(matrix.Aggregate, matrix.ValueField, RowsAt(rk, ck));
+            }
+        }
+
+        var scale = matrix.ColorScale;
+        var range = scale is null
+            ? null
+            : ColorScalePainter.Range(scale, cellValues.Values.Select(ColorScalePainter.Number).OfType<double>());
+
         var y = y0;
 
         // header row
@@ -116,10 +133,18 @@ public static class MatrixEmitter
             var rowAll = new List<Row>();
             foreach (var ck in colKeys)
             {
-                var cellRows = RowsAt(rk, ck);
-                rowAll.AddRange(cellRows);
-                var value = AggregateComputer.Compute(matrix.Aggregate, matrix.ValueField, cellRows);
-                yield return Cell(BindingResolver.FormatValue(value, matrix.Format, context.Culture), x, y, dataColW, rowHeight, style, align: HorizontalAnchor.Right);
+                rowAll.AddRange(RowsAt(rk, ck));
+                var value = cellValues[(rk, ck)];
+                var fill = Fill(scale, range, value);
+                if (fill is not null)
+                {
+                    yield return Paint(x, y, dataColW, rowHeight, fill);
+                }
+
+                yield return Cell(
+                    BindingResolver.FormatValue(value, matrix.Format, context.Culture),
+                    x, y, dataColW, rowHeight, style, align: HorizontalAnchor.Right,
+                    colorHex: fill is null ? null : ColorScalePainter.TextOn(fill));
                 x += dataColW;
             }
 
@@ -167,12 +192,30 @@ public static class MatrixEmitter
         double h,
         EffectiveStyle style,
         bool bold = false,
-        HorizontalAnchor align = HorizontalAnchor.Left) => new()
+        HorizontalAnchor align = HorizontalAnchor.Left,
+        string? colorHex = null) => new()
     {
         X = x + 2, Y = y, Width = Math.Max(0, w - 4), Height = h,
         Text = text, FontFamily = style.FontFamily, FontSizePt = style.FontSizePt,
-        Bold = bold, ColorHex = style.Color, HAlign = align, VAlign = VerticalAnchor.Middle,
+        Bold = bold, ColorHex = colorHex ?? style.Color, HAlign = align, VAlign = VerticalAnchor.Middle,
     };
+
+    /// <summary>The scale's fill for one cell, or null when there is no scale, no range, or the
+    /// cell isn't numeric — an empty cell stays empty rather than being painted as a low value.</summary>
+    private static string? Fill(ColorScale? scale, (double Min, double Max)? range, object? value)
+    {
+        if (scale is null || range is null)
+        {
+            return null;
+        }
+
+        var number = ColorScalePainter.Number(value);
+        return number is null ? null : ColorScalePainter.Fill(scale, number.Value, range.Value.Min, range.Value.Max);
+    }
+
+    /// <summary>Drawn before the text so the value sits on top of its fill.</summary>
+    private static RectanglePrimitive Paint(double x, double y, double w, double h, string fill) =>
+        new() { X = x, Y = y, Width = w, Height = h, FillColorHex = fill, BorderThicknessPx = 0 };
 
     private static LinePrimitive HLine(double x, double y, double width, string color) =>
         new() { X = x, Y = y, X2 = x + width, Y2 = y, ThicknessPx = 0.5, ColorHex = color };

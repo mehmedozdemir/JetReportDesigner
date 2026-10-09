@@ -108,6 +108,16 @@ public sealed class TableColumn
     public string? Format { get; set; }
 
     public TextAlign Align { get; set; } = TextAlign.Left;
+
+    /// <summary>Paints each cell in this column by where its value falls in the column's range.
+    /// Null leaves the column unpainted.</summary>
+    public ColorScale? ColorScale { get; set; }
+
+    /// <summary>Draws a per-row mini trend chart instead of this column's text. Mutually
+    /// meaningful on its own — a sparkline column's <see cref="Value"/> binding supplies the
+    /// series, not a single displayed value, so <see cref="Format"/> and <see cref="ColorScale"/>
+    /// are ignored when this is set.</summary>
+    public SparklineSpec? Sparkline { get; set; }
 }
 
 public sealed class ChartSpec
@@ -202,6 +212,10 @@ public sealed class MatrixSpec
     public AggregateFunction Aggregate { get; set; } = AggregateFunction.Sum;
 
     public string? Format { get; set; }
+
+    /// <summary>Paints the data cells by value — the classic heatmap. The range covers the
+    /// grid's own cells, so totals rows/columns stay unpainted and don't flatten the scale.</summary>
+    public ColorScale? ColorScale { get; set; }
 
     public bool ShowRowTotals { get; set; } = true;
 

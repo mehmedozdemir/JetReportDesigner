@@ -34,6 +34,30 @@ public sealed record ReportJobInfo(
 
 public sealed record ReportJobResult(byte[] Content, string ContentType, string FileName);
 
+/// <summary>What the Jobs page is asking for. Filtering, sorting and paging all happen in the
+/// database: sorting only the rows that happened to be on screen would silently claim to be
+/// sorting the whole history.</summary>
+/// <param name="Statuses">Empty means every status.</param>
+/// <param name="SortKey">One of <see cref="ReportJobSort"/>; anything else falls back to newest-first.</param>
+public sealed record ReportJobQuery(
+    IReadOnlyList<string> Statuses,
+    string SortKey,
+    bool Descending,
+    int Skip,
+    int Take);
+
+public static class ReportJobSort
+{
+    public const string ReportName = "reportName";
+    public const string Format = "format";
+    public const string Status = "status";
+    public const string Created = "createdAtUtc";
+}
+
+/// <summary><paramref name="Total"/> counts every job matching the filter, not just this page —
+/// the page footer and the "queued or running" nav badge both need the real number.</summary>
+public sealed record ReportJobPage(IReadOnlyList<ReportJobInfo> Items, int Total);
+
 /// <summary>A job handed to the background worker — no tenant context available there,
 /// so it carries the tenant id explicitly.</summary>
 public sealed record ClaimedReportJob(Guid Id, Guid TenantId, Guid ReportId, string Format, Guid? ScheduleId);
@@ -45,8 +69,9 @@ public interface IReportJobRepository
     /// this job — the worker distributes per that schedule's settings once it succeeds.</summary>
     Task<ReportJobInfo?> EnqueueAsync(Guid reportId, string format, Guid createdByUserId, CancellationToken cancellationToken, Guid? scheduleId = null);
 
-    /// <summary>Most recent jobs for the tenant (all reports), newest first.</summary>
-    Task<IReadOnlyList<ReportJobInfo>> ListAsync(CancellationToken cancellationToken);
+    /// <summary>One page of the tenant's jobs (all reports), filtered and sorted per
+    /// <paramref name="query"/>.</summary>
+    Task<ReportJobPage> ListAsync(ReportJobQuery query, CancellationToken cancellationToken);
 
     Task<ReportJobInfo?> GetAsync(Guid id, CancellationToken cancellationToken);
 

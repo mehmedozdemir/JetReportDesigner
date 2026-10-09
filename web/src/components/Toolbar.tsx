@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { JobTray } from "./JobTray";
 import {
   ChevronDown,
   FileBarChart2,
@@ -162,6 +163,7 @@ export function Toolbar({ busy, onNew, onShowStart, onSettings, onSave, onExport
 
         <div className="spacer" />
 
+        <JobTray />
         <button className="btn icon" onClick={onSettings} title={t("nav.settings")} aria-label={t("nav.settings")}>
           <Settings />
         </button>

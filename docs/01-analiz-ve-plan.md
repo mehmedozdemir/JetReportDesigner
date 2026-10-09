@@ -617,7 +617,77 @@ rozetleri, kaydetmeden e-posta testi). Kapsam dışı bırakılan, daha büyük 
   katlıyordu. `ListAsync`/`GetAsync` artık sorgu içinde `ReportJobInfo`'ya projeksiyon yapıyor,
   blob sütunları hiç seçilmiyor. Ayrıca `ReportJobProcessor` en fazla 6 saatte bir,
   `Jobs:RetentionDays` (varsayılan 30, 0 = kapalı) süresini aşmış bitmiş işleri siliyor.
-  Kalan: sayfalama/filtre UI'si (şu an "en son 50" dipnotu var).
+- ✅ **Jobs sayfalama + durum filtresi** (2026-09-16): `GET /api/jobs` artık
+  `?status=…&sort=…&desc=…&skip=…&take=…` alıyor ve `{ items, total }` dönüyor; `status`
+  tekrarlanabiliyor (OR). Filtreleme, sıralama ve sayfalama **veritabanında** yapılıyor —
+  ekrandaki 25 satırı istemcide sıralamak, göremediği bir geçmişi sıralıyormuş gibi
+  görünürdü. Sayfa boyutu 25, sunucu tarafında 200'e sınırlı; sıralama anahtarı
+  beyaz listede (bilinmeyen → en yeni önce), eşitlik `Id` ile bozuluyor ki iki poll
+  arasında satırlar yer değiştirmesin. Filtre/sıralama değişince sayfa 1'e dönüyor,
+  sayfa altında "1–25 / 34" sayacı ve Önceki/Sonraki var. Nav rozeti artık bir sayfa
+  satır yerine `status=Queued&status=Running&take=1` isteyip `total` okuyor.
+- ✅ **Sparkline (hücre içi mini eğilim grafiği)** (2026-09-16): modern görselleştirme
+  maddesinin 2. parçası. `SparklineSpec` (çizgi/çubuk, renk, alan doldurma, isteğe bağlı
+  "son nokta" vurgu rengi) tablo sütununa takılıyor — matrise değil, çünkü seri kavramı
+  satır bazlı: sütunun `Value` bağlaması artık tek bir değeri değil, tüm seriyi besliyor
+  (JSON dizisi `[4,7,2,9]` — bir JSON veri kaynağındaki iç içe dizi alanının doğal biçimi
+  zaten bu — ya da virgülle ayrılmış liste). Sparkline açıkken sütunun `Format`/`ColorScale`
+  alanları göz ardı ediliyor; ikisi aynı hücrede anlamsız.
+  - Her iki tip de kendi min/max'ı üzerinden aynı yükseklik eşlemesini kullanıyor —
+    sıfır tabanlı çubuk taban çizgisi bilerek atlandı, aynı seri çizgi ve çubukta
+    farklı okunurdu.
+  - Tasarımcı kanvası sabit örnek iki seriyle (MatrixPreview'daki gibi) gerçek şekli
+    gösteriyor; gerçek veri yalnızca render çıktısında.
+  - **Sınır:** HTML önizlemede çapraz çizgi, motorun köşegen olmayan çizgileri
+    eksenle-hizalı dolgu kutusu olarak çizmesi yüzünden basamaklı görünüyor — bu
+    ChartEmitter'ın çizgi/alan grafiklerini de etkileyen, önceden var olan bir motor
+    davranışı, kapsam dışı bıraktım. PDF çıktısında (`XGraphics.DrawLine`) gerçek
+    çapraz çizgi çiziliyor, doğrulandı.
+  - Satır yüksekliği tüm sütunlar arasında paylaşılıyor (yazı boyutundan türetiliyor,
+    sütun başına ayarlanamıyor) — çok daha yüksek bir sparkline istenirse tablo
+    elemanının yazı boyutunu büyütmek pratik kaldıraç.
+  - Doğrulama: 5 satırlık örnek veri → HTML'de 30 çizgi parçası (5×6), 35 çubuk
+    (5×7), 5 vurgu noktası — beklenenle birebir. PDF içerik akışında gerçek `RG`/`m`/`l`
+    çizgi operatörleri var. Tasarımcıda hem tasarım hem "Önizleme" (gerçek render)
+    sekmesinde ekran görüntüsüyle doğrulandı.
+- ✅ **Sparkline için örnek rapor** (2026-09-16): `Samples/sparkline-trends.sample.json`
+  — "Analytics" kategorisinde, 5 ürünün 7 haftalık eğilimini çizgi (kırmızı son-nokta
+  vurgusu) ve çubuk sütunlarıyla gösteriyor.
+- ✅ **Renk skalası için örnek rapor** (2026-09-16): `Samples/regional-sales-heatmap.sample.json`
+  — yeni özelliği gösteren, kendi kendine yeten (inline veri) bir örnek rapor. "Analytics"
+  kategorisinde Yeni Rapor galerisinde çıkıyor: matriste bölge×çeyrek ısı haritası (satır/
+  sütun toplamları boyanmadan), tabloda üç durak renkli bir sütun. Diğer örnekler gibi
+  `Samples\*.sample.json` glob'u otomatik yakalıyor; `MetaController.SampleCategories`'e tek
+  satır eklemek yetti. Gerçek bir rapora dönüştürüp render ettim: HTML'de 33 boyalı hücre,
+  tasarımcıda aynı ısı haritası görünüyor — sonra test raporunu sildim.
+- ✅ **Renk skalası / heatmap** (2026-09-16): modern görselleştirme maddesinin ilk parçası.
+  `ColorScale` (düşük/orta/yüksek renk + isteğe bağlı sabit sınırlar) matris hücrelerine ve
+  tablo sütunlarına takılıyor. Yeni bir `FormatRule` türü **değil**: kural eşik testidir,
+  gradyanı kurallarla ifade etmek her değer aralığı için ayrı kural yazmak demekti.
+  - Aralık varsayılan olarak otomatik: matriste **yalnızca gövde hücreleri**, toplamlar hariç —
+    satır toplamı kendi hücrelerini ezip skalayı tek tona düşürürdü.
+  - Metin rengi WCAG bağıl parlaklığına göre siyah/beyaz seçiliyor; koyu uçtaki (yani en
+    önemli) hücreler okunaksız kalmasın diye. Düz RGB ortalaması doygun maviyi "açık" sayıp
+    okunmaz siyah metin seçiyordu.
+  - Sayısal olmayan/boş hücre boyanmıyor — sıfır gibi görünmesi yanlış olurdu.
+  - Emitter'lar tembel dizi olduğu için hücre değerleri önden hesaplanıyor; skala ilk hücre
+    boyanmadan önce aralığı bilmek zorunda.
+  - **Sınır:** PDF ve HTML'de çıkıyor, **XLSX'te çıkmıyor** — Excel kolu tanımdan yalnızca
+    tablo değerlerini yazıyor, primitive akışını tüketmiyor. Excel'in kendi koşullu
+    biçimlendirmesine yazmak ayrı bir iş.
+- ✅ **Arka plan iş tepsisi** (2026-09-16): raporu arka plana gönderince artık **Jobs sayfasına
+  yönlendirilmiyorsun** — asıl amaç kaldığın yerde kalmaktı. Tarayıcıdaki indirmeler düğmesi
+  gibi bir tepsi eklendi: tasarımcı toolbar'ında (Ayarlar'ın solunda) ve Start ekranının sol
+  rayında aynı bileşen. Kuyruğa atınca panel 4 saniye kendiliğinden açılıp kapanıyor; üzerine
+  gelince açık kalıyor. Panel `document.body`'ye portal'lanıp düğmenin konumundan
+  hesaplanıyor — ilk sürüm sol rayın `overflow`'u tarafından kırpılmıştı, bunu ancak ekran
+  görüntüsü gösterdi. Dar rayda (≤1100px) tepsi markanın altına iniyor, yan yana dizilim rayı
+  taşırıyordu.
+  Ayrıca **tek paylaşılan yoklayıcı** (`web/src/jobFeed.ts`): önce nav rozeti, bitiş bildirimi
+  ve tepsi ayrı ayrı `/api/jobs` çağırıyordu; artık sekme başına tik başına tek istek
+  (`?take=20`). Rozet bu penceredeki bitmemiş işleri sayıyor, sayı pencereyi doldurursa "20+"
+  diyor. Tepsi açıkken tamamlandı toast'ı bastırılıyor (aynı şeyi iki kez söylememek için);
+  OS bildirimi olduğu gibi kalıyor.
 - ✅ **Çoklu seçim / toplu işlem** (2026-09-15): tile/satırda hover'da beliren onay kutusu ya da
   Ctrl/Cmd-tık ile seçim; seçim çubuğundan klasöre taşı veya sil. Düz tık hâlâ raporu açıyor.
   Toplu işlemler mevcut tekil uç noktaları sırayla kullanıp listeyi sonda bir kez yeniliyor.
