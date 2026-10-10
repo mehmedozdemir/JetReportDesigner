@@ -27,7 +27,12 @@ services:
       Storage__Provider: "SqlServer"
       Storage__ConnectionString: "Server=sqlserver,1433;Database=JetReportDesigner;User Id=sa;Password=Your_strong_Pass123;TrustServerCertificate=True;Encrypt=False"
       Storage__MigrateOnStartup: "true"
+      # Where ASP.NET Data Protection keeps its key ring. It encrypts the stored database connection
+      # strings, so it must survive container re-creation (otherwise saved connections become unreadable).
+      DataProtection__KeyPath: "/keys"
       Jwt__Secret: "local-docker-dev-secret-change-me-0123456789abcdef"
+    volumes:
+      - app-keys:/keys
     ports:
       - "8081:8080"
 
@@ -65,6 +70,7 @@ services:
       retries: 20
 
 volumes:
+  app-keys:
   sqlserver-data:
   postgres-data:
   oracle-data:

@@ -88,13 +88,20 @@ public static class ElementEmitter
 
             case ElementType.Image:
             {
-                if (element.Image is { Source: { Length: > 0 } imgSource })
+                if (element.Image is { Source: { Length: > 0 } rawImgSource })
                 {
-                    yield return new ImagePrimitive
+                    // {ds.field} bindings are resolved per row, so a photo or logo can come from the data.
+                    var imgSource = rawImgSource.Contains('{')
+                        ? BindingResolver.ResolveValue(rawImgSource, null, context).Trim()
+                        : rawImgSource;
+                    if (imgSource.Length > 0)
                     {
-                        X = x, Y = y, Width = b.Width, Height = b.Height,
-                        Source = imgSource, Fit = ParseFit(element.Image.Fit),
-                    };
+                        yield return new ImagePrimitive
+                        {
+                            X = x, Y = y, Width = b.Width, Height = b.Height,
+                            Source = imgSource, Fit = ParseFit(element.Image.Fit),
+                        };
+                    }
                 }
 
                 if (style.Border is { } ib)

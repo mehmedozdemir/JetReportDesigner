@@ -52,6 +52,37 @@ public class BackgroundImageTests
     }
 
     [Fact]
+    public void Image_source_binding_is_resolved_from_the_current_row()
+    {
+        var report = new ReportDefinition
+        {
+            Name = "photo",
+            LayoutMode = LayoutMode.Free,
+            DataSources = [new DataSourceDefinition { Name = "data", Kind = DataSourceKind.Json, Json = new JsonSourceConfig() }],
+            Body = new ReportBody
+            {
+                Elements =
+                [
+                    new ReportElement
+                    {
+                        Id = "photo", Type = ElementType.Image,
+                        Bounds = new Bounds { X = 0, Y = 0, Width = 80, Height = 100 },
+                        Image = new ImageSpec { Source = "{data.photo}" },
+                    },
+                ],
+            },
+        };
+        var data = new ReportData(new Dictionary<string, ResolvedDataSet>
+        {
+            ["data"] = JsonRows.Parse("[{\"photo\":\"asset:abc\"}]", "$"),
+        });
+
+        var doc = new FreeLayoutBuilder().Build(report, data, new Dictionary<string, object?>());
+
+        Assert.Equal("asset:abc", doc.Pages.Single().Primitives.OfType<ImagePrimitive>().Single().Source);
+    }
+
+    [Fact]
     public async Task Render_service_fills_image_bytes_from_the_resolver()
     {
         var report = new ReportDefinition

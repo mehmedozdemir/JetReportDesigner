@@ -111,6 +111,22 @@ public class BandedLayoutTests
     });
 
     [Fact]
+    public void Row_Less_Bands_Read_The_First_Row_Of_The_First_Source()
+    {
+        var report = GroupedReport();
+        report.Bands.RemoveAll(b => b.Type is BandType.GroupHeader or BandType.GroupFooter);
+        report.Bands.Add(new Band
+        {
+            Type = BandType.ReportHeader, Height = 24,
+            Elements = [Field("rh", "Header {orders.customer}", 0, 2, 200, 18)],
+        });
+        var doc = new BandedLayoutBuilder().Build(report, Data(report), new Dictionary<string, object?>());
+
+        var firstPage = doc.Pages[0].Primitives.OfType<TextPrimitive>().Select(t => t.Text).ToList();
+        Assert.Contains("Header Acme", firstPage);
+    }
+
+    [Fact]
     public void Paginates_Across_Multiple_Pages()
     {
         var report = GroupedReport();

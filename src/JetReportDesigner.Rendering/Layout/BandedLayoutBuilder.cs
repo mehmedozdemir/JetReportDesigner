@@ -65,6 +65,7 @@ public sealed class BandedLayoutBuilder
 
         var detailSource = detail?.DataSource ?? report.DataSources.FirstOrDefault()?.Name ?? string.Empty;
         var allRows = data.Get(detailSource).Rows.ToList();
+        var primaryRow = data.Row(report.DataSources.FirstOrDefault()?.Name ?? string.Empty, 0);
 
         // The detail band flows left-to-right across this many side-by-side columns,
         // then wraps down; every other band stays full width. columns == 1 (the
@@ -443,7 +444,11 @@ public sealed class BandedLayoutBuilder
                     _ => allRows,
                 };
 
-                var context = new BindingContext(instance.Row, parameters)
+                // Bands that sit outside the detail rows (report/page header and footer) have no current
+                // row of their own. They read row 0 of the report's first data source — the same rule a
+                // free-layout report uses — so a header or footer can show single-row data such as an
+                // invoice's customer and totals, while aggregates still range over the detail rows.
+                var context = new BindingContext(instance.Row ?? primaryRow, parameters)
                 {
                     PageNumber = p + 1,
                     TotalPages = totalPages,
