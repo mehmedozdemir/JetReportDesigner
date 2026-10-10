@@ -118,6 +118,18 @@ await reports.RenderAsync("aylik-ozet", veri,
     parameters: new Dictionary<string, object> { ["donem"] = "2026-10" });
 ```
 
+### Raporun beklediği alanları öğrenmek (dinamik form)
+
+```csharp
+var sema = await reports.GetSchemaAsync("izmirim-kart-diger-cocuk");
+foreach (var kaynak in sema.DataSources)            // Name, Kind, Fields (Name, Type), SampleRowsJson
+    Console.WriteLine($"{kaynak.Name}: {string.Join(", ", kaynak.Fields.Select(f => f.Name))}");
+// sema.Parameters: Name, Label, Type, DefaultValue, Required, AllowedValues
+```
+
+Alanlar, veri kaynağında tanımlı alanlar + tasarımda `{kaynak.alan}` olarak kullanılanlar + örnek verinin anahtarlarıdır.
+`clients/RaporOnizleyici` (WinUI 3) bu bilgiyle formunu raporun kendisinden üretir.
+
 ### Hatalar
 
 Her başarısızlık `ReportClientException` atar; `Message` nedeni, `StatusCode` HTTP kodunu söyler:

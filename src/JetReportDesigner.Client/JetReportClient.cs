@@ -149,6 +149,21 @@ namespace JetReportDesigner.Client
             return _reports.OrderBy(r => r.Code, StringComparer.Ordinal).ToList();
         }
 
+        /// <summary>
+        /// Reads what the report needs: its parameters and its data sources with their fields, so an application can
+        /// build its input form from the report itself instead of hard-coding field names.
+        /// </summary>
+        public async Task<ReportSchema> GetSchemaAsync(string report, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var id = await ResolveIdAsync(report, cancellationToken).ConfigureAwait(false);
+            using (var response = await _http.GetAsync("api/reports/" + id.ToString("D"), cancellationToken).ConfigureAwait(false))
+            {
+                if (!response.IsSuccessStatusCode) throw await ToExceptionAsync(response).ConfigureAwait(false);
+                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return ReportSchemaReader.Read(json);
+            }
+        }
+
         public void Dispose()
         {
             _lookupLock.Dispose();
