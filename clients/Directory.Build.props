@@ -1,0 +1,3 @@
+<Project>
+  <!-- Desktop tools live outside the server's strict build rules (central package versions, warnings as errors). -->
+</Project>

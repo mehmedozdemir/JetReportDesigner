@@ -1,0 +1,105 @@
+<Window x:Class="RaporOnizleyici.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Rapor Önizleyici">
+    <Grid x:Name="Root" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Systems bar -->
+        <Grid Grid.Row="0" Padding="16,10" ColumnSpacing="10" Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Sistem" VerticalAlignment="Center" FontWeight="SemiBold" />
+            <ComboBox x:Name="SystemCombo" Grid.Column="1" HorizontalAlignment="Stretch" PlaceholderText="Bir sistem seçin"
+                      SelectionChanged="SystemCombo_SelectionChanged" />
+            <Button Grid.Column="2" Content="Sistemleri yönet…" Click="ManageSystems_Click" />
+            <Button Grid.Column="3" Content="Raporları yenile" Click="Refresh_Click" />
+            <TextBlock x:Name="SystemInfo" Grid.Column="4" VerticalAlignment="Center" Opacity="0.7" TextTrimming="CharacterEllipsis" />
+            <ProgressRing x:Name="Busy" Grid.Column="5" Width="22" Height="22" IsActive="False" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" />
+                <ColumnDefinition Width="520" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Reports -->
+            <Grid Grid.Column="0" Padding="12" RowSpacing="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBox x:Name="SearchBox" PlaceholderText="Rapor ara (ad veya kod)" TextChanged="SearchBox_TextChanged" />
+                <ListView x:Name="ReportList" Grid.Row="1" SelectionChanged="ReportList_SelectionChanged" SelectionMode="Single" />
+            </Grid>
+
+            <!-- Inputs: parameters + data, generated from the selected report -->
+            <Grid Grid.Column="1" Padding="12,12,12,12" RowSpacing="8" Background="{ThemeResource LayerFillColorDefaultBrush}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <StackPanel Spacing="2">
+                    <TextBlock x:Name="ReportTitle" Text="Bir rapor seçin" Style="{StaticResource SubtitleTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="ReportCode" Opacity="0.65" />
+                </StackPanel>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="InputHost" Spacing="14" Padding="0,0,12,0" />
+                </ScrollViewer>
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="PreviewButton" Content="Önizle" Style="{StaticResource AccentButtonStyle}" Click="Preview_Click" IsEnabled="False" />
+                    <DropDownButton x:Name="SaveButton" Content="Kaydet" IsEnabled="False">
+                        <DropDownButton.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="PDF" Click="SavePdf_Click" />
+                                <MenuFlyoutItem Text="Excel (XLSX)" Click="SaveXlsx_Click" />
+                                <MenuFlyoutItem Text="HTML" Click="SaveHtml_Click" />
+                                <MenuFlyoutItem Text="Veriyi JSON olarak kaydet" Click="SaveJson_Click" />
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+                    <ComboBox x:Name="DpiCombo" Width="100" SelectedIndex="1" ToolTipService.ToolTip="Önizleme çözünürlüğü">
+                        <ComboBoxItem Content="96 dpi" Tag="96" />
+                        <ComboBoxItem Content="150 dpi" Tag="150" />
+                        <ComboBoxItem Content="200 dpi" Tag="200" />
+                        <ComboBoxItem Content="300 dpi" Tag="300" />
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+            <!-- Preview -->
+            <Grid Grid.Column="2" Padding="12" RowSpacing="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock Text="Önizleme" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock x:Name="PageInfo" VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock Text="Yakınlaştır" VerticalAlignment="Center" Margin="12,0,0,0" Opacity="0.7" />
+                    <Slider x:Name="ZoomSlider" Width="160" Minimum="25" Maximum="200" Value="100" StepFrequency="5"
+                            ValueChanged="Zoom_ValueChanged" VerticalAlignment="Center" />
+                </StackPanel>
+                <ScrollViewer Grid.Row="1" ZoomMode="Disabled" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                              Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                    <StackPanel x:Name="PagesHost" Spacing="14" Padding="16" HorizontalAlignment="Left" />
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <InfoBar x:Name="Status" Grid.Row="2" IsOpen="False" IsClosable="True" Margin="12,0,12,8" />
+    </Grid>
+</Window>
